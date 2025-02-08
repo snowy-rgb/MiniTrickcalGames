@@ -16,24 +16,21 @@
 
   <!-- ✅ auth.js 불러오기 -->
   <script type="module">
-    import { signUp, signIn, logOut } from "./auth.js";
+  import { signUp, signIn } from "./auth.js";
 
-    document.getElementById("signup-btn").addEventListener("click", () => {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-      signUp(email, password);
-    });
+  document.getElementById("signup-btn").addEventListener("click", () => {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    signUp(email, password);
+  });
 
-    document.getElementById("signin-btn").addEventListener("click", () => {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-      signIn(email, password);
-    });
-
-    document.getElementById("logout-btn").addEventListener("click", () => {
-      logOut();
-    });
+  document.getElementById("signin-btn").addEventListener("click", () => {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    signIn(email, password);
+  });
   </script>
+
 
 </body>
 </html>
