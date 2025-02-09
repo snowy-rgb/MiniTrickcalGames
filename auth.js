@@ -1,6 +1,12 @@
 // ✅ Firebase SDK 불러오기
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendEmailVerification } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-auth.js";
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  sendEmailVerification
+} from "https://www.gstatic.com/firebasejs/11.3.0/firebase-auth.js";
 
 // ✅ Firebase 설정
 const firebaseConfig = {
@@ -50,6 +56,8 @@ export function signIn(email, password) {
       // 이메일 인증 여부 확인
       if (user.emailVerified) {
         alert("로그인 성공!");
+        // 로그인 성공 시 start.html로 이동
+        window.location.href = "start.html";
       } else {
         alert("이메일 인증이 필요합니다. 이메일을 확인하세요.");
       }
@@ -66,9 +74,12 @@ export function logOut() {
     .then(() => {
       console.log("로그아웃 성공");
       alert("로그아웃 완료!");
+      // 로그아웃 후 index.html로 이동
+      window.location.href = "index.html";
     })
     .catch((error) => {
       console.error("로그아웃 실패:", error.message);
       alert("로그아웃 실패: " + error.message);
     });
 }
+
