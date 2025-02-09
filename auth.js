@@ -34,7 +34,7 @@ export function signUp(email, password) {
       // 이메일 인증 링크 전송
       sendEmailVerification(user)
         .then(() => {
-          alert("회원가입 성공! 이메일 인증 링크를 보냈습니다. 이메일을 확인해 주세요.");
+          alert("회원가입 성공! 이메일 인증 링크를 보냈습니다. 이메일을 확인해 주세요.(주의! 스팸이메일으로 인식 될 수 있으므로, 이메일이 오지 않았다면 스팸이메일을 확인하거나 trigger.snowii@gmail.com으로 문의해주세요");
         })
         .catch((error) => {
           console.error("이메일 인증 링크 전송 실패:", error.message);
