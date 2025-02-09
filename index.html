@@ -5,135 +5,124 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Firebase 로그인</title>
   <style>
+    /* 전체 화면 스타일 */
     body {
       font-family: Arial, sans-serif;
+      background-color: #f7f7f7;
       margin: 0;
-      padding: 0;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       height: 100vh;
-      background-color: #f4f4f4;
     }
 
-    h2 {
+    /* 이미지 스타일 */
+    .logo {
+      margin-bottom: 10px;
+      display: block;
+      max-width: 200px;
+      height: auto;
+    }
+
+    /* 제목 스타일 */
+    .title {
+      font-size: 1.8rem;
       margin-bottom: 20px;
+      text-align: center;
     }
 
+    /* 입력 필드 스타일 */
     input {
       display: block;
-      margin: 10px auto;
+      width: 250px;
       padding: 10px;
-      width: 80%;
-      max-width: 400px;
-      border: 2px solid #000;
+      margin: 10px auto;
+      border: 1px solid #ccc;
       border-radius: 5px;
-      font-size: 16px;
+      font-size: 1rem;
     }
 
+    /* 버튼 컨테이너 */
+    .button-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* 버튼 스타일 */
     button {
-      display: inline-block;
-      margin: 10px 10px 0;
-      padding: 10px 20px;
-      border: 2px solid #000;
+      width: 250px;
+      padding: 10px;
+      border: none;
       border-radius: 5px;
-      background-color: white;
-      font-size: 16px;
+      font-size: 1rem;
       cursor: pointer;
-      transition: 0.3s;
     }
 
-    button:hover {
-      background-color: #000;
+    #signup-btn {
+      background-color: #4CAF50;
+      color: white;
+    }
+
+    #signin-btn {
+      background-color: #008CBA;
       color: white;
     }
 
     #logout-btn {
-      margin-top: 30px;
-      color: red;
-      border: 2px solid red;
-    }
-
-    #logout-btn:hover {
-      background-color: red;
+      background-color: #f44336;
       color: white;
+      margin-top: 20px;
     }
 
-    .image-container {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-
-    .image-container img {
-      width: 200px;
-      height: auto;
-    }
-
-    @media (max-width: 768px) {
+    /* 반응형 처리 */
+    @media (max-width: 400px) {
       input, button {
         width: 90%;
-        font-size: 14px;
-      }
-    }
-
-    @media (max-width: 480px) {
-      input, button {
-        width: 95%;
-        font-size: 12px;
-      }
-
-      .image-container img {
-        width: 80px;
       }
     }
   </style>
 </head>
 <body>
 
-  <div class="image-container">
-    <img src="5ef216934137c.png" alt="트릭컬 로고">
-  </div>
-  <h2><str>MiniTrickcalGames로 로그인</str></h2>
+  <!-- 로고 이미지 -->
+  <img src="5ef216934137c.png" alt="트릭컬 로고" class="logo">
+
+  <!-- 제목 -->
+  <div class="title">MiniTrickcalGames로 로그인</div>
+
+  <!-- 입력 필드 -->
   <input type="email" id="email" placeholder="아이디">
   <input type="password" id="password" placeholder="비밀번호">
-  <button id="signup-btn">회원가입</button>
-  <button id="signin-btn">로그인</button>
-  <button id="logout-btn">로그아웃</button>
 
-  <!-- ✅ auth.js 불러오기 -->
+  <!-- 버튼들 -->
+  <div class="button-container">
+    <button id="signup-btn">회원가입</button>
+    <button id="signin-btn">로그인</button>
+    <button id="logout-btn">로그아웃</button>
+  </div>
+
+  <!-- Firebase auth.js 연결 -->
   <script type="module">
-    import { signUp, signIn, logOut } from "./auth.js";
+  import { signUp, signIn, logOut } from "./auth.js";
 
-    document.getElementById("signup-btn").addEventListener("click", () => {
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value.trim();
+  document.getElementById("signup-btn").addEventListener("click", () => {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    signUp(email, password);
+  });
 
-      if (!email || !password) {
-        alert("아이디와 비밀번호를 입력해주세요.");
-        return;
-      }
+  document.getElementById("signin-btn").addEventListener("click", () => {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    signIn(email, password);
+  });
 
-      signUp(email, password);
-    });
-
-    document.getElementById("signin-btn").addEventListener("click", () => {
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value.trim();
-
-      if (!email || !password) {
-        alert("아이디와 비밀번호를 입력해주세요.");
-        return;
-      }
-
-      signIn(email, password);
-    });
-
-    document.getElementById("logout-btn").addEventListener("click", () => {
-      logOut();
-    });
+  document.getElementById("logout-btn").addEventListener("click", () => {
+    logOut();
+  });
   </script>
 
 </body>
