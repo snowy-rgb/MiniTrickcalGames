@@ -25,10 +25,10 @@ async function getWeather(city) {
     let soundFile = '';
 
     if (weather.includes('clear')) {
-      soundFile = `${timePeriod}-sunny.mp3`;
+      soundFile = `${timePeriod}-밤맑음.mp3`;
       weatherStatus.textContent = `현재 날씨: 화창함 (${timePeriod === 'day' ? '아침/낮' : '밤'}) 🌞`;
     } else if (weather.includes('clouds')) {
-      soundFile = `${timePeriod}-cloudy.mp3`;
+      soundFile = `${timePeriod}-밤맑음.mp3`;
       weatherStatus.textContent = `현재 날씨: 흐림 (${timePeriod === 'day' ? '아침/낮' : '밤'}) ☁️`;
     } else if (weather.includes('rain')) {
       soundFile = `${timePeriod}-소나기.mp3`;
