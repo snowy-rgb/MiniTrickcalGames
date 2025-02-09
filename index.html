@@ -4,33 +4,138 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Firebase 로그인</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background-color: #f4f4f4;
+    }
+
+    h2 {
+      margin-bottom: 20px;
+    }
+
+    input {
+      display: block;
+      margin: 10px auto;
+      padding: 10px;
+      width: 80%;
+      max-width: 400px;
+      border: 2px solid #000;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+
+    button {
+      display: inline-block;
+      margin: 10px 10px 0;
+      padding: 10px 20px;
+      border: 2px solid #000;
+      border-radius: 5px;
+      background-color: white;
+      font-size: 16px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background-color: #000;
+      color: white;
+    }
+
+    #logout-btn {
+      margin-top: 30px;
+      color: red;
+      border: 2px solid red;
+    }
+
+    #logout-btn:hover {
+      background-color: red;
+      color: white;
+    }
+
+    .image-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .image-container img {
+      width: 100px;
+      height: auto;
+    }
+
+    @media (max-width: 768px) {
+      input, button {
+        width: 90%;
+        font-size: 14px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      input, button {
+        width: 95%;
+        font-size: 12px;
+      }
+
+      .image-container img {
+        width: 80px;
+      }
+    }
+  </style>
 </head>
 <body>
 
+  <div class="image-container">
+    <img src="사진1.png" alt="사진1">
+  </div>
   <h2>Firebase 회원가입 및 로그인</h2>
-  <input type="email" id="email" placeholder="이메일 입력">
-  <input type="password" id="password" placeholder="비밀번호 입력">
+  <input type="email" id="email" placeholder="아이디">
+  <input type="password" id="password" placeholder="비밀번호">
   <button id="signup-btn">회원가입</button>
   <button id="signin-btn">로그인</button>
   <button id="logout-btn">로그아웃</button>
 
   <!-- ✅ auth.js 불러오기 -->
   <script type="module">
-  import { signUp, signIn } from "./auth.js";
+    import { signUp, signIn, logOut } from "./auth.js";
 
-  document.getElementById("signup-btn").addEventListener("click", () => {
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
-    signUp(email, password);
-  });
+    document.getElementById("signup-btn").addEventListener("click", () => {
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
 
-  document.getElementById("signin-btn").addEventListener("click", () => {
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
-    signIn(email, password);
-  });
+      if (!email || !password) {
+        alert("아이디와 비밀번호를 입력해주세요.");
+        return;
+      }
+
+      signUp(email, password);
+    });
+
+    document.getElementById("signin-btn").addEventListener("click", () => {
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+
+      if (!email || !password) {
+        alert("아이디와 비밀번호를 입력해주세요.");
+        return;
+      }
+
+      signIn(email, password);
+    });
+
+    document.getElementById("logout-btn").addEventListener("click", () => {
+      logOut();
+    });
   </script>
-
 
 </body>
 </html>
+
