@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>프로필 설정</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h2>프로필 설정</h2>
+
+  <label for="profile-icon">아이콘 사진:</label>
+  <input type="file" id="profile-icon" accept="image/*">
+
+  <label for="profile-name">이름:</label>
+  <input type="text" id="profile-name" placeholder="이름을 입력하세요">
+
+  <label for="profile-bio">소개글:</label>
+  <textarea id="profile-bio" placeholder="소개글을 입력하세요"></textarea>
+
+  <label>
+    <input type="checkbox" id="email-visibility">
+    이메일 공개하기
+  </label>
+
+  <button id="save-profile">저장</button>
+  <button onclick="window.location.href='start.html'">취소</button>
+
+  <script type="module" src="profile.js"></script>
+</body>
+</html>
