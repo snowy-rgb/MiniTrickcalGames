@@ -58,6 +58,24 @@
       text-decoration: underline;
     }
 
+    /* 프로필 설정 버튼 */
+    .profile-settings-btn {
+      position: absolute;
+      top: 15px;
+      right: 20px;
+      background-color: #007bff;
+      color: white;
+      padding: 8px 12px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .profile-settings-btn:hover {
+      background-color: #0056b3;
+    }
+
     /* 하단 버전 영역 */
     .footer {
       text-align: right;
@@ -76,6 +94,11 @@
       .logo {
         width: 80px;
       }
+
+      .profile-settings-btn {
+        font-size: 12px;
+        padding: 6px 10px;
+      }
     }
   </style>
 </head>
@@ -83,6 +106,9 @@
   <audio id="background-audio" loop></audio>
 
   <script src="weather-sound.js"></script>
+
+  <!-- ✅ 프로필 설정 버튼 추가 -->
+  <button class="profile-settings-btn" id="profile-settings-btn">프로필 설정</button>
 
   <!-- 로고 영역 -->
   <div class="logo-container">
@@ -107,5 +133,13 @@
     버전: 1.0.0
   </div>
 
+  <script>
+    // ✅ 프로필 설정 버튼 클릭 시 profile.html로 이동
+    document.getElementById("profile-settings-btn").addEventListener("click", () => {
+      window.location.href = "profile.html";
+    });
+  </script>
+
 </body>
 </html>
+
