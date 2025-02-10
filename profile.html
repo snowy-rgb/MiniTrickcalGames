@@ -4,27 +4,117 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>프로필 설정</title>
-  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #f5f5f5;
+    }
+
+    .profile-container {
+      width: 90%;
+      max-width: 400px;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+
+    .profile-icon {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background-color: #ddd;
+      margin: 0 auto;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 12px;
+      color: #666;
+      cursor: pointer;
+    }
+
+    .profile-name, .profile-bio, .profile-info {
+      margin-top: 20px;
+    }
+
+    input, textarea, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+
+    textarea {
+      resize: none;
+    }
+
+    button {
+      background-color: #4CAF50;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    .info-section {
+      margin-top: 20px;
+      text-align: left;
+    }
+
+    .info-section p {
+      margin: 5px 0;
+      font-size: 14px;
+    }
+
+    .cancel-button {
+      background-color: #f44336;
+      margin-top: 10px;
+    }
+
+    .cancel-button:hover {
+      background-color: #d32f2f;
+    }
+  </style>
 </head>
 <body>
-  <h2>프로필 설정</h2>
-
-  <label for="profile-icon">아이콘 사진:</label>
-  <input type="file" id="profile-icon" accept="image/*">
-
-  <label for="profile-name">이름:</label>
-  <input type="text" id="profile-name" placeholder="이름을 입력하세요">
-
-  <label for="profile-bio">소개글:</label>
-  <textarea id="profile-bio" placeholder="소개글을 입력하세요"></textarea>
-
-  <label>
-    <input type="checkbox" id="email-visibility">
-    이메일 공개하기
-  </label>
-
-  <button id="save-profile">저장</button>
-  <button onclick="window.location.href='start.html'">취소</button>
+  <div class="profile-container">
+    <div class="profile-icon" id="profile-icon">
+      사진 추가
+    </div>
+    <div class="profile-name">
+      <input type="text" id="profile-name" placeholder="이름을 입력하세요">
+    </div>
+    <div class="profile-bio">
+      <textarea id="profile-bio" placeholder="소개글을 입력하세요"></textarea>
+    </div>
+    <div class="profile-info">
+      <label for="profile-birthday">생일:</label>
+      <input type="date" id="profile-birthday">
+      <label>
+        <input type="checkbox" id="email-visibility">
+        이메일 공개하기
+      </label>
+    </div>
+    <div class="info-section">
+      <p><strong>이메일:</strong> <span id="profile-email">user@example.com</span></p>
+      <p><strong>생일:</strong> <span id="profile-birthday-display">정보 없음</span></p>
+      <p><strong>가입일:</strong> <span id="profile-join-date">정보 없음</span></p>
+    </div>
+    <button id="save-profile">저장</button>
+    <button class="cancel-button" onclick="window.location.href='start.html'">취소</button>
+  </div>
 
   <script type="module" src="profile.js"></script>
 </body>
