@@ -22,14 +22,16 @@ async function loadProfile() {
       document.getElementById("profile-birthday").value = data.birthday ? new Date(data.birthday.toDate()).toISOString().substring(0, 10) : "";
       document.getElementById("email-visibility").checked = data.email !== "비공개";
 
-      // 프로필 이미지 미리보기
+      // 이메일 & 가입일 자동 설정
+      document.getElementById("email-display").textContent = user.email || "정보 없음";
+      document.getElementById("join-date").textContent = data.joinday ? new Date(data.joinday.toDate()).toLocaleDateString() : new Date().toLocaleDateString();
+
+      // 프로필 사진 미리보기
       if (data.profile && data.profile.icon) {
         document.getElementById("profile-icon-preview").src = data.profile.icon;
+      } else {
+        document.getElementById("profile-icon-preview").src = "default-icon.png"; // 기본 아이콘
       }
-
-      // 이메일, 가입일 표시
-      document.getElementById("email-display").textContent = data.email || "정보 없음";
-      document.getElementById("join-date").textContent = data.joinday ? new Date(data.joinday.toDate()).toLocaleDateString() : "정보 없음";
     } else {
       console.log("프로필 데이터가 없습니다.");
     }
@@ -52,6 +54,7 @@ async function saveProfile() {
         ? new Date(document.getElementById("profile-birthday").value)
         : null,
       email: document.getElementById("email-visibility").checked ? user.email : "비공개",
+      joinday: new Date(), // 가입일을 현재 시간으로 설정
       profile: {
         icon: document.getElementById("profile-icon-preview").src || "default-icon.png",
       },
@@ -60,6 +63,7 @@ async function saveProfile() {
     try {
       await setDoc(userDocRef, profileData, { merge: true });
       alert("프로필이 저장되었습니다!");
+      loadProfile(); // 저장 후 다시 불러오기
     } catch (error) {
       console.error("프로필 저장 오류:", error);
       alert("프로필 저장 중 오류가 발생했습니다.");
@@ -78,11 +82,11 @@ async function uploadProfilePicture(file) {
 
   const user = auth.currentUser;
   const storageRef = ref(storage, `profile-pictures/${user.uid}`);
-  
+
   try {
     await uploadBytes(storageRef, file);
     const downloadURL = await getDownloadURL(storageRef);
-    alert("사진 업로드 성공!");
+    document.getElementById("profile-icon-preview").src = downloadURL; // 미리보기 업데이트
     return downloadURL;
   } catch (error) {
     console.error("사진 업로드 오류:", error);
@@ -108,3 +112,4 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
+
