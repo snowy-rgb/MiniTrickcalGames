@@ -50,12 +50,14 @@ export function signUp(email, password) {
 }
 
 // **2. 로그인 (Firestore에서 데이터 불러오기)**
+// **2. 로그인 (Firestore에서 데이터 불러오기)**
 export function signIn(email, password) {
   signInWithEmailAndPassword(auth, email, password)
     .then(async (userCredential) => {
       const user = userCredential.user;
       if (user.emailVerified) {
         alert("로그인 성공!");
+        window.location.href = "start.html"; // ✅ 로그인 후 start.html로 이동
       } else {
         alert("이메일 인증이 필요합니다. 이메일을 확인하세요.(주의. 이메일이 스팸메일함에 들어갈 수 있습니다)");
       }
@@ -65,6 +67,7 @@ export function signIn(email, password) {
       alert("로그인 실패: " + error.message);
     });
 }
+
 
 // **3. 로그아웃**
 export function logOut() {
