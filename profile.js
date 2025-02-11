@@ -16,17 +16,26 @@ async function loadProfile() {
     if (userDocSnap.exists()) {
       const data = userDocSnap.data();
 
-      // UI에 데이터를 반영
+      // **이름, 소개글 반영**
       document.getElementById("profile-name").value = data.username || "";
       document.getElementById("profile-bio").value = data.introduction || "";
-      document.getElementById("profile-birthday").value = data.birthday ? new Date(data.birthday.toDate()).toISOString().substring(0, 10) : "";
+
+      // **이메일 공개 여부 설정**
       document.getElementById("email-visibility").checked = data.email !== "비공개";
 
-      // 이메일 & 가입일 자동 설정
+      // **이메일 표시**
       document.getElementById("email-display").textContent = user.email || "정보 없음";
-      document.getElementById("join-date").textContent = data.joinday ? new Date(data.joinday.toDate()).toLocaleDateString() : new Date().toLocaleDateString();
 
-      // 프로필 사진 미리보기
+      // **가입일과 생일 처리**
+      document.getElementById("join-date").textContent = data.joinday
+        ? new Date(data.joinday.seconds * 1000).toLocaleDateString()
+        : "정보 없음";
+
+      document.getElementById("profile-birthday").value = data.birthday
+        ? new Date(data.birthday.seconds * 1000).toISOString().substring(0, 10)
+        : "";
+
+      // **프로필 사진 반영**
       if (data.profile && data.profile.icon) {
         document.getElementById("profile-icon-preview").src = data.profile.icon;
       } else {
@@ -54,7 +63,7 @@ async function saveProfile() {
         ? new Date(document.getElementById("profile-birthday").value)
         : null,
       email: document.getElementById("email-visibility").checked ? user.email : "비공개",
-      joinday: new Date(), // 가입일을 현재 시간으로 설정
+      joinday: new Date(), // 가입일 저장
       profile: {
         icon: document.getElementById("profile-icon-preview").src || "default-icon.png",
       },
