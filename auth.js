@@ -1,12 +1,7 @@
 // ✅ Firebase SDK 불러오기
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-app.js";
-import {
-  getAuth,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  signOut,
-  sendEmailVerification
-} from "https://www.gstatic.com/firebasejs/11.3.0/firebase-auth.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendEmailVerification } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-firestore.js";
 
 // ✅ Firebase 설정
 const firebaseConfig = {
@@ -22,24 +17,31 @@ const firebaseConfig = {
 // ✅ Firebase 초기화
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+const db = getFirestore(app);
 
-export { auth };
+export { auth, db };
 
-// ✅ 회원가입 함수 (이메일 인증 추가)
+// **1. 회원가입 (Firestore에 자동 저장)**
 export function signUp(email, password) {
   createUserWithEmailAndPassword(auth, email, password)
-    .then((userCredential) => {
+    .then(async (userCredential) => {
       const user = userCredential.user;
+      await sendEmailVerification(user);
+      alert("회원가입 성공! 이메일 인증 링크를 보냈습니다. 이메일을 확인해 주세요.");
 
-      // 이메일 인증 링크 전송
-      sendEmailVerification(user)
-        .then(() => {
-          alert("회원가입 성공! 이메일 인증 링크를 보냈습니다. 이메일을 확인해 주세요.(주의! 스팸이메일으로 인식 될 수 있으므로, 이메일이 오지 않았다면 스팸이메일을 확인하거나 trigger.snowii@gmail.com으로 문의해주세요)");
-        })
-        .catch((error) => {
-          console.error("이메일 인증 링크 전송 실패:", error.message);
-          alert("이메일 인증 링크 전송에 실패했습니다: " + error.message);
-        });
+      // **Firestore에 기본 사용자 정보 저장**
+      const userDocRef = doc(db, "Trickcal : MiniGames", user.uid);
+      await setDoc(userDocRef, {
+        username: "", // 사용자가 나중에 설정 가능
+        email: email,
+        introduction: "",
+        birthday: null, // 사용자가 나중에 설정 가능
+        joinday: new Date(), // **가입일 자동 저장**
+        profile: {
+          icon: "default-icon.png", // 기본 프로필 사진
+        },
+      });
+
     })
     .catch((error) => {
       console.error("회원가입 실패:", error.message);
@@ -47,19 +49,15 @@ export function signUp(email, password) {
     });
 }
 
-// ✅ 로그인 함수
+// **2. 로그인 (Firestore에서 데이터 불러오기)**
 export function signIn(email, password) {
   signInWithEmailAndPassword(auth, email, password)
-    .then((userCredential) => {
+    .then(async (userCredential) => {
       const user = userCredential.user;
-
-      // 이메일 인증 여부 확인
       if (user.emailVerified) {
         alert("로그인 성공!");
-        // 로그인 성공 시 start.html로 이동
-        window.location.href = "start.html";
       } else {
-        alert("이메일 인증이 필요합니다. 이메일을 확인하세요.");
+        alert("이메일 인증이 필요합니다. 이메일을 확인하세요.(주의. 이메일이 스팸메일함에 들어갈 수 있습니다)");
       }
     })
     .catch((error) => {
@@ -68,14 +66,12 @@ export function signIn(email, password) {
     });
 }
 
-// ✅ 로그아웃 함수
+// **3. 로그아웃**
 export function logOut() {
   signOut(auth)
     .then(() => {
       console.log("로그아웃 성공");
       alert("로그아웃 완료!");
-      // 로그아웃 후 index.html로 이동
-      window.location.href = "index.html";
     })
     .catch((error) => {
       console.error("로그아웃 실패:", error.message);
