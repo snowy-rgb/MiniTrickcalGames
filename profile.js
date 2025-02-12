@@ -1,5 +1,5 @@
-import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-firestore.js";
-import { getAuth } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-firestore.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-auth.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-storage.js";
 
 // ✅ Firebase 초기화
@@ -7,22 +7,21 @@ const db = getFirestore();
 const auth = getAuth();
 const storage = getStorage();
 
-// **1. Firestore에서 프로필 데이터 불러오기**
-async function loadProfile() {
-  const user = auth.currentUser;
+// **1️⃣ Firestore에서 프로필 데이터 불러오기**
+async function loadProfile(user) {
   if (!user) {
     console.log("로그인된 사용자가 없습니다.");
     return;
   }
 
-  const userDocRef = doc(db, "Trickcal : MiniGames", user.uid);
+  const userDocRef = doc(db, "Trickcal_MIniGames", user.uid);
   const userDocSnap = await getDoc(userDocRef);
 
   if (userDocSnap.exists()) {
     const data = userDocSnap.data();
 
     // **이름, 소개글, 이메일 공개 여부 반영**
-    document.getElementById("profile-name").value = data.username || "";
+    document.getElementById("profile-name").value = data.username ?? "이름 없음";
     document.getElementById("profile-bio").value = data.introduction || "";
     document.getElementById("email-visibility").checked = data.email !== "비공개";
 
@@ -40,17 +39,13 @@ async function loadProfile() {
       : "";
 
     // **프로필 사진 로드**
-    if (data.profile && data.profile.icon) {
-      document.getElementById("profile-icon-preview").src = data.profile.icon;
-    } else {
-      document.getElementById("profile-icon-preview").src = "default-icon.png";
-    }
+    document.getElementById("profile-icon-preview").src = data.profile?.icon || "default-icon.png";
   } else {
     console.log("프로필 데이터가 없습니다.");
   }
 }
 
-// **2. 프로필 저장 (Firestore에 저장)**
+// **2️⃣ 프로필 저장 (Firestore에 저장)**
 async function saveProfile() {
   const user = auth.currentUser;
   if (!user) {
@@ -58,7 +53,18 @@ async function saveProfile() {
     return;
   }
 
-  const userDocRef = doc(db, "Trickcal : MiniGames", user.uid);
+  const userDocRef = doc(db, "Trickcal_MIniGames", user.uid);
+
+  // **프로필 사진이 변경되었는지 확인 후 업로드**
+  const fileInput = document.getElementById("profile-icon");
+  let iconURL = document.getElementById("profile-icon-preview").src;
+
+  if (fileInput.files.length > 0) {
+    const uploadedURL = await uploadProfilePicture(fileInput.files[0]);
+    if (uploadedURL) {
+      iconURL = uploadedURL;
+    }
+  }
 
   const profileData = {
     username: document.getElementById("profile-name").value || "",
@@ -68,31 +74,31 @@ async function saveProfile() {
       : null,
     email: document.getElementById("email-visibility").checked ? user.email : "비공개",
     profile: {
-      icon: document.getElementById("profile-icon-preview").src,
+      icon: iconURL,
     },
   };
 
   try {
-    await updateDoc(userDocRef, profileData);
+    await setDoc(userDocRef, profileData, { merge: true });
     alert("프로필이 저장되었습니다!");
-    loadProfile(); // 저장 후 UI 업데이트
+    loadProfile(user); // 저장 후 UI 업데이트
   } catch (error) {
     console.error("프로필 저장 오류:", error);
     alert("프로필 저장 중 오류가 발생했습니다.");
   }
 }
 
-// **3. 프로필 사진 업로드 (Firebase Storage)**
+// **3️⃣ 프로필 사진 업로드 (Firebase Storage)**
 async function uploadProfilePicture(file) {
   if (!file) {
     alert("파일을 선택하세요!");
-    return;
+    return null;
   }
 
   const user = auth.currentUser;
   if (!user) {
     alert("로그인된 사용자가 없습니다.");
-    return;
+    return null;
   }
 
   const storageRef = ref(storage, `profile-pictures/${user.uid}`);
@@ -100,18 +106,26 @@ async function uploadProfilePicture(file) {
   try {
     await uploadBytes(storageRef, file);
     const downloadURL = await getDownloadURL(storageRef);
-    document.getElementById("profile-icon-preview").src = downloadURL;
     alert("사진 업로드 성공!");
     return downloadURL;
   } catch (error) {
     console.error("사진 업로드 오류:", error);
     alert("사진 업로드 중 오류가 발생했습니다.");
+    return null;
   }
 }
 
-// **4. 이벤트 리스너 설정**
+// **4️⃣ 로그인 감지 후 프로필 로드**
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    loadProfile(user);
+  } else {
+    console.log("사용자가 로그인하지 않았습니다.");
+  }
+});
+
+// **5️⃣ 이벤트 리스너 설정**
 document.addEventListener("DOMContentLoaded", () => {
-  loadProfile();
   document.getElementById("save-profile").addEventListener("click", saveProfile);
   document.getElementById("profile-icon").addEventListener("change", async (event) => {
     const file = event.target.files[0];
@@ -121,3 +135,4 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
+
