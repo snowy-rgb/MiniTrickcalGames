@@ -174,23 +174,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ✅ 프로필 사진 변경 이벤트 리스너 추가
   document.getElementById("profile-icon-input").addEventListener("change", async (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
+  const file = event.target.files[0];
+  if (!file) return;
 
-    const imageUrl = await uploadProfilePicture(file);
-    if (imageUrl) {
-      document.getElementById("profile-icon-preview").src = imageUrl;
+  const imageUrl = await uploadProfilePicture(file);
+  if (imageUrl) {
+    document.getElementById("profile-icon-preview").src = imageUrl;
 
-      // ✅ Firestore에도 즉시 업데이트
-      const user = auth.currentUser;
-      if (user) {
-        const userDocRef = doc(db, "Trickcal_MIniGames", user.uid);
-        try {
-          await updateDoc(userDocRef, { "profile.icon": imageUrl });
-          console.log("✅ Firestore 프로필 이미지 URL 업데이트 완료!");
-        } catch (error) {
-          console.error("❌ Firestore 프로필 이미지 업데이트 오류:", error);
-        }
+    // ✅ Firestore에도 즉시 업데이트
+    const user = auth.currentUser;
+    if (user) {
+      const userDocRef = doc(db, "Trickcal_MIniGames", user.uid);
+      try {
+        await updateDoc(userDocRef, { "profile.icon": imageUrl });
+        console.log("✅ Firestore 프로필 이미지 URL 업데이트 완료!");
+      } catch (error) {
+        console.error("❌ Firestore 프로필 이미지 업데이트 오류:", error);
       }
-    });
-  });
+    }
+  } // if (imageUrl) 블록의 끝
+}); // addEventListener 콜백 함수의 끝
+
