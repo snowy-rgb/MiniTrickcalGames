@@ -99,7 +99,7 @@ async function saveProfile() {
     }
   }
 
-  // ✅ 기존 `joinday` 값 유지 (덮어쓰지 않도록)
+  // ✅ 기존 `joinday` 값 유지
   const existingData = await getDoc(userDocRef);
   let joinDate = serverTimestamp(); // 기본값
   if (existingData.exists() && existingData.data().joinday) {
@@ -195,5 +195,3 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
-
-
