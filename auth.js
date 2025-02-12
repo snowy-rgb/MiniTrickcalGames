@@ -30,11 +30,11 @@ export function signUp(email, password) {
       alert("회원가입 성공! 이메일 인증 링크를 보냈습니다. 이메일을 확인해 주세요.");
 
       // **Firestore에 기본 사용자 정보 저장**
-      const userDocRef = doc(db, "Trickcal : MiniGames", user.uid);
+      const userDocRef = doc(db, "Trickcal_MiniGames", user.uid);
       await setDoc(userDocRef, {
-        username: "", // 사용자가 나중에 설정 가능
+        username: email.split('@')[0],  // 기본 이름을 이메일 앞부분으로 설정
         email: email,
-        introduction: "",
+        introduction: "안녕하세요!",
         birthday: null, // 사용자가 나중에 설정 가능
         joinday: new Date(), // **가입일 자동 저장**
         profile: {
@@ -49,15 +49,17 @@ export function signUp(email, password) {
     });
 }
 
-// **2. 로그인 (Firestore에서 데이터 불러오기)**
-// **2. 로그인 (Firestore에서 데이터 불러오기)**
+// **2. 로그인 (Firestore에서 데이터 불러오기 후 start.html로 이동)**
 export function signIn(email, password) {
   signInWithEmailAndPassword(auth, email, password)
     .then(async (userCredential) => {
       const user = userCredential.user;
       if (user.emailVerified) {
         alert("로그인 성공!");
-        window.location.href = "start.html"; // ✅ 로그인 후 start.html로 이동
+
+        // 로그인 후 start.html로 이동
+        window.location.href = "start.html";
+
       } else {
         alert("이메일 인증이 필요합니다. 이메일을 확인하세요.(주의. 이메일이 스팸메일함에 들어갈 수 있습니다)");
       }
@@ -68,13 +70,13 @@ export function signIn(email, password) {
     });
 }
 
-
 // **3. 로그아웃**
 export function logOut() {
   signOut(auth)
     .then(() => {
       console.log("로그아웃 성공");
       alert("로그아웃 완료!");
+      window.location.href = "index.html"; // 로그아웃 후 로그인 화면으로 이동
     })
     .catch((error) => {
       console.error("로그아웃 실패:", error.message);
