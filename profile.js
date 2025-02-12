@@ -1,8 +1,9 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-auth.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-storage.js";
 
+// ✅ Firebase 설정
 const firebaseConfig = {
   apiKey: "AIzaSyA-tApRNQGZ3d1gzGhX5hAdntMsC5d9PrM",
   authDomain: "minitrickcal.firebaseapp.com",
@@ -15,9 +16,9 @@ const firebaseConfig = {
 
 // ✅ Firebase 초기화
 const app = initializeApp(firebaseConfig);
-const db = getFirestore();
-const auth = getAuth();
-const storage = getStorage();
+const db = getFirestore(app);
+const auth = getAuth(app);
+const storage = getStorage(app);
 
 // **1️⃣ Firestore에서 프로필 데이터 불러오기**
 async function loadProfile(user) {
@@ -33,7 +34,7 @@ async function loadProfile(user) {
     const data = userDocSnap.data();
 
     // **이름, 소개글, 이메일 공개 여부 반영**
-    document.getElementById("profile-name").value = data.username ?? "이름 없음";
+    document.getElementById("profile-name").value = data.username || "";
     document.getElementById("profile-bio").value = data.introduction || "";
     document.getElementById("email-visibility").checked = data.email !== "비공개";
 
@@ -52,8 +53,25 @@ async function loadProfile(user) {
 
     // **프로필 사진 로드**
     document.getElementById("profile-icon-preview").src = data.profile?.icon || "default-icon.png";
+
   } else {
-    console.log("프로필 데이터가 없습니다.");
+    console.log("🚨 프로필 데이터가 없으므로 새로 생성합니다.");
+
+    // **새로운 유저 데이터 생성**
+    const newUserData = {
+      username: user.email.split("@")[0], // 기본값: 이메일 앞부분
+      introduction: "",
+      email: user.email || "비공개",
+      birthday: null,
+      joinday: serverTimestamp(), // Firestore에서 현재 시간으로 자동 저장
+      profile: {
+        icon: "default-icon.png"
+      }
+    };
+
+    // **Firestore에 새 문서 저장**
+    await setDoc(userDocRef, newUserData);
+    loadProfile(user); // 저장 후 다시 로드
   }
 }
 
@@ -92,11 +110,11 @@ async function saveProfile() {
 
   try {
     await setDoc(userDocRef, profileData, { merge: true });
-    alert("프로필이 저장되었습니다!");
+    alert("✅ 프로필이 저장되었습니다!");
     loadProfile(user); // 저장 후 UI 업데이트
   } catch (error) {
-    console.error("프로필 저장 오류:", error);
-    alert("프로필 저장 중 오류가 발생했습니다.");
+    console.error("❌ 프로필 저장 오류:", error);
+    alert("🚨 프로필 저장 중 오류가 발생했습니다.");
   }
 }
 
@@ -118,11 +136,10 @@ async function uploadProfilePicture(file) {
   try {
     await uploadBytes(storageRef, file);
     const downloadURL = await getDownloadURL(storageRef);
-    alert("사진 업로드 성공!");
     return downloadURL;
   } catch (error) {
-    console.error("사진 업로드 오류:", error);
-    alert("사진 업로드 중 오류가 발생했습니다.");
+    console.error("❌ 사진 업로드 오류:", error);
+    alert("🚨 사진 업로드 중 오류가 발생했습니다.");
     return null;
   }
 }
@@ -132,7 +149,7 @@ onAuthStateChanged(auth, (user) => {
   if (user) {
     loadProfile(user);
   } else {
-    console.log("사용자가 로그인하지 않았습니다.");
+    console.log("🚨 사용자가 로그인하지 않았습니다.");
   }
 });
 
