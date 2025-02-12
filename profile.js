@@ -82,21 +82,26 @@ async function loadProfile(user) {
     loadProfile(user); // 저장 후 다시 로드
   }
 }
-
-// **2️⃣ 프로필 저장 (Firestore에 저장)**
+//**보호코드, 2. 프로필 저장**
 async function saveProfile() {
   const user = auth.currentUser;
   if (!user) {
-    alert("로그인된 사용자가 없습니다.");
+    alert("🚨 로그인된 사용자가 없습니다.");
     return;
   }
 
   const userDocRef = doc(db, "Trickcal_MIniGames", user.uid);
 
-  // **프로필 사진이 변경되었는지 확인 후 업로드**
-  const fileInput = document.getElementById("profile-icon");
-  let iconURL = document.getElementById("profile-icon-preview").src;
+  // ✅ 프로필 사진 미리보기 요소 존재 여부 확인
+  let profileIconPreview = document.getElementById("profile-icon-preview");
+  if (!profileIconPreview) {
+    console.error("🚨 'profile-icon-preview' 요소를 찾을 수 없습니다.");
+    return;
+  }
+  let iconURL = profileIconPreview.src;
 
+  // ✅ 프로필 사진 업로드 여부 확인 후 업로드 진행
+  const fileInput = document.getElementById("profile-icon");
   if (fileInput.files.length > 0) {
     const uploadedURL = await uploadProfilePicture(fileInput.files[0]);
     if (uploadedURL) {
@@ -105,12 +110,12 @@ async function saveProfile() {
   }
 
   const profileData = {
-    username: document.getElementById("profile-name").value || "",
-    introduction: document.getElementById("profile-bio").value || "",
-    birthday: document.getElementById("profile-birthday").value
+    username: document.getElementById("profile-name")?.value || "",
+    introduction: document.getElementById("profile-bio")?.value || "",
+    birthday: document.getElementById("profile-birthday")?.value
       ? new Date(document.getElementById("profile-birthday").value)
       : null,
-    email: document.getElementById("email-visibility").checked ? user.email : "비공개",
+    email: document.getElementById("email-visibility")?.checked ? user.email : "비공개",
     profile: {
       icon: iconURL,
     },
