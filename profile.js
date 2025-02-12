@@ -1,8 +1,20 @@
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-auth.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-storage.js";
 
+const firebaseConfig = {
+  apiKey: "AIzaSyA-tApRNQGZ3d1gzGhX5hAdntMsC5d9PrM",
+  authDomain: "minitrickcal.firebaseapp.com",
+  projectId: "minitrickcal",
+  storageBucket: "minitrickcal.firebasestorage.app",
+  messagingSenderId: "891613009633",
+  appId: "1:891613009633:web:1b0888f7641df77424c9a0",
+  measurementId: "G-6BK85ML1RH"
+};
+
 // ✅ Firebase 초기화
+const app = initializeApp(firebaseConfig);
 const db = getFirestore();
 const auth = getAuth();
 const storage = getStorage();
