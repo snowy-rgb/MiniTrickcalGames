@@ -38,24 +38,32 @@ async function loadProfile(user) {
     document.getElementById("profile-bio").value = data.introduction || "";
     document.getElementById("email-visibility").checked = data.email !== "비공개";
 
-    // **이메일 표시**
-    document.getElementById("email-display").textContent = data.email || user.email || "정보 없음";
-
-    // **가입일 표시**
-    document.getElementById("join-date").textContent = data.joinday
-      ? new Date(data.joinday.seconds * 1000).toLocaleDateString()
-      : "정보 없음";
-
-    // **생일 표시**
-    document.getElementById("profile-birthday").value = data.birthday
-      ? new Date(data.birthday.seconds * 1000).toISOString().substring(0, 10)
-      : "";
-
-    // **프로필 사진 로드**
-    document.getElementById("profile-icon-preview").src = data.profile?.icon || "default-icon.png";
+    const emailDisplay = document.getElementById("email-display");
+    if (emailDisplay) {
+      emailDisplay.textContent = data.email || user.email || "정보 없음";
+    }
+    // ✅ **가입일 요소 존재 여부 체크**
+    const joinDateDisplay = document.getElementById("join-date");
+    if (joinDateDisplay) {
+      joinDateDisplay.textContent = data.joinday
+        ? new Date(data.joinday.seconds * 1000).toLocaleDateString()
+        : "정보 없음";
+    }
+    // ✅ **생일 값 설정**
+    const birthdayInput = document.getElementById("profile-birthday");
+    if (birthdayInput) {
+      birthdayInput.value = data.birthday
+        ? new Date(data.birthday.seconds * 1000).toISOString().substring(0, 10)
+        : "";
+    }
+    // ✅ **프로필 사진 로드 (사진 미리보기 설정)**
+    const profileIcon = document.getElementById("profile-icon-preview");
+    if (profileIcon) {
+      profileIcon.src = data.profile?.icon || "default-icon.png";
+    }
 
   } else {
-    console.log("🚨 프로필 데이터가 없으므로 새로 생성합니다.");
+    console.log("🚨 프로필 데이터가 없습니다. 새로 생성합니다.");
 
     // **새로운 유저 데이터 생성**
     const newUserData = {
