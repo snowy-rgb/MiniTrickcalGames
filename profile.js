@@ -168,6 +168,11 @@ onAuthStateChanged(auth, (user) => {
 document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("save-profile").addEventListener("click", saveProfile);
 
+  // ✅ 프로필 사진 클릭 시 파일 선택 창 열기
+  document.getElementById("profile-icon").addEventListener("click", () => {
+    document.getElementById("profile-icon-input").click();
+  });
+
   // ✅ 프로필 사진 변경 이벤트 리스너 추가
   document.getElementById("profile-icon-input").addEventListener("change", async (event) => {
       const file = event.target.files[0];
@@ -193,6 +198,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
   });
 });
+
 
 
   // ✅ 프로필 사진 클릭 시 파일 선택 창 열기
