@@ -143,8 +143,9 @@ async function uploadProfilePicture(file) {
   const storageRef = ref(storage, `profile-pictures/${user.uid}`);
 
   try {
-    await uploadBytes(storageRef, file);
-    const downloadURL = await getDownloadURL(storageRef);
+    const snapshot = await uploadBytes(storageRef, file); // ✅ 파일 업로드
+    const downloadURL = await getDownloadURL(snapshot.ref); // ✅ URL 가져오기
+    console.log("📸 사진 업로드 성공! URL:", downloadURL); // ✅ 업로드된 URL 확인
     return downloadURL;
   } catch (error) {
     console.error("❌ 사진 업로드 오류:", error);
@@ -152,6 +153,7 @@ async function uploadProfilePicture(file) {
     return null;
   }
 }
+
 
 // **4️⃣ 로그인 감지 후 프로필 로드**
 onAuthStateChanged(auth, (user) => {
@@ -165,6 +167,33 @@ onAuthStateChanged(auth, (user) => {
 // **5️⃣ 이벤트 리스너 설정**
 document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("save-profile").addEventListener("click", saveProfile);
+
+  // ✅ 프로필 사진 변경 이벤트 리스너 추가
+  document.getElementById("profile-icon-input").addEventListener("change", async (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const imageUrl = await uploadProfilePicture(file); // ✅ Firebase Storage 업로드
+      if (imageUrl) {
+          document.getElementById("profile-icon-preview").src = imageUrl; // ✅ UI 업데이트
+
+          // ✅ Firestore에도 즉시 업데이트
+          const user = auth.currentUser;
+          if (user) {
+              const userDocRef = doc(db, "Trickcal_MIniGames", user.uid);
+              try {
+                  await updateDoc(userDocRef, {
+                      "profile.icon": imageUrl,  // ✅ Firestore에 업로드된 이미지 URL 저장
+                  });
+                  console.log("✅ Firestore 프로필 이미지 URL 업데이트 완료!");
+              } catch (error) {
+                  console.error("❌ Firestore 프로필 이미지 업데이트 오류:", error);
+              }
+          }
+      }
+  });
+});
+
 
   // ✅ 프로필 사진 클릭 시 파일 선택 창 열기
   document.getElementById("profile-icon").addEventListener("click", () => {
