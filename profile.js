@@ -23,7 +23,7 @@ const storage = getStorage(app);
 // **1️⃣ Firestore에서 프로필 데이터 불러오기**
 async function loadProfile(user) {
   if (!user) {
-    console.log("로그인된 사용자가 없습니다.");
+    console.log("🚨 로그인된 사용자가 없습니다.");
     return;
   }
 
@@ -33,56 +33,52 @@ async function loadProfile(user) {
   if (userDocSnap.exists()) {
     const data = userDocSnap.data();
 
-    // **이름, 소개글, 이메일 공개 여부 반영**
+    // ✅ HTML 요소가 존재하는지 체크 후 값 설정
     document.getElementById("profile-name").value = data.username || "";
     document.getElementById("profile-bio").value = data.introduction || "";
     document.getElementById("email-visibility").checked = data.email !== "비공개";
 
     const emailDisplay = document.getElementById("email-display");
-    if (emailDisplay) {
-      emailDisplay.textContent = data.email || user.email || "정보 없음";
-    }
-    // ✅ **가입일 요소 존재 여부 체크**
-    const joinDateDisplay = document.getElementById("join-date");
+    if (emailDisplay) emailDisplay.textContent = data.email || user.email || "정보 없음";
+
+    const joinDateDisplay = document.getElementById("profile-join-date");
     if (joinDateDisplay) {
       joinDateDisplay.textContent = data.joinday
         ? new Date(data.joinday.seconds * 1000).toLocaleDateString()
         : "정보 없음";
     }
-    // ✅ **생일 값 설정**
+
     const birthdayInput = document.getElementById("profile-birthday");
     if (birthdayInput) {
       birthdayInput.value = data.birthday
         ? new Date(data.birthday.seconds * 1000).toISOString().substring(0, 10)
         : "";
     }
-    // ✅ **프로필 사진 로드 (사진 미리보기 설정)**
+
+    // ✅ **프로필 사진 로드 (사진 미리보기)**
     const profileIcon = document.getElementById("profile-icon-preview");
     if (profileIcon) {
       profileIcon.src = data.profile?.icon || "default-icon.png";
     }
 
   } else {
-    console.log("🚨 프로필 데이터가 없습니다. 새로 생성합니다.");
+    console.log("🚨 프로필 데이터 없음 → 새 문서 생성");
 
-    // **새로운 유저 데이터 생성**
     const newUserData = {
       username: user.email.split("@")[0], // 기본값: 이메일 앞부분
       introduction: "",
       email: user.email || "비공개",
       birthday: null,
-      joinday: serverTimestamp(), // Firestore에서 현재 시간으로 자동 저장
-      profile: {
-        icon: "default-icon.png"
-      }
+      joinday: serverTimestamp(), // Firestore 자동 시간 기록
+      profile: { icon: "default-icon.png" }
     };
 
-    // **Firestore에 새 문서 저장**
     await setDoc(userDocRef, newUserData);
-    loadProfile(user); // 저장 후 다시 로드
+    loadProfile(user); // 저장 후 다시 불러오기
   }
 }
-//**보호코드, 2. 프로필 저장**
+
+// **2️⃣ 프로필 저장 (Firestore에 저장)**
 async function saveProfile() {
   const user = auth.currentUser;
   if (!user) {
@@ -92,7 +88,7 @@ async function saveProfile() {
 
   const userDocRef = doc(db, "Trickcal_MIniGames", user.uid);
 
-  // ✅ 프로필 사진 미리보기 요소 존재 여부 확인
+  // ✅ 프로필 사진 미리보기 요소 체크
   let profileIconPreview = document.getElementById("profile-icon-preview");
   if (!profileIconPreview) {
     console.error("🚨 'profile-icon-preview' 요소를 찾을 수 없습니다.");
@@ -100,8 +96,8 @@ async function saveProfile() {
   }
   let iconURL = profileIconPreview.src;
 
-  // ✅ 프로필 사진 업로드 여부 확인 후 업로드 진행
-  const fileInput = document.getElementById("profile-icon");
+  // ✅ 파일 입력 체크 후 업로드 진행
+  const fileInput = document.getElementById("profile-icon-input");
   if (fileInput.files.length > 0) {
     const uploadedURL = await uploadProfilePicture(fileInput.files[0]);
     if (uploadedURL) {
@@ -109,7 +105,7 @@ async function saveProfile() {
     }
   }
 
-  // ✅ Firestore에 저장할 데이터
+  // ✅ Firestore 저장 데이터
   const profileData = {
     username: document.getElementById("profile-name")?.value || "",
     introduction: document.getElementById("profile-bio")?.value || "",
@@ -117,10 +113,8 @@ async function saveProfile() {
       ? new Date(document.getElementById("profile-birthday").value)
       : null,
     email: document.getElementById("email-visibility")?.checked ? user.email : "비공개",
-    joinday: serverTimestamp(),  // ✅ Firestore에서 자동으로 시간 기록
-    profile: {
-      icon: iconURL,
-    },
+    joinday: serverTimestamp(),  // Firestore 자동 시간 기록
+    profile: { icon: iconURL }
   };
 
   try {
@@ -132,8 +126,6 @@ async function saveProfile() {
     alert("🚨 프로필 저장 중 오류가 발생했습니다.");
   }
 }
-
-
 
 // **3️⃣ 프로필 사진 업로드 (Firebase Storage)**
 async function uploadProfilePicture(file) {
@@ -173,11 +165,20 @@ onAuthStateChanged(auth, (user) => {
 // **5️⃣ 이벤트 리스너 설정**
 document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("save-profile").addEventListener("click", saveProfile);
-  document.getElementById("profile-icon").addEventListener("change", async (event) => {
+
+  // ✅ 프로필 사진 클릭 시 파일 선택 창 열기
+  document.getElementById("profile-icon").addEventListener("click", () => {
+    document.getElementById("profile-icon-input").click();
+  });
+
+  // ✅ 파일 선택 시 미리보기 변경
+  document.getElementById("profile-icon-input").addEventListener("change", async (event) => {
     const file = event.target.files[0];
-    const imageUrl = await uploadProfilePicture(file);
-    if (imageUrl) {
-      document.getElementById("profile-icon-preview").src = imageUrl;
+    if (file) {
+      const imageUrl = await uploadProfilePicture(file);
+      if (imageUrl) {
+        document.getElementById("profile-icon-preview").src = imageUrl;
+      }
     }
   });
 });
