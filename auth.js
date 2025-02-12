@@ -30,7 +30,7 @@ export function signUp(email, password) {
       alert("회원가입 성공! 이메일 인증 링크를 보냈습니다. 이메일을 확인해 주세요.");
 
       // **Firestore에 기본 사용자 정보 저장**
-      const userDocRef = doc(db, "Trickcal_MiniGames", user.uid);
+      const userDocRef = doc(db, "Trickcal_MIniGames", user.uid);
       await setDoc(userDocRef, {
         username: email.split('@')[0],  // 기본 이름을 이메일 앞부분으로 설정
         email: email,
