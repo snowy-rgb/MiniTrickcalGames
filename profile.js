@@ -109,6 +109,7 @@ async function saveProfile() {
     }
   }
 
+  // ✅ Firestore에 저장할 데이터
   const profileData = {
     username: document.getElementById("profile-name")?.value || "",
     introduction: document.getElementById("profile-bio")?.value || "",
@@ -116,6 +117,7 @@ async function saveProfile() {
       ? new Date(document.getElementById("profile-birthday").value)
       : null,
     email: document.getElementById("email-visibility")?.checked ? user.email : "비공개",
+    joinday: serverTimestamp(),  // ✅ Firestore에서 자동으로 시간 기록
     profile: {
       icon: iconURL,
     },
@@ -130,6 +132,8 @@ async function saveProfile() {
     alert("🚨 프로필 저장 중 오류가 발생했습니다.");
   }
 }
+
+
 
 // **3️⃣ 프로필 사진 업로드 (Firebase Storage)**
 async function uploadProfilePicture(file) {
