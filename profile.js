@@ -33,13 +33,11 @@ async function loadProfile(user) {
   if (userDocSnap.exists()) {
     const data = userDocSnap.data();
 
-    // ✅ HTML 요소가 존재하는지 체크 후 값 설정
     document.getElementById("profile-name").value = data.username || "";
     document.getElementById("profile-bio").value = data.introduction || "";
     document.getElementById("email-visibility").checked = data.email !== "비공개";
 
-    const emailDisplay = document.getElementById("email-display");
-    if (emailDisplay) emailDisplay.textContent = data.email || user.email || "정보 없음";
+    document.getElementById("email-display").textContent = data.email || user.email || "정보 없음";
 
     const joinDateDisplay = document.getElementById("profile-join-date");
     if (joinDateDisplay) {
@@ -55,17 +53,14 @@ async function loadProfile(user) {
         : "";
     }
 
-    // ✅ **프로필 사진 로드 (사진 미리보기)**
-    const profileIcon = document.getElementById("profile-icon-preview");
-    if (profileIcon) {
-      profileIcon.src = data.profile?.icon || "default-icon.png";
-    }
+    // ✅ 프로필 사진 로드
+    document.getElementById("profile-icon-preview").src = data.profile?.icon || "default-icon.png";
 
   } else {
     console.log("🚨 프로필 데이터 없음 → 새 문서 생성");
 
     const newUserData = {
-      username: user.email.split("@")[0], // 기본값: 이메일 앞부분
+      username: user.email.split("@")[0],
       introduction: "",
       email: user.email || "비공개",
       birthday: null,
@@ -74,7 +69,7 @@ async function loadProfile(user) {
     };
 
     await setDoc(userDocRef, newUserData);
-    loadProfile(user); // 저장 후 다시 불러오기
+    loadProfile(user);
   }
 }
 
@@ -88,7 +83,6 @@ async function saveProfile() {
 
   const userDocRef = doc(db, "Trickcal_MIniGames", user.uid);
 
-  // ✅ 프로필 사진 미리보기 요소 체크
   let profileIconPreview = document.getElementById("profile-icon-preview");
   if (!profileIconPreview) {
     console.error("🚨 'profile-icon-preview' 요소를 찾을 수 없습니다.");
@@ -96,7 +90,7 @@ async function saveProfile() {
   }
   let iconURL = profileIconPreview.src;
 
-  // ✅ 파일 입력 체크 후 업로드 진행
+  // ✅ 파일 업로드 여부 체크 후 진행
   const fileInput = document.getElementById("profile-icon-input");
   if (fileInput.files.length > 0) {
     const uploadedURL = await uploadProfilePicture(fileInput.files[0]);
@@ -105,7 +99,13 @@ async function saveProfile() {
     }
   }
 
-  // ✅ Firestore 저장 데이터
+  // ✅ 기존 `joinday` 값 유지 (덮어쓰지 않도록)
+  const existingData = await getDoc(userDocRef);
+  let joinDate = serverTimestamp(); // 기본값
+  if (existingData.exists() && existingData.data().joinday) {
+    joinDate = existingData.data().joinday;
+  }
+
   const profileData = {
     username: document.getElementById("profile-name")?.value || "",
     introduction: document.getElementById("profile-bio")?.value || "",
@@ -113,14 +113,14 @@ async function saveProfile() {
       ? new Date(document.getElementById("profile-birthday").value)
       : null,
     email: document.getElementById("email-visibility")?.checked ? user.email : "비공개",
-    joinday: serverTimestamp(),  // Firestore 자동 시간 기록
+    joinday: joinDate,  // ✅ 기존 값 유지
     profile: { icon: iconURL }
   };
 
   try {
     await setDoc(userDocRef, profileData, { merge: true });
     alert("✅ 프로필이 저장되었습니다!");
-    loadProfile(user); // 저장 후 UI 업데이트
+    loadProfile(user);
   } catch (error) {
     console.error("❌ 프로필 저장 오류:", error);
     alert("🚨 프로필 저장 중 오류가 발생했습니다.");
@@ -143,9 +143,9 @@ async function uploadProfilePicture(file) {
   const storageRef = ref(storage, `profile-pictures/${user.uid}`);
 
   try {
-    const snapshot = await uploadBytes(storageRef, file); // ✅ 파일 업로드
-    const downloadURL = await getDownloadURL(snapshot.ref); // ✅ URL 가져오기
-    console.log("📸 사진 업로드 성공! URL:", downloadURL); // ✅ 업로드된 URL 확인
+    const snapshot = await uploadBytes(storageRef, file);
+    const downloadURL = await getDownloadURL(snapshot.ref);
+    console.log("📸 사진 업로드 성공! URL:", downloadURL);
     return downloadURL;
   } catch (error) {
     console.error("❌ 사진 업로드 오류:", error);
@@ -153,7 +153,6 @@ async function uploadProfilePicture(file) {
     return null;
   }
 }
-
 
 // **4️⃣ 로그인 감지 후 프로필 로드**
 onAuthStateChanged(auth, (user) => {
@@ -175,46 +174,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ✅ 프로필 사진 변경 이벤트 리스너 추가
   document.getElementById("profile-icon-input").addEventListener("change", async (event) => {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const imageUrl = await uploadProfilePicture(file); // ✅ Firebase Storage 업로드
-      if (imageUrl) {
-          document.getElementById("profile-icon-preview").src = imageUrl; // ✅ UI 업데이트
-
-          // ✅ Firestore에도 즉시 업데이트
-          const user = auth.currentUser;
-          if (user) {
-              const userDocRef = doc(db, "Trickcal_MIniGames", user.uid);
-              try {
-                  await updateDoc(userDocRef, {
-                      "profile.icon": imageUrl,  // ✅ Firestore에 업로드된 이미지 URL 저장
-                  });
-                  console.log("✅ Firestore 프로필 이미지 URL 업데이트 완료!");
-              } catch (error) {
-                  console.error("❌ Firestore 프로필 이미지 업데이트 오류:", error);
-              }
-          }
-      }
-  });
-});
-
-
-
-  // ✅ 프로필 사진 클릭 시 파일 선택 창 열기
-  document.getElementById("profile-icon").addEventListener("click", () => {
-    document.getElementById("profile-icon-input").click();
-  });
-
-  // ✅ 파일 선택 시 미리보기 변경
-  document.getElementById("profile-icon-input").addEventListener("change", async (event) => {
     const file = event.target.files[0];
-    if (file) {
-      const imageUrl = await uploadProfilePicture(file);
-      if (imageUrl) {
-        document.getElementById("profile-icon-preview").src = imageUrl;
+    if (!file) return;
+
+    const imageUrl = await uploadProfilePicture(file);
+    if (imageUrl) {
+      document.getElementById("profile-icon-preview").src = imageUrl;
+
+      // ✅ Firestore에도 즉시 업데이트
+      const user = auth.currentUser;
+      if (user) {
+        const userDocRef = doc(db, "Trickcal_MIniGames", user.uid);
+        try {
+          await updateDoc(userDocRef, { "profile.icon": imageUrl });
+          console.log("✅ Firestore 프로필 이미지 URL 업데이트 완료!");
+        } catch (error) {
+          console.error("❌ Firestore 프로필 이미지 업데이트 오류:", error);
+        }
       }
     }
   });
 });
+
 
