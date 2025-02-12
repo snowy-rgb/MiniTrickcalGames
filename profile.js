@@ -192,5 +192,5 @@ document.addEventListener("DOMContentLoaded", () => {
           console.error("❌ Firestore 프로필 이미지 업데이트 오류:", error);
         }
       }
-    }
+    });
   });
