@@ -26,18 +26,28 @@
       text-align: center;
     }
 
+    /* ✅ 프로필 사진 미리보기 */
     .profile-icon {
-      width: 100px;
-      height: 100px;
+      width: 120px;
+      height: 120px;
       border-radius: 50%;
       background-color: #ddd;
-      margin: 0 auto;
+      margin: 10px auto;
       display: flex;
       justify-content: center;
       align-items: center;
       font-size: 12px;
       color: #666;
       cursor: pointer;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .profile-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
     }
 
     .profile-name, .profile-bio, .profile-info {
@@ -86,13 +96,21 @@
     .cancel-button:hover {
       background-color: #d32f2f;
     }
+
+    /* ✅ 숨겨진 파일 입력 */
+    #profile-icon-input {
+      display: none;
+    }
   </style>
 </head>
 <body>
   <div class="profile-container">
+    <!-- ✅ 프로필 사진 미리보기 -->
     <div class="profile-icon" id="profile-icon">
-      사진 추가
+      <img id="profile-icon-preview" src="default-icon.png" alt="프로필 사진">
     </div>
+    <input type="file" id="profile-icon-input" accept="image/*">
+
     <div class="profile-name">
       <input type="text" id="profile-name" placeholder="이름을 입력하세요">
     </div>
@@ -108,7 +126,7 @@
       </label>
     </div>
     <div class="info-section">
-      <p><strong>이메일:</strong> <span id="profile-email">user@example.com</span></p>
+      <p><strong>이메일:</strong> <span id="email-display">user@example.com</span></p>
       <p><strong>생일:</strong> <span id="profile-birthday-display">정보 없음</span></p>
       <p><strong>가입일:</strong> <span id="profile-join-date">정보 없음</span></p>
     </div>
