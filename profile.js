@@ -152,44 +152,6 @@ async function uploadProfilePicture(file) {
   }
 }
 
-// ✅ Firestore에도 저장하고 localStorage에도 저장
-async function saveProfile() {
-  const user = auth.currentUser;
-  if (!user) {
-    alert("🚨 로그인된 사용자가 없습니다.");
-    return;
-  }
-
-  const userDocRef = doc(db, "Trickcal_MIniGames", user.uid);
-
-  let profileIconPreview = document.getElementById("profile-icon-preview");
-  if (!profileIconPreview) {
-    console.error("🚨 'profile-icon-preview' 요소를 찾을 수 없습니다.");
-    return;
-  }
-  let iconURL = profileIconPreview.src;
-
-  // ✅ localStorage에도 저장
-  localStorage.setItem("userProfile", JSON.stringify({
-    username: document.getElementById("profile-name")?.value || "",
-    profilePicture: iconURL
-  }));
-
-  const profileData = {
-    username: document.getElementById("profile-name")?.value || "",
-    profile: { icon: iconURL }
-  };
-
-  try {
-    await setDoc(userDocRef, profileData, { merge: true });
-    alert("✅ 프로필이 저장되었습니다!");
-  } catch (error) {
-    console.error("❌ 프로필 저장 오류:", error);
-    alert("🚨 프로필 저장 중 오류가 발생했습니다.");
-  }
-}
-
-
 // **4️⃣ 로그인 감지 후 프로필 로드**
 onAuthStateChanged(auth, (user) => {
   if (user) {
