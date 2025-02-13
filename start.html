@@ -123,7 +123,7 @@
     <div class="menu-item">홈</div>
     <div class="menu-item">커뮤니티</div>
     <div class="menu-item">게시판</div>
-    <div class="menu-item">친구찾기</div>
+    <div class="menu-item" id="more-menu">추가기능</div>
     <div class="menu-item">미니게임</div>
   </div>
 
@@ -136,6 +136,10 @@
     // ✅ 프로필 설정 버튼 클릭 시 profile.html로 이동
     document.getElementById("profile-settings-btn").addEventListener("click", () => {
       window.location.href = "profile.html";
+    });
+
+    document.getElementById("more-menu").addEventListener("click", () => {
+      window.location.href = "more.html";
     });
   </script>
   
