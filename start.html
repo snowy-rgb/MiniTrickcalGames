@@ -96,6 +96,29 @@
       font-weight: bold;
       box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
     }
+    /* ✅ 원형 프로필 버튼 */
+    .profile-button {
+      position: absolute;
+      top: 10px;
+      right: 20px;
+      width: 50px;
+      height: 50px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      font-size: 14px;
+      font-weight: bold;
+      text-align: center;
+      line-height: 50px;
+      cursor: pointer;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      transition: background-color 0.3s;
+    }
+
+    .profile-button:hover {
+      background-color: #0056b3;
+    }
 
     /* 반응형 처리 */
     @media (max-width: 600px) {
@@ -114,11 +137,9 @@
 
   <script src="weather-sound.js"></script>
 
-  <!-- ✅ 프로필 설정 버튼 (이름 + 원형 이미지) -->
-  <div class="profile-container" id="profile-container">
-    <span class="profile-name" id="profile-name">로그인 필요</span>
-    <img src="default-icon.png" alt="프로필 사진" class="profile-picture" id="profile-picture">
-  </div>
+  <!-- ✅ 원형 프로필 버튼 -->
+  <button class="profile-button" id="profile-btn">프로필</button>
+
 
   <!-- 로고 영역 -->
   <div class="logo-container">
@@ -144,7 +165,7 @@
 
   <script>
     // ✅ 프로필 클릭 시 profile.html로 이동
-    document.getElementById("profile-container").addEventListener("click", () => {
+    document.getElementById("profile-btn").addEventListener("click", () => {
       window.location.href = "profile.html";
     });
 
