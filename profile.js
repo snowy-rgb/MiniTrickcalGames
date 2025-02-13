@@ -54,7 +54,7 @@ async function loadProfile(user) {
     }
 
     // ✅ 프로필 사진 로드
-    document.getElementById("profile-icon-preview").src = data.profile?.icon || "default-icon.png";
+    document.getElementById("profile-icon-preview").src = data.profile?.icon || "https://snowy-rgb.github.io/MiniTrickcalGames/default-icon.png";
 
   } else {
     console.log("🚨 프로필 데이터 없음 → 새 문서 생성");
