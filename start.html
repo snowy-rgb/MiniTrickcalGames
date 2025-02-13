@@ -33,6 +33,7 @@
       width: 100px;
       height: auto;
       flex-shrink: 0;
+      cursor: pointer;
     }
 
     /* 메뉴 영역 */
@@ -139,14 +140,16 @@
   </script>
   
   <script>
-    // DOM 요소가 로드된 후 실행되도록 보장하기 위해
     document.addEventListener("DOMContentLoaded", () => {
-      document.getElementById("logo").addEventListener("click", () => {
-        window.location.href = "logo.html";
+      // 모든 .logo 요소를 선택한 후 각각에 이벤트 리스너를 추가합니다.
+      document.querySelectorAll('.logo').forEach(logo => {
+        logo.addEventListener("click", () => {
+          window.location.href = "logo.html";
+        });
       });
     });
   </script>
-
+  
 </body>
 </html>
 
