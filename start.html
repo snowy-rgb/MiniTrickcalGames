@@ -26,7 +26,7 @@
       background-color: #fff;
       padding: 10px 0;
       border-bottom: 2px solid #ccc;
-      overflow-x: auto; /* 화면이 작을 때 스크롤 가능 */
+      overflow-x: auto;
     }
 
     .logo {
@@ -45,7 +45,7 @@
       background-color: #333;
       color: white;
       padding: 10px 0;
-      overflow-x: auto; /* 화면이 작을 때 스크롤 가능 */
+      overflow-x: auto;
     }
 
     .menu-item {
@@ -59,22 +59,29 @@
       text-decoration: underline;
     }
 
-    /* 프로필 설정 버튼 */
-    .profile-settings-btn {
+    /* ✅ 프로필 버튼 스타일 */
+    .profile-container {
       position: absolute;
-      top: 15px;
+      top: 10px;
       right: 20px;
-      background-color: #007bff;
-      color: white;
-      padding: 8px 12px;
-      border: none;
-      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
       cursor: pointer;
-      font-size: 14px;
     }
 
-    .profile-settings-btn:hover {
-      background-color: #0056b3;
+    .profile-name {
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+    }
+
+    .profile-picture {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid white;
     }
 
     /* 하단 버전 영역 */
@@ -82,13 +89,14 @@
       position: fixed;
       bottom: 0;
       width: 100%;
-      background: rgba(255, 255, 255, 0.9); /* 반투명 흰색 배경 */
+      background: rgba(255, 255, 255, 0.9);
       text-align: center;
       padding: 10px;
       font-size: 14px;
       font-weight: bold;
       box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
     }
+
     /* 반응형 처리 */
     @media (max-width: 600px) {
       .menu-item {
@@ -98,11 +106,6 @@
       .logo {
         width: 80px;
       }
-
-      .profile-settings-btn {
-        font-size: 12px;
-        padding: 6px 10px;
-      }
     }
   </style>
 </head>
@@ -111,8 +114,11 @@
 
   <script src="weather-sound.js"></script>
 
-  <!-- ✅ 프로필 설정 버튼 추가 -->
-  <button class="profile-settings-btn" id="profile-settings-btn">프로필 설정</button>
+  <!-- ✅ 프로필 설정 버튼 (이름 + 원형 이미지) -->
+  <div class="profile-container" id="profile-container">
+    <span class="profile-name" id="profile-name">로그인 필요</span>
+    <img src="default-icon.png" alt="프로필 사진" class="profile-picture" id="profile-picture">
+  </div>
 
   <!-- 로고 영역 -->
   <div class="logo-container">
@@ -131,35 +137,46 @@
   </div>
 
   <!-- 하단 버전 -->
-  
-
   <div class="footer">
     <p>Trickcal copyrighted by EPIDGames. MiniTrickcalGames powered by Snowii. 버전 : 1.1.5</p>
     <a href="privacy.html" style="color: red; text-decoration: underline;" target="_blank">개인정보 처리방침</a>
   </div>
 
   <script>
-    // ✅ 프로필 설정 버튼 클릭 시 profile.html로 이동
-    document.getElementById("profile-settings-btn").addEventListener("click", () => {
+    // ✅ 프로필 클릭 시 profile.html로 이동
+    document.getElementById("profile-container").addEventListener("click", () => {
       window.location.href = "profile.html";
     });
 
     document.getElementById("more-menu").addEventListener("click", () => {
       window.location.href = "more.html";
     });
-  </script>
-  
-  <script>
+
     document.addEventListener("DOMContentLoaded", () => {
-      // 모든 .logo 요소를 선택한 후 각각에 이벤트 리스너를 추가합니다.
+      // 모든 .logo 요소를 선택한 후 각각에 이벤트 리스너 추가
       document.querySelectorAll('.logo').forEach(logo => {
         logo.addEventListener("click", () => {
           window.location.href = "logo.html";
         });
       });
+
+      // ✅ Firebase에서 프로필 데이터 불러오기 (사용자 로그인 상태 확인)
+      fetchUserProfile();
     });
+
+    async function fetchUserProfile() {
+      try {
+        const user = JSON.parse(localStorage.getItem("userProfile"));
+        if (user) {
+          document.getElementById("profile-name").textContent = user.username || "사용자";
+          document.getElementById("profile-picture").src = user.profilePicture || "default-icon.png";
+        }
+      } catch (error) {
+        console.error("🚨 프로필 데이터를 불러오는 중 오류 발생:", error);
+      }
+    }
   </script>
-  
+
 </body>
 </html>
 
