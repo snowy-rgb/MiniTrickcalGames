@@ -1,7 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-auth.js";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-storage.js";
 
 // ✅ Firebase 설정
 const firebaseConfig = {
@@ -18,7 +17,9 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
-const storage = getStorage(app);
+
+// ✅ Imgur API 설정 (여기 Client ID를 변경해야 함)
+const IMGUR_CLIENT_ID = "YOUR_IMGUR_CLIENT_ID";  // 🛑 여기에 Imgur Client ID 입력
 
 // **1️⃣ Firestore에서 프로필 데이터 불러오기**
 async function loadProfile(user) {
@@ -54,7 +55,7 @@ async function loadProfile(user) {
     }
 
     // ✅ 프로필 사진 로드
-    document.getElementById("profile-icon-preview").src = data.profile?.icon || "https://snowy-rgb.github.io/MiniTrickcalGames/default-icon.png";
+    document.getElementById("profile-icon-preview").src = data.profile?.icon || "default-icon.png";
 
   } else {
     console.log("🚨 프로필 데이터 없음 → 새 문서 생성");
@@ -90,15 +91,6 @@ async function saveProfile() {
   }
   let iconURL = profileIconPreview.src;
 
-  // ✅ 파일 업로드 여부 체크 후 진행
-  const fileInput = document.getElementById("profile-icon-input");
-  if (fileInput.files.length > 0) {
-    const uploadedURL = await uploadProfilePicture(fileInput.files[0]);
-    if (uploadedURL) {
-      iconURL = uploadedURL;
-    }
-  }
-
   // ✅ 기존 `joinday` 값 유지
   const existingData = await getDoc(userDocRef);
   let joinDate = serverTimestamp(); // 기본값
@@ -127,26 +119,32 @@ async function saveProfile() {
   }
 }
 
-// **3️⃣ 프로필 사진 업로드 (Firebase Storage)**
+// **3️⃣ Imgur에 프로필 사진 업로드**
 async function uploadProfilePicture(file) {
   if (!file) {
     alert("파일을 선택하세요!");
     return null;
   }
 
-  const user = auth.currentUser;
-  if (!user) {
-    alert("로그인된 사용자가 없습니다.");
-    return null;
-  }
-
-  const storageRef = ref(storage, `profile-pictures/${user.uid}`);
-
   try {
-    const snapshot = await uploadBytes(storageRef, file);
-    const downloadURL = await getDownloadURL(snapshot.ref);
-    console.log("📸 사진 업로드 성공! URL:", downloadURL);
-    return downloadURL;
+    const formData = new FormData();
+    formData.append("image", file);
+
+    const response = await fetch("https://api.imgur.com/3/image", {
+      method: "POST",
+      headers: {
+        Authorization: `Client-ID ${IMGUR_CLIENT_ID}`,
+      },
+      body: formData,
+    });
+
+    const data = await response.json();
+    if (data.success) {
+      console.log("📸 사진 업로드 성공! URL:", data.data.link);
+      return data.data.link; // ✅ 업로드된 URL 반환
+    } else {
+      throw new Error("Imgur 업로드 실패");
+    }
   } catch (error) {
     console.error("❌ 사진 업로드 오류:", error);
     alert("🚨 사진 업로드 중 오류가 발생했습니다.");
@@ -181,17 +179,12 @@ document.addEventListener("DOMContentLoaded", () => {
     if (imageUrl) {
       document.getElementById("profile-icon-preview").src = imageUrl;
 
-      // ✅ Firestore에도 즉시 업데이트
       const user = auth.currentUser;
       if (user) {
         const userDocRef = doc(db, "Trickcal_MIniGames", user.uid);
-        try {
-          await updateDoc(userDocRef, { "profile.icon": imageUrl });
-          console.log("✅ Firestore 프로필 이미지 URL 업데이트 완료!");
-        } catch (error) {
-          console.error("❌ Firestore 프로필 이미지 업데이트 오류:", error);
-        }
+        await updateDoc(userDocRef, { "profile.icon": imageUrl });
+        console.log("✅ Firestore 프로필 이미지 URL 업데이트 완료!");
       }
     }
-  }); // if (imageUrl) 블록의 끝
-}); // addEventListener 콜백 함수의 끝
+  });
+});
