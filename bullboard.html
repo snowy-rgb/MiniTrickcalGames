@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>커뮤니티 - MiniTrickcalGames</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f4;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 20px;
+      background: white;
+      box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+      border-radius: 10px;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    .post-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    .post-item {
+      padding: 15px;
+      border-bottom: 1px solid #ddd;
+      cursor: pointer;
+    }
+
+    .post-item:hover {
+      background-color: #f9f9f9;
+    }
+
+    .write-btn {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      margin-top: 20px;
+      background-color: #007bff;
+      color: white;
+      text-align: center;
+      border-radius: 5px;
+      text-decoration: none;
+    }
+
+    .write-btn:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>📢 MiniTrickcalGames 커뮤니티</h1>
+
+    <ul id="post-list" class="post-list"></ul>
+
+    <a href="write.html" class="write-btn">✍ 새 글 작성</a>
+  </div>
+
+  <script type="module">
+    import { db } from "./auth.js";
+    import { collection, getDocs, orderBy, query } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-firestore.js";
+
+    async function loadPosts() {
+      const postList = document.getElementById("post-list");
+      postList.innerHTML = "<p>📡 로딩 중...</p>";
+
+      const q = query(collection(db, "community_posts"), orderBy("createdAt", "desc"));
+      const querySnapshot = await getDocs(q);
+
+      postList.innerHTML = "";
+
+      querySnapshot.forEach((doc) => {
+        const post = doc.data();
+        const listItem = document.createElement("li");
+        listItem.className = "post-item";
+        listItem.innerHTML = `<strong>${post.title}</strong> <br> ✍ ${post.authorName} | 🕒 ${new Date(post.createdAt.seconds * 1000).toLocaleString()}`;
+        listItem.addEventListener("click", () => {
+          window.location.href = `post.html?postId=${doc.id}`;
+        });
+
+        postList.appendChild(listItem);
+      });
+
+      if (querySnapshot.empty) {
+        postList.innerHTML = "<p>📝 아직 게시글이 없습니다.</p>";
+      }
+    }
+
+    loadPosts();
+  </script>
+
+</body>
+</html>
