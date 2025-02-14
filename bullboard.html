@@ -127,7 +127,8 @@
 
     let currentBoard = "community_posts"; // 기본적으로 자유게시판
 
-    function switchBoard(board) {
+    // ✅ 게시판 변경 함수 (window에 등록)
+    window.switchBoard = function(board) {
       currentBoard = board;
 
       // ✅ 기존 탭 스타일 초기화 후, 선택된 탭 강조
@@ -137,7 +138,7 @@
 
       // ✅ 게시글 불러오기
       loadPosts(board);
-    }
+    };
 
     // ✅ 게시글 작성 버튼 클릭 시, 현재 게시판에 맞는 글쓰기 페이지로 이동
     document.getElementById("write-btn").addEventListener("click", () => {
@@ -152,3 +153,4 @@
 
 </body>
 </html>
+
