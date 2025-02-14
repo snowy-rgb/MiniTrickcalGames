@@ -7,32 +7,63 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #f7f7f7;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 20px;
       text-align: center;
     }
+
     .container {
-      width: 80%;
-      max-width: 500px;
-      margin: 20px auto;
-      background: white;
+      max-width: 700px;
+      margin: auto;
       padding: 20px;
+      background: white;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
       border-radius: 10px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
-    input, textarea, select, button {
+
+    h2 {
+      margin-bottom: 20px;
+    }
+
+    input, textarea {
       width: 100%;
-      margin: 10px 0;
       padding: 10px;
-      font-size: 16px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 5px;
     }
-    button {
-      background-color: #007bff;
-      color: white;
+
+    .button-container {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+    }
+
+    .submit-button, .cancel-button {
+      padding: 10px 15px;
+      font-size: 14px;
       border: none;
+      border-radius: 5px;
       cursor: pointer;
     }
-    button:hover {
+
+    .submit-button {
+      background-color: #007bff;
+      color: white;
+    }
+
+    .submit-button:hover {
       background-color: #0056b3;
+    }
+
+    .cancel-button {
+      background-color: #f44336;
+      color: white;
+    }
+
+    .cancel-button:hover {
+      background-color: #c9302c;
     }
   </style>
 </head>
@@ -40,25 +71,56 @@
 
   <div class="container">
     <h2>게시글 작성</h2>
-    
-    <!-- ✅ 게시판 선택 -->
-    <form id="post-form">
-       <label for="board-type">게시판 선택:</label>
-       <select id="board-type">
-           <option value="dev_notices">개발자 공지</option>
-          <option value="community_posts">자유 게시판</option>
-      </select>
-  
-      <label for="title">제목:</label>
-      <input type="text" id="title" required>
 
-      <label for="content">내용:</label>
-      <textarea id="content" required></textarea>
+    <!-- 📌 게시판 종류 자동 표시 -->
+    <p id="board-label">📢 개발자 공지</p>
 
-      <button type="submit">게시글 작성</button>
-    </form>
+    <input type="text" id="post-title" placeholder="제목을 입력하세요">
+    <textarea id="post-content" placeholder="내용을 입력하세요" rows="5"></textarea>
 
-  <script type="module" src="post.js"></script>
+    <!-- ✅ 버튼 추가 (등록, 취소) -->
+    <div class="button-container">
+      <button class="submit-button" id="submit-btn">게시글 등록</button>
+      <button class="cancel-button" id="cancel-btn">취소</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { savePost } from "./post.js";
+    import { auth } from "./auth.js";
+
+    // ✅ URL에서 게시판 종류 가져오기
+    const urlParams = new URLSearchParams(window.location.search);
+    let boardType = urlParams.get("board") || "community_posts";
+
+    // ✅ 게시판 이름 표시
+    document.getElementById("board-label").textContent = 
+      boardType === "dev_notices" ? "📢 개발자 공지" : "💬 자유 게시판";
+
+    document.getElementById("submit-btn").addEventListener("click", async () => {
+      const title = document.getElementById("post-title").value.trim();
+      const content = document.getElementById("post-content").value.trim();
+
+      if (!title || !content) {
+        alert("🚨 제목과 내용을 입력해주세요!");
+        return;
+      }
+
+      const user = auth.currentUser;
+      if (!user) {
+        alert("🚨 로그인한 사용자만 글을 작성할 수 있습니다.");
+        return;
+      }
+
+      await savePost(boardType, title, content, user.email);
+    });
+
+    // ✅ 취소 버튼 클릭 시 게시판으로 돌아가기
+    document.getElementById("cancel-btn").addEventListener("click", () => {
+      window.location.href = "bullboard.html";
+    });
+  </script>
 
 </body>
 </html>
+
