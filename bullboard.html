@@ -127,12 +127,15 @@
 
     let currentBoard = "community_posts"; // 기본적으로 자유게시판
 
-    // ✅ 게시판 변경 시 실행되는 함수
     function switchBoard(board) {
       currentBoard = board;
-      document.getElementById("devTab").classList.toggle("active", board === "dev_notices");
-      document.getElementById("freeTab").classList.toggle("active", board === "community_posts");
 
+      // ✅ 기존 탭 스타일 초기화 후, 선택된 탭 강조
+      document.getElementById("devTab").classList.remove("active");
+      document.getElementById("freeTab").classList.remove("active");
+      document.getElementById(board === "dev_notices" ? "devTab" : "freeTab").classList.add("active");
+
+      // ✅ 게시글 불러오기
       loadPosts(board);
     }
 
@@ -149,4 +152,3 @@
 
 </body>
 </html>
-
