@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>게시판</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .container {
+      max-width: 700px;
+      margin: auto;
+      padding: 20px;
+      background: white;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      border-radius: 10px;
+    }
+
+    h2 {
+      margin-bottom: 20px;
+    }
+
+    .tab-container {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 20px;
+    }
+
+    .tab {
+      padding: 10px;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+    }
+
+    .tab.active {
+      font-weight: bold;
+      border-bottom: 3px solid blue;
+    }
+
+    .post-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    .post-item {
+      padding: 15px;
+      margin: 10px 0;
+      background: #fafafa;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .post-item:hover {
+      background: #e9e9e9;
+    }
+
+    .post-title {
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .post-meta {
+      font-size: 12px;
+      color: gray;
+    }
+
+    .write-button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .write-button:hover {
+      background-color: #0056b3;
+    }
+
+    .back-button {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background-color: gray;
+      padding: 8px 12px;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 🔙 돌아가기 버튼 -->
+  <div class="back-button" onclick="history.back()">← 돌아가기</div>
+
+  <div class="container">
+    <h2>게시판</h2>
+
+    <!-- 📌 탭 버튼 -->
+    <div class="tab-container">
+      <div class="tab active" id="devTab" onclick="loadPosts('dev_notices')">📢 개발자 공지</div>
+      <div class="tab" id="freeTab" onclick="loadPosts('community_posts')">💬 자유 게시판</div>
+    </div>
+
+    <!-- 📌 게시글 목록 -->
+    <ul class="post-list" id="post-list">
+      <li>게시글을 불러오는 중...</li>
+    </ul>
+
+    <!-- 📝 게시글 작성 버튼 -->
+    <button class="write-button" onclick="window.location.href='post.html'">게시글 작성</button>
+  </div>
+
+  <script type="module">
+    import { db } from "./auth.js";
+    import { getFirestore, collection, query, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-firestore.js";
+
+    let currentBoard = "dev_notices";  // 기본값: 개발자 공지
+
+    async function loadPosts(board) {
+      currentBoard = board;
+
+      // 탭 UI 업데이트
+      document.getElementById("devTab").classList.toggle("active", board === "dev_notices");
+      document.getElementById("freeTab").classList.toggle("active", board === "community_posts");
+
+      const postList = document.getElementById("post-list");
+      postList.innerHTML = "<li>게시글을 불러오는 중...</li>";
+
+      try {
+        const q = query(collection(db, board), orderBy("timestamp", "desc"));
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+          postList.innerHTML = "<li>아직 게시글이 없습니다.</li>";
+          return;
+        }
+
+        postList.innerHTML = ""; // 초기화 후 데이터 추가
+
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          const postId = doc.id;
+
+          const postItem = document.createElement("li");
+          postItem.className = "post-item";
+          postItem.innerHTML = `
+            <div class="post-title">${data.title}</div>
+            <div class="post-meta">작성자: ${data.author} | ${new Date(data.timestamp.seconds * 1000).toLocaleString()}</div>
+          `;
+          postItem.onclick = () => window.location.href = `post-view.html?id=${postId}&board=${board}`;
+
+          postList.appendChild(postItem);
+        });
+
+      } catch (error) {
+        console.error("게시글 불러오기 오류:", error);
+        postList.innerHTML = "<li>게시글을 불러오는 중 오류가 발생했습니다.</li>";
+      }
+    }
+
+    // 초기 로드 (기본: 개발자 공지)
+    loadPosts("dev_notices");
+  </script>
+
+</body>
+</html>
