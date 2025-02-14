@@ -24,7 +24,7 @@ export async function savePost(boardType, title, content, author) {
     });
 
     alert("✅ 게시글이 등록되었습니다!");
-    window.location.href = "bullboard.html";
+    window.location.href = "bullboard.html"; // 게시판으로 이동
 
   } catch (error) {
     console.error("❌ 게시글 저장 오류:", error);
@@ -70,6 +70,10 @@ export async function loadPosts(boardType) {
     alert("🚨 게시글을 불러오는 중 오류가 발생했습니다.");
   }
 }
+
+// ✅ export 추가
+export { savePost, loadPosts };
+
 
 
 
