@@ -1,38 +1,34 @@
-import { db, auth } from "./auth.js";
-import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-firestore.js";
+import { db } from "./auth.js"; 
+import { collection, getDocs, orderBy, query } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-firestore.js";
 
-// ✅ 게시글 저장 함수
-async function savePost(board, title, content) {
-  const user = auth.currentUser;
-  if (!user) {
-    alert("로그인이 필요합니다.");
-    return;
-  }
+// ✅ Firestore에서 게시글 불러오기
+export async function loadPosts(boardType) {
+    try {
+        const postList = document.getElementById("post-list");
+        postList.innerHTML = ""; // 기존 게시글 목록 초기화
 
-  try {
-    const docRef = await addDoc(collection(db, board), {
-      title: title,
-      content: content,
-      author: user.displayName || user.email,  // 작성자 정보
-      timestamp: serverTimestamp(),
-    });
-    alert("게시글이 등록되었습니다!");
-    console.log("✅ 게시글 ID:", docRef.id);
-  } catch (error) {
-    console.error("❌ 게시글 저장 오류:", error);
-  }
+        // ✅ Firestore에서 게시글 가져오기
+        const postsQuery = query(collection(db, boardType), orderBy("createdAt", "desc"));
+        const querySnapshot = await getDocs(postsQuery);
+
+        querySnapshot.forEach((doc) => {
+            const post = doc.data();
+
+            // ✅ 게시글 HTML 요소 추가
+            const postElement = document.createElement("div");
+            postElement.classList.add("post");
+            postElement.innerHTML = `
+                <h3>${post.title}</h3>
+                <p>${post.content}</p>
+                <p><strong>작성자:</strong> ${post.author}</p>
+                <p><small>${new Date(post.createdAt.seconds * 1000).toLocaleString()}</small></p>
+            `;
+            postList.appendChild(postElement);
+        });
+
+        console.log("✅ 게시글 불러오기 성공!");
+
+    } catch (error) {
+        console.error("❌ 게시글 불러오기 오류:", error);
+    }
 }
-
-// ✅ 게시글 작성 버튼 클릭 시 실행
-document.getElementById("post-submit").addEventListener("click", () => {
-  const board = document.getElementById("board-select").value;
-  const title = document.getElementById("post-title").value;
-  const content = document.getElementById("post-content").value;
-  
-  if (title.trim() === "" || content.trim() === "") {
-    alert("제목과 내용을 입력하세요.");
-    return;
-  }
-
-  savePost(board, title, content);
-});
