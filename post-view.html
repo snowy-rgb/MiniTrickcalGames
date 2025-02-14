@@ -163,6 +163,11 @@
       postDate.textContent = `📅 ${new Date(data.createdAt.seconds * 1000).toLocaleString()}`;
       postContent.textContent = data.content;
 
+      if (!data.authorId) {
+        authorName.textContent = "알 수 없는 사용자";
+        return;
+      }
+
       // 🔹 Firestore에서 작성자의 프로필 정보 가져오기
       const userRef = doc(db, "Trickcal_MIniGames", data.authorId);
       const userSnap = await getDoc(userRef);
@@ -204,3 +209,4 @@
 
 </body>
 </html>
+
