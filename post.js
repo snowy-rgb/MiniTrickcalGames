@@ -1,34 +1,22 @@
 import { db } from "./auth.js"; 
-import { collection, getDocs, orderBy, query } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-firestore.js";
+import { collection, getDocs, addDoc, orderBy, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-firestore.js";
 
-// ✅ Firestore에서 게시글 불러오기
-export async function loadPosts(boardType) {
+// ✅ 게시글 저장 함수
+export async function savePost(boardType, title, content, author) {
     try {
-        const postList = document.getElementById("post-list");
-        postList.innerHTML = ""; // 기존 게시글 목록 초기화
-
-        // ✅ Firestore에서 게시글 가져오기
-        const postsQuery = query(collection(db, boardType), orderBy("createdAt", "desc"));
-        const querySnapshot = await getDocs(postsQuery);
-
-        querySnapshot.forEach((doc) => {
-            const post = doc.data();
-
-            // ✅ 게시글 HTML 요소 추가
-            const postElement = document.createElement("div");
-            postElement.classList.add("post");
-            postElement.innerHTML = `
-                <h3>${post.title}</h3>
-                <p>${post.content}</p>
-                <p><strong>작성자:</strong> ${post.author}</p>
-                <p><small>${new Date(post.createdAt.seconds * 1000).toLocaleString()}</small></p>
-            `;
-            postList.appendChild(postElement);
+        const postCollection = collection(db, boardType);  // ✅ 선택한 게시판에 게시글 저장
+        await addDoc(postCollection, {  // ✅ 자동으로 문서 ID 생성됨
+            title: title,
+            content: content,
+            author: author,
+            createdAt: serverTimestamp()  // Firestore에서 자동으로 타임스탬프 설정
         });
 
-        console.log("✅ 게시글 불러오기 성공!");
+        alert("✅ 게시글이 등록되었습니다!");
+        window.location.href = "bullboard.html"; // 게시판으로 이동
 
     } catch (error) {
-        console.error("❌ 게시글 불러오기 오류:", error);
+        console.error("❌ 게시글 저장 오류:", error);
+        alert("🚨 게시글 저장 중 오류가 발생했습니다.");
     }
 }
