@@ -123,11 +123,11 @@
   </div>
 
   <script type="module">
-    import { loadPosts } from "./post.js"; // ✅ import 문 수정
+    import { loadPosts } from "./post.js"; // ✅ 올바르게 import
 
     let currentBoard = "community_posts"; // 기본적으로 자유게시판
 
-    // ✅ 게시판 변경 시 실행되는 함수
+    // ✅ 게시판 변경 시 실행되는 함수 (window에 등록)
     window.switchBoard = function (board) {
       currentBoard = board;
       document.getElementById("devTab").classList.toggle("active", board === "dev_notices");
