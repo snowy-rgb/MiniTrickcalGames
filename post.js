@@ -70,10 +70,3 @@ export async function loadPosts(boardType) {
     alert("🚨 게시글을 불러오는 중 오류가 발생했습니다.");
   }
 }
-
-// ✅ export 추가
-export { savePost, loadPosts };
-
-
-
-
