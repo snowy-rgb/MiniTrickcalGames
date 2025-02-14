@@ -103,15 +103,18 @@
 
   <script type="module">
     import { db, auth } from "./auth.js";
-    import { getFirestore, doc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-firestore.js";
+    import { doc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-firestore.js";
     import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-auth.js";
 
+    // ✅ URL에서 게시글 ID와 게시판 정보 가져오기
     const urlParams = new URLSearchParams(window.location.search);
     const postId = urlParams.get("id");
-    const board = urlParams.get("board"); // "dev_notices" or "community_posts"
+    const board = urlParams.get("board");
+
+    console.log("📌 URL 파라미터:", postId, board); // 🔍 URL 파라미터 확인
 
     if (!postId || !board) {
-      alert("잘못된 접근입니다.");
+      alert("🚨 잘못된 접근입니다.");
       window.location.href = "bullboard.html";
     }
 
@@ -121,21 +124,24 @@
     const editBtn = document.getElementById("edit-btn");
     const deleteBtn = document.getElementById("delete-btn");
 
+    // ✅ 게시글 불러오기 함수
     async function loadPost() {
       try {
         const postRef = doc(db, board, postId);
         const postSnap = await getDoc(postRef);
 
         if (!postSnap.exists()) {
-          alert("게시글을 찾을 수 없습니다.");
+          alert("🚨 게시글을 찾을 수 없습니다.");
           window.location.href = "bullboard.html";
           return;
         }
 
         const data = postSnap.data();
+        console.log("📌 불러온 게시글 데이터:", data); // 🔍 Firestore 데이터 확인
+
         postTitle.textContent = data.title;
-        postMeta.textContent = `작성자: ${data.author} | ${new Date(data.timestamp.seconds * 1000).toLocaleString()}`;
-        postContent.innerHTML = data.content;  // 🔹 textContent → innerHTML로 변경 (HTML 유지)
+        postMeta.textContent = `작성자: ${data.author} | ${new Date(data.createdAt.seconds * 1000).toLocaleString()}`;
+        postContent.textContent = data.content;
 
         // 🔹 현재 로그인한 사용자와 게시글 작성자가 일치할 경우 수정/삭제 버튼 표시
         onAuthStateChanged(auth, (user) => {
@@ -156,6 +162,7 @@
             };
           }
         });
+
       } catch (error) {
         console.error("❌ 게시글 불러오기 오류:", error);
         alert("🚨 게시글을 불러오는 중 오류가 발생했습니다.");
@@ -167,4 +174,5 @@
 
 </body>
 </html>
+
 
