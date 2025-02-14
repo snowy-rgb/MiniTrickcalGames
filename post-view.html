@@ -29,9 +29,27 @@
     }
 
     .post-meta {
-      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
       color: gray;
-      text-align: center;
+      text-align: left;
+    }
+
+    .post-author {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+    }
+
+    .post-author img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid #ddd;
     }
 
     .post-content {
@@ -91,7 +109,13 @@
 
   <div class="container">
     <h2 id="post-title">게시글 제목</h2>
-    <div class="post-meta" id="post-meta">작성자 | 작성일</div>
+    <div class="post-meta">
+      <div class="post-author" id="post-author">
+        <img src="default-icon.png" alt="작성자 프로필" id="author-icon">
+        <span id="author-name">작성자</span>
+      </div>
+      <span id="post-date">작성일</span>
+    </div>
     <div class="post-content" id="post-content">게시글 내용</div>
 
     <!-- 수정 및 삭제 버튼 -->
@@ -103,70 +127,76 @@
 
   <script type="module">
     import { db, auth } from "./auth.js";
-    import { doc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-firestore.js";
     import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-auth.js";
 
-    // ✅ URL에서 게시글 ID와 게시판 정보 가져오기
     const urlParams = new URLSearchParams(window.location.search);
     const postId = urlParams.get("id");
-    const board = urlParams.get("board");
-
-    console.log("📌 URL 파라미터:", postId, board); // 🔍 URL 파라미터 확인
+    const board = urlParams.get("board"); // "dev_notices" or "community_posts"
 
     if (!postId || !board) {
-      alert("🚨 잘못된 접근입니다.");
+      alert("잘못된 접근입니다.");
       window.location.href = "bullboard.html";
     }
 
     const postTitle = document.getElementById("post-title");
-    const postMeta = document.getElementById("post-meta");
+    const postAuthor = document.getElementById("post-author");
+    const authorIcon = document.getElementById("author-icon");
+    const authorName = document.getElementById("author-name");
+    const postDate = document.getElementById("post-date");
     const postContent = document.getElementById("post-content");
     const editBtn = document.getElementById("edit-btn");
     const deleteBtn = document.getElementById("delete-btn");
 
-    // ✅ 게시글 불러오기 함수
     async function loadPost() {
-      try {
-        const postRef = doc(db, board, postId);
-        const postSnap = await getDoc(postRef);
+      const postRef = doc(db, board, postId);
+      const postSnap = await getDoc(postRef);
 
-        if (!postSnap.exists()) {
-          alert("🚨 게시글을 찾을 수 없습니다.");
-          window.location.href = "bullboard.html";
-          return;
-        }
-
-        const data = postSnap.data();
-        console.log("📌 불러온 게시글 데이터:", data); // 🔍 Firestore 데이터 확인
-
-        postTitle.textContent = data.title;
-        postMeta.textContent = `작성자: ${data.author} | ${new Date(data.createdAt.seconds * 1000).toLocaleString()}`;
-        postContent.textContent = data.content;
-
-        // 🔹 현재 로그인한 사용자와 게시글 작성자가 일치할 경우 수정/삭제 버튼 표시
-        onAuthStateChanged(auth, (user) => {
-          if (user && user.email === data.author) {
-            editBtn.style.display = "inline-block";
-            deleteBtn.style.display = "inline-block";
-
-            editBtn.onclick = () => {
-              window.location.href = `post-edit.html?id=${postId}&board=${board}`;
-            };
-
-            deleteBtn.onclick = async () => {
-              if (confirm("정말 삭제하시겠습니까?")) {
-                await deleteDoc(postRef);
-                alert("게시글이 삭제되었습니다.");
-                window.location.href = "bullboard.html";
-              }
-            };
-          }
-        });
-
-      } catch (error) {
-        console.error("❌ 게시글 불러오기 오류:", error);
-        alert("🚨 게시글을 불러오는 중 오류가 발생했습니다.");
+      if (!postSnap.exists()) {
+        alert("게시글을 찾을 수 없습니다.");
+        window.location.href = "bullboard.html";
+        return;
       }
+
+      const data = postSnap.data();
+      postTitle.textContent = data.title;
+      postDate.textContent = `📅 ${new Date(data.createdAt.seconds * 1000).toLocaleString()}`;
+      postContent.textContent = data.content;
+
+      // 🔹 Firestore에서 작성자의 프로필 정보 가져오기
+      const userRef = doc(db, "Trickcal_MIniGames", data.author);
+      const userSnap = await getDoc(userRef);
+
+      if (userSnap.exists()) {
+        const userData = userSnap.data();
+        authorIcon.src = userData.profile?.icon || "default-icon.png";
+        authorName.textContent = userData.profile?.username || "익명";
+        postAuthor.onclick = () => {
+          window.location.href = `profile.html?uid=${data.author}`;
+        };
+      } else {
+        authorName.textContent = "알 수 없는 사용자";
+      }
+
+      // 🔹 현재 로그인한 사용자와 게시글 작성자가 같을 경우 수정/삭제 버튼 표시
+      onAuthStateChanged(auth, (user) => {
+        if (user && user.uid === data.author) {
+          editBtn.style.display = "inline-block";
+          deleteBtn.style.display = "inline-block";
+
+          editBtn.onclick = () => {
+            window.location.href = `post-edit.html?id=${postId}&board=${board}`;
+          };
+
+          deleteBtn.onclick = async () => {
+            if (confirm("정말 삭제하시겠습니까?")) {
+              await deleteDoc(postRef);
+              alert("게시글이 삭제되었습니다.");
+              window.location.href = "bullboard.html";
+            }
+          };
+        }
+      });
     }
 
     loadPost();
@@ -174,5 +204,6 @@
 
 </body>
 </html>
+
 
 
