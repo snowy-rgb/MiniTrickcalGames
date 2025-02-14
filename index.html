@@ -93,6 +93,13 @@
       box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
     }
 
+    .video-small {
+      width: 100px; /* 원하는 크기로 조절 */
+      height: auto; /* 비율 유지 */
+      display: block;
+      margin: 0 auto; /* 가운데 정렬 */
+    }
+
     /* 반응형 처리 */
     @media (max-width: 400px) {
       input, button {
@@ -104,7 +111,7 @@
 <body>
 
   <!-- 로고 이미지 -->
-  <video autoplay loop muted playsinline>
+  <video class="video-small" autoplay loop muted playsinline>
     <source src="komi.mp4" class="logo" type="video/mp4">
     브라우저가 video 태그를 지원하지 않습니다.
   </video>
