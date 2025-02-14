@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>게시글 작성</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: auto;
+      padding: 20px;
+      background: white;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      border-radius: 10px;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    .back-button {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background-color: gray;
+      padding: 8px 12px;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 🔙 돌아가기 버튼 -->
+  <div class="back-button" onclick="history.back()">← 돌아가기</div>
+
+  <div class="container">
+    <h2>게시글 작성</h2>
+    
+    <!-- 게시판 선택 -->
+    <label for="board-type">게시판 선택:</label>
+    <select id="board-type">
+      <option value="community_posts">자유 게시판</option>
+      <option value="dev_notices">개발자 공지</option>
+    </select>
+
+    <!-- 제목 입력 -->
+    <input type="text" id="post-title" placeholder="제목을 입력하세요" required>
+
+    <!-- 내용 입력 -->
+    <textarea id="post-content" rows="5" placeholder="내용을 입력하세요" required></textarea>
+
+    <!-- 게시 버튼 -->
+    <button onclick="submitPost()">게시하기</button>
+  </div>
+
+  <script type="module">
+    import { auth, db } from "./auth.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-auth.js";
+    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-firestore.js";
+
+    async function submitPost() {
+      const title = document.getElementById("post-title").value.trim();
+      const content = document.getElementById("post-content").value.trim();
+      const boardType = document.getElementById("board-type").value;
+
+      if (!title || !content) {
+        alert("제목과 내용을 입력하세요.");
+        return;
+      }
+
+      const user = auth.currentUser;
+      if (!user) {
+        alert("로그인이 필요합니다.");
+        return;
+      }
+
+      // **개발자 공지는 운영자만 작성 가능**
+      if (boardType === "dev_notices" && user.email !== "admin@example.com") {
+        alert("개발자 공지는 운영자만 작성할 수 있습니다.");
+        return;
+      }
+
+      try {
+        await addDoc(collection(db, boardType), {
+          title,
+          content,
+          author: user.email,
+          authorId: user.uid,
+          timestamp: serverTimestamp(),
+        });
+
+        alert("게시글이 성공적으로 등록되었습니다!");
+        window.location.href = "bullboard.html"; // 게시판으로 이동
+      } catch (error) {
+        console.error("게시글 작성 오류:", error);
+        alert("게시글 등록 중 오류가 발생했습니다.");
+      }
+    }
+  </script>
+
+</body>
+</html>
