@@ -123,7 +123,7 @@
   </div>
 
   <script type="module">
-    import { loadPosts } from "./post.js";
+    import { loadPosts } from "./post.js"; // ✅ import 문 수정
 
     let currentBoard = "community_posts"; // 기본적으로 자유게시판
 
@@ -133,19 +133,15 @@
       document.getElementById("devTab").classList.toggle("active", board === "dev_notices");
       document.getElementById("freeTab").classList.toggle("active", board === "community_posts");
 
-      loadPosts(board);
+      loadPosts(board); // 게시판 변경 시 게시글 로드
     };
-
-    // ✅ 게시글 작성 버튼 클릭 시, 현재 게시판에 맞는 글쓰기 페이지로 이동
-    document.getElementById("write-btn").addEventListener("click", () => {
-      window.location.href = `post.html?board=${currentBoard}`;
-    });
 
     // ✅ 페이지 로드 시 기본 게시판 불러오기
     document.addEventListener("DOMContentLoaded", () => {
       switchBoard(currentBoard);
     });
   </script>
+
 </body>
 </html>
 
