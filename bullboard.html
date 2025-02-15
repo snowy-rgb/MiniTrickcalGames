@@ -102,7 +102,7 @@
 <body>
 
   <!-- 🔙 돌아가기 버튼 -->
-  <div class="back-button" onclick="history.back()">← 돌아가기</div>
+  <div class="back-button" id="backbtn">← 돌아가기</div>
 
   <div class="container">
     <h2>게시판</h2>
@@ -146,6 +146,11 @@
     document.getElementById("write-btn").addEventListener("click", () => {
       console.log("현재 선택된 게시판:", currentBoard); // 디버깅용
       window.location.href = `post.html?board=${currentBoard}`;
+    });
+  </script>
+  <script>
+    document.getElementById("backbtn").addEventListener("click", () => {
+      window.location.href = "start.html";
     });
   </script>
 
