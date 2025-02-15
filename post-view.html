@@ -154,9 +154,9 @@
       const postSnap = await getDoc(postRef);
 
       if (!postSnap.exists()) {
-        alert("게시글을 찾을 수 없습니다.");
-        window.location.href = "bullboard.html";
-        return;
+          alert("게시글을 찾을 수 없습니다.");
+          window.location.href = "bullboard.html";
+          return;
       }
 
       const data = postSnap.data();
@@ -165,24 +165,25 @@
       postContent.textContent = data.content;
 
       if (!data.authorId) {
-        authorName.textContent = "알 수 없는 사용자";
-        return;
+          authorName.textContent = "알 수 없는 사용자";
+          return;
       }
 
-      // 🔹 Firestore에서 작성자의 프로필 정보 가져오기
+      // 🔹 Trickcal_MIniGames 컬렉션에서 작성자 정보 가져오기
       const userRef = doc(db, "Trickcal_MIniGames", data.authorId);
       const userSnap = await getDoc(userRef);
 
       if (userSnap.exists()) {
-        const userData = userSnap.data();
-        authorIcon.src = userData.profile?.icon || "default-icon.png";
-        authorName.textContent = userData.profile?.username || "익명";
-        postAuthor.onclick = () => {
-          window.location.href = `profile.html?uid=${data.authorId}`;
-        };
+          const userData = userSnap.data();
+          authorIcon.src = userData.profile?.icon || "default-icon.png";
+          authorName.textContent = userData.username || "익명";
+          postAuthor.onclick = () => {
+              window.location.href = `profile.html?uid=${data.authorId}`;
+          };
       } else {
-        authorName.textContent = "알 수 없는 사용자";
+          authorName.textContent = "알 수 없는 사용자";
       }
+    }
 
       // 🔹 현재 로그인한 사용자와 게시글 작성자가 같을 경우 수정/삭제 버튼 표시
       onAuthStateChanged(auth, (user) => {
