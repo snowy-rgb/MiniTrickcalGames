@@ -8,19 +8,31 @@ import {
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-firestore.js";
 
-// ✅ 게시글 저장 함수 (export 추가)
-export async function savePost(boardType, title, content, authorId) {
+// ✅ 게시글 저장 함수
+export async function savePost(boardType, title, content) {
     try {
+        const user = auth.currentUser;
+        if (!user) {
+            alert("🚨 로그인 후 작성해주세요!");
+            return;
+        }
+
+        // 🔹 Firestore에서 `customUID` 가져오기
+        const userDocRef = doc(db, "Trickcal_MIniGames", user.uid);
+        const userDocSnap = await getDoc(userDocRef);
+        const customUID = userDocSnap.exists() ? userDocSnap.data().customUID || user.uid : user.uid;
+
         const postCollection = collection(db, boardType);
-        await addDoc(postCollection, {  
+        await addDoc(postCollection, {
             title: title.trim(),
             content: content.trim(),
-            authorId: authorId,  // ✅ Firestore에 사용자 ID 저장
+            authorId: customUID,  // ✅ `customUID`를 저장
             createdAt: serverTimestamp()
         });
 
         alert("✅ 게시글이 등록되었습니다!");
         window.location.href = "bullboard.html";
+
     } catch (error) {
         console.error("❌ 게시글 저장 오류:", error);
         alert("🚨 게시글 저장 중 오류가 발생했습니다.");
