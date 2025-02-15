@@ -108,6 +108,9 @@
   <!-- 🔙 돌아가기 버튼 -->
   <div class="back-button" id="backbtn">← 돌아가기</div>
 
+  <div class="post-tags" id="post-tags"></div>
+  <div class="post-media" id="post-media"></div>
+
   <div class="container">
     <h2 id="post-title">게시글 제목</h2>
     <div class="post-meta">
@@ -148,6 +151,24 @@
     const postContent = document.getElementById("post-content");
     const editBtn = document.getElementById("edit-btn");
     const deleteBtn = document.getElementById("delete-btn");
+    const postTags = document.getElementById("post-tags");
+
+    if (postData.tags && postData.tags.length > 0) {
+      postTags.innerHTML = postData.tags.map(tag => `<span class="tag">#${tag}</span>`).join(" ");
+    }
+
+    const postMedia = document.getElementById("post-media");
+    if (postData.media && postData.media.length > 0) {
+      postData.media.forEach(mediaUrl => {
+        if (mediaUrl.endsWith(".mp4") || mediaUrl.endsWith(".webm")) {
+          postMedia.innerHTML += `<video controls src="${mediaUrl}"></video>`;
+        } else if (mediaUrl.endsWith(".mp3") || mediaUrl.endsWith(".wav")) {
+          postMedia.innerHTML += `<audio controls src="${mediaUrl}"></audio>`;
+        } else {
+          postMedia.innerHTML += `<img src="${mediaUrl}" alt="업로드된 이미지">`;
+        }
+      });
+    }
 
     let postData = {}; // 🔹 전역 변수로 게시글 데이터 저장
 
