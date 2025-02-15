@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>사용자 프로필</title>
+  <title>게시글 수정</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -14,32 +14,70 @@
     }
 
     .container {
-      max-width: 500px;
+      max-width: 700px;
       margin: auto;
       padding: 20px;
       background: white;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
       border-radius: 10px;
+      text-align: left;
     }
 
-    .profile-img {
-      width: 100px;
-      height: 100px;
-      border-radius: 50%;
-      object-fit: cover;
-      border: 2px solid gray;
+    h2 {
+      text-align: center;
+      margin-bottom: 10px;
     }
 
-    .username {
-      font-size: 20px;
-      font-weight: bold;
+    .input-field {
+      width: 100%;
+      padding: 10px;
       margin-top: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 16px;
     }
 
-    .bio {
+    .textarea {
+      width: 100%;
+      height: 200px;
+      padding: 10px;
+      margin-top: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 16px;
+      resize: none;
+    }
+
+    .button-container {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+    }
+
+    .save-button, .cancel-button {
+      padding: 10px 15px;
       font-size: 14px;
-      color: gray;
-      margin-top: 10px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .save-button {
+      background-color: #007bff;
+      color: white;
+    }
+
+    .save-button:hover {
+      background-color: #0056b3;
+    }
+
+    .cancel-button {
+      background-color: #f44336;
+      color: white;
+    }
+
+    .cancel-button:hover {
+      background-color: #c9302c;
     }
 
     .back-button {
@@ -60,60 +98,115 @@
   <div class="back-button" onclick="history.back()">← 돌아가기</div>
 
   <div class="container">
-    <img id="profile-img" class="profile-img" src="default-icon.png" alt="프로필 이미지">
-    <div id="username" class="username">알 수 없는 사용자</div>
-    <div id="bio" class="bio">사용자 정보를 불러오는 중...</div>
+    <h2>게시글 수정</h2>
+    
+    <!-- 📝 수정할 게시글 입력 폼 -->
+    <input type="text" id="post-title" class="input-field" placeholder="제목">
+    <textarea id="post-content" class="textarea" placeholder="내용을 입력하세요"></textarea>
+
+    <!-- ✅ 저장 / 취소 버튼 -->
+    <div class="button-container">
+      <button class="save-button" id="save-btn">저장</button>
+      <button class="cancel-button" onclick="history.back()">취소</button>
+    </div>
   </div>
 
   <script type="module">
-    import { db } from "./auth.js";
-    import { doc, getDoc } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-firestore.js";
+    import { db, auth } from "./auth.js";
+    import { doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-firestore.js";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-auth.js";
 
-    // URL에서 유저 ID 가져오기
+    // ✅ URL에서 게시글 ID와 게시판 이름 가져오기
     const urlParams = new URLSearchParams(window.location.search);
-    const userId = urlParams.get("id");
+    const postId = urlParams.get("id");
+    const board = urlParams.get("board");
 
-    if (!userId) {
+    if (!postId || !board) {
       alert("잘못된 접근입니다.");
-      window.location.href = "start.html";
+      window.location.href = "bullboard.html";
     }
+
+    const postTitle = document.getElementById("post-title");
+    const postContent = document.getElementById("post-content");
+    const saveBtn = document.getElementById("save-btn");
+
+    let postData = {}; // 🔹 게시글 데이터를 저장할 변수
 
     async function loadPost() {
       const postRef = doc(db, board, postId);
       const postSnap = await getDoc(postRef);
 
       if (!postSnap.exists()) {
-          alert("게시글을 찾을 수 없습니다.");
-          window.location.href = "bullboard.html";
-          return;
+        alert("게시글을 찾을 수 없습니다.");
+        window.location.href = "bullboard.html";
+        return;
       }
 
-      const postData = postSnap.data();
-      console.log("📌 게시글 데이터:", postData);  // ✅ 게시글 데이터 확인용 로그
+      postData = postSnap.data();
+      console.log("📌 게시글 데이터:", postData); // ✅ 로그 확인
 
-      document.getElementById("post-title").value = postData.title;
-      document.getElementById("post-content").value = postData.content;
+      postTitle.value = postData.title;
+      postContent.value = postData.content;
 
       if (!postData.authorId) {
-          alert("작성자를 찾을 수 없습니다.");
-          return;
+        alert("작성자를 찾을 수 없습니다.");
+        return;
       }
 
-      // Firestore에서 작성자 정보 가져오기
+      // 🔹 Firestore에서 작성자 정보 가져오기
       const userRef = doc(db, "Trickcal_MIniGames", postData.authorId);
       const userSnap = await getDoc(userRef);
 
-      if (userSnap.exists()) {
-          const userData = userSnap.data();
-          console.log("📌 작성자 데이터:", userData);  // ✅ 작성자 데이터 확인용 로그
-          document.getElementById("author-name").textContent = userData.username || "익명";
-          document.getElementById("author-icon").src = userData.profile?.icon || "default-icon.png";
-      } else {
-          document.getElementById("author-name").textContent = "사용자 없음";
+      if (!userSnap.exists()) {
+        alert("사용자를 찾을 수 없습니다.");
+        return;
       }
+
+      console.log("📌 작성자 데이터:", userSnap.data()); // ✅ 로그 확인
     }
-   
+
+    // ✅ 로그인한 사용자와 작성자가 같은지 확인
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        alert("로그인이 필요합니다.");
+        window.location.href = "login.html";
+        return;
+      }
+
+      if (postData.authorId && user.uid !== postData.authorId) {
+        alert("이 게시글을 수정할 권한이 없습니다.");
+        window.location.href = "bullboard.html";
+        return;
+      }
+    });
+
+    // ✅ 게시글 수정 저장하기
+    saveBtn.addEventListener("click", async () => {
+      if (!postTitle.value.trim() || !postContent.value.trim()) {
+        alert("제목과 내용을 입력해주세요.");
+        return;
+      }
+
+      const postRef = doc(db, board, postId);
+
+      try {
+        await updateDoc(postRef, {
+          title: postTitle.value.trim(),
+          content: postContent.value.trim(),
+          updatedAt: new Date(),
+        });
+
+        alert("✅ 게시글이 수정되었습니다!");
+        window.location.href = `post-view.html?id=${postId}&board=${board}`;
+      } catch (error) {
+        console.error("❌ 게시글 수정 오류:", error);
+        alert("🚨 게시글 수정 중 오류가 발생했습니다.");
+      }
+    });
+
+    loadPost();
   </script>
 
 </body>
 </html>
+
