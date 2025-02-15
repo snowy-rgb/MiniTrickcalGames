@@ -59,6 +59,22 @@ async function loadProfile(user) {
         document.getElementById("email-display").textContent = userData.email || user.email || "정보 없음";
         document.getElementById("profile-icon-preview").src = userData.profile?.icon || "default-icon.png";
 
+        // ✅ 가입일(joinday) 표시
+        const joinDateDisplay = document.getElementById("profile-join-date");
+        if (joinDateDisplay) {
+            joinDateDisplay.textContent = userData.joinday
+                ? new Date(userData.joinday.seconds * 1000).toLocaleDateString()
+                : "정보 없음";
+        }
+
+        // ✅ 생일(birthday) 표시
+        const birthdayInput = document.getElementById("profile-birthday");
+        if (birthdayInput) {
+            birthdayInput.value = userData.birthday
+                ? new Date(userData.birthday.seconds * 1000).toISOString().substring(0, 10)
+                : "";
+        }
+
     } else {
         console.log("🚨 새 사용자 → 새 문서 생성");
 
@@ -67,6 +83,7 @@ async function loadProfile(user) {
             username: user.email.split("@")[0],
             introduction: "",
             email: user.email || "비공개",
+            birthday: null,
             joinday: serverTimestamp(), 
             profile: { icon: "default-icon.png" }
         };
@@ -122,40 +139,7 @@ async function saveProfile() {
     }
 }
 
-// **4️⃣ Imgur에 프로필 사진 업로드**
-async function uploadProfilePicture(file) {
-    if (!file) {
-        alert("파일을 선택하세요!");
-        return null;
-    }
-
-    try {
-        const formData = new FormData();
-        formData.append("image", file);
-
-        const response = await fetch("https://api.imgur.com/3/image", {
-            method: "POST",
-            headers: {
-                Authorization: `Client-ID ${IMGUR_CLIENT_ID}`,
-            },
-            body: formData,
-        });
-
-        const data = await response.json();
-        if (data.success) {
-            console.log("📸 사진 업로드 성공! URL:", data.data.link);
-            return data.data.link; 
-        } else {
-            throw new Error("Imgur 업로드 실패");
-        }
-    } catch (error) {
-        console.error("❌ 사진 업로드 오류:", error);
-        alert("🚨 사진 업로드 중 오류가 발생했습니다.");
-        return null;
-    }
-}
-
-// **5️⃣ 로그인 감지 후 `customUID` 사용**
+// **4️⃣ 로그인 감지 후 `customUID` 사용**
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         await loadProfile(user);
@@ -164,7 +148,7 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
-// **6️⃣ 이벤트 리스너 설정**
+// **5️⃣ 이벤트 리스너 설정**
 document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("save-profile").addEventListener("click", saveProfile);
 
@@ -192,5 +176,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 });
+
 
 
