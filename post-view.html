@@ -106,7 +106,7 @@
 <body>
 
   <!-- 🔙 돌아가기 버튼 -->
-  <div class="back-button" onclick="bullboard.html">← 돌아가기</div>
+  <div class="back-button" id="backbtn">← 돌아가기</div>
 
   <div class="container">
     <h2 id="post-title">게시글 제목</h2>
@@ -212,6 +212,11 @@
     }
 
     loadPost();
+  </script>
+  <script>
+    document.getElementById("backbtn").addEventListener("click", () => {
+      window.location.href = "bullboard.html";
+    });
   </script>
 
 </body>
