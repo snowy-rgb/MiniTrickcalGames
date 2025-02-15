@@ -139,8 +139,10 @@
   <script type="module">
     import { db, auth } from "./auth.js";
     import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-firestore.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-storage.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-auth.js";
 
+    const storage = getStorage(); // ✅ Firebase Storage 초기화
     const urlParams = new URLSearchParams(window.location.search);
     let boardType = urlParams.get("board") || "community_posts";
 
@@ -150,46 +152,69 @@
     const submitBtn = document.getElementById("submit-btn");
     const cancelBtn = document.getElementById("cancel-btn");
 
+    // 🔹 파일을 Firebase Storage에 업로드 후 다운로드 URL 가져오기
+    async function uploadFiles(files) {
+        const urls = [];
+        for (const file of files) {
+            const storageRef = ref(storage, `uploads/${Date.now()}_${file.name}`);
+            await uploadBytes(storageRef, file);
+            const fileURL = await getDownloadURL(storageRef);
+            urls.push(fileURL);
+        }
+        return urls;
+    }
+
     submitBtn.addEventListener("click", async () => {
-      const title = document.getElementById("post-title").value.trim();
-      const content = document.getElementById("post-content").value.trim();
-      const tags = document.getElementById("tag-input").value
-        .split("#")
-        .map(tag => tag.trim())
-        .filter(tag => tag !== "");
+        const title = document.getElementById("post-title").value.trim();
+        const content = document.getElementById("post-content").value.trim();
+        const tags = document.getElementById("tag-input").value
+          .split("#")
+          .map(tag => tag.trim())
+          .filter(tag => tag !== "");
 
-      if (!title || !content) {
-        alert("🚨 제목과 내용을 입력해주세요!");
-        return;
-      }
+        if (!title || !content) {
+            alert("🚨 제목과 내용을 입력해주세요!");
+            return;
+        }
 
-      const user = auth.currentUser;
-      if (!user) {
-        alert("🚨 로그인한 사용자만 글을 작성할 수 있습니다.");
-        return;
-      }
+        const user = auth.currentUser;
+        if (!user) {
+            alert("🚨 로그인한 사용자만 글을 작성할 수 있습니다.");
+            return;
+        }
 
-      try {
-        await addDoc(collection(db, boardType), {
-          title,
-          content,
-          tags,
-          authorId: user.uid,
-          createdAt: serverTimestamp(),
-        });
+        // 🔥 이미지 & 비디오 파일 업로드
+        const imageFiles = document.getElementById("image-upload").files;
+        const videoFiles = document.getElementById("video-upload").files;
 
-        alert("✅ 게시글이 등록되었습니다!");
-        window.location.href = "bullboard.html";
-      } catch (error) {
-        console.error("❌ 게시글 저장 오류:", error);
-        alert("🚨 게시글 저장 중 오류가 발생했습니다.");
-      }
+        const imageUrls = await uploadFiles(imageFiles);
+        const videoUrls = await uploadFiles(videoFiles);
+        const mediaUrls = [...imageUrls, ...videoUrls]; // 🔹 사진 & 비디오 URL 배열
+
+        try {
+            await addDoc(collection(db, boardType), {
+                title,
+                content,
+                tags,
+                authorId: user.uid,
+                createdAt: serverTimestamp(),
+                media: mediaUrls // ✅ Firestore에 이미지/비디오 저장
+            });
+
+            alert("✅ 게시글이 등록되었습니다!");
+            window.location.href = "bullboard.html";
+        } catch (error) {
+            console.error("❌ 게시글 저장 오류:", error);
+            alert("🚨 게시글 저장 중 오류가 발생했습니다.");
+        }
     });
 
     cancelBtn.addEventListener("click", () => {
-      window.location.href = "bullboard.html";
+        window.location.href = "bullboard.html";
     });
+
   </script>
+
 
   <script>
     function changeFontSize() {
