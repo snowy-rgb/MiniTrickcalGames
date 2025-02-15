@@ -20,9 +20,11 @@
       background: white;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
       border-radius: 10px;
+      text-align: left;
     }
 
     h2 {
+      text-align: center;
       margin-bottom: 20px;
     }
 
@@ -32,6 +34,32 @@
       margin: 10px 0;
       border: 1px solid #ccc;
       border-radius: 5px;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .toolbar button {
+      padding: 8px;
+      border: none;
+      background: #ddd;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+
+    .toolbar button:hover {
+      background: #bbb;
+    }
+
+    .tag-input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      margin-top: 10px;
     }
 
     .button-container {
@@ -65,6 +93,11 @@
     .cancel-button:hover {
       background-color: #c9302c;
     }
+
+    .preview img {
+      max-width: 100%;
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
@@ -76,7 +109,26 @@
     <p id="board-label">📢 개발자 공지</p>
 
     <input type="text" id="post-title" placeholder="제목을 입력하세요">
+    
+    <!-- ✅ 툴바 추가 -->
+    <div class="toolbar">
+      <button onclick="document.getElementById('image-upload').click()">🖼 사진</button>
+      <button onclick="document.getElementById('video-upload').click()">🎥 비디오</button>
+      <button onclick="changeFontSize()">🔠 글자 크기</button>
+      <button onclick="changeFontColor()">🎨 글자 색</button>
+    </div>
+
+    <!-- ✅ 파일 업로드 (숨김 처리) -->
+    <input type="file" id="image-upload" accept="image/*" style="display:none">
+    <input type="file" id="video-upload" accept="video/*" style="display:none">
+    
+    <!-- ✅ 미리보기 영역 -->
+    <div class="preview" id="preview"></div>
+
     <textarea id="post-content" placeholder="내용을 입력하세요" rows="5"></textarea>
+
+    <!-- ✅ 태그 입력 -->
+    <input type="text" id="tag-input" class="tag-input" placeholder="태그 입력 (#으로 구분, 최대 10개)">
 
     <!-- ✅ 버튼 추가 (등록, 취소) -->
     <div class="button-container">
@@ -100,9 +152,15 @@
     document.getElementById("submit-btn").addEventListener("click", async () => {
       const title = document.getElementById("post-title").value.trim();
       const content = document.getElementById("post-content").value.trim();
+      const tags = document.getElementById("tag-input").value.trim().split(/\s*#\s*/).filter(Boolean);
 
       if (!title || !content) {
         alert("🚨 제목과 내용을 입력해주세요!");
+        return;
+      }
+
+      if (tags.length > 10) {
+        alert("🚨 태그는 최대 10개까지 입력할 수 있습니다!");
         return;
       }
 
@@ -112,15 +170,55 @@
         return;
       }
 
-      await savePost(boardType, title, content, user.email);
+      await savePost(boardType, title, content, tags, user.email);
     });
 
     // ✅ 취소 버튼 클릭 시 게시판으로 돌아가기
     document.getElementById("cancel-btn").addEventListener("click", () => {
       window.location.href = "bullboard.html";
     });
+
+    // ✅ 파일 업로드 미리보기
+    document.getElementById("image-upload").addEventListener("change", (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          document.getElementById("preview").innerHTML = `<img src="${e.target.result}" alt="이미지 미리보기">`;
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    document.getElementById("video-upload").addEventListener("change", (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          document.getElementById("preview").innerHTML = `<video controls><source src="${e.target.result}" type="${file.type}"></video>`;
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // ✅ 글자 크기 변경
+    function changeFontSize() {
+      const newSize = prompt("변경할 글자 크기를 입력하세요 (예: 16px, 1.2em)");
+      if (newSize) {
+        document.getElementById("post-content").style.fontSize = newSize;
+      }
+    }
+
+    // ✅ 글자 색상 변경
+    function changeFontColor() {
+      const newColor = prompt("변경할 글자 색상을 입력하세요 (예: red, #ff0000)");
+      if (newColor) {
+        document.getElementById("post-content").style.color = newColor;
+      }
+    }
   </script>
 
 </body>
 </html>
+
 
