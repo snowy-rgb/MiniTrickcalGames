@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>사용자 프로필</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .container {
+      max-width: 500px;
+      margin: auto;
+      padding: 20px;
+      background: white;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      border-radius: 10px;
+    }
+
+    .profile-img {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid gray;
+    }
+
+    .username {
+      font-size: 20px;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    .bio {
+      font-size: 14px;
+      color: gray;
+      margin-top: 10px;
+    }
+
+    .back-button {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background-color: gray;
+      padding: 8px 12px;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 🔙 돌아가기 버튼 -->
+  <div class="back-button" onclick="history.back()">← 돌아가기</div>
+
+  <div class="container">
+    <img id="profile-img" class="profile-img" src="default-icon.png" alt="프로필 이미지">
+    <div id="username" class="username">알 수 없는 사용자</div>
+    <div id="bio" class="bio">사용자 정보를 불러오는 중...</div>
+  </div>
+
+  <script type="module">
+    import { db } from "./auth.js";
+    import { doc, getDoc } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-firestore.js";
+
+    // URL에서 유저 ID 가져오기
+    const urlParams = new URLSearchParams(window.location.search);
+    const userId = urlParams.get("id");
+
+    if (!userId) {
+      alert("잘못된 접근입니다.");
+      window.location.href = "start.html";
+    }
+
+    async function loadUserProfile() {
+      try {
+        const userRef = doc(db, "Trickcal_MIniGames", userId);
+        const userSnap = await getDoc(userRef);
+
+        if (!userSnap.exists()) {
+          document.getElementById("username").textContent = "사용자 없음";
+          document.getElementById("bio").textContent = "해당 사용자를 찾을 수 없습니다.";
+          return;
+        }
+
+        const userData = userSnap.data();
+        document.getElementById("profile-img").src = userData.profile?.icon || "default-icon.png";
+        document.getElementById("username").textContent = userData.profile?.username || "알 수 없는 사용자";
+        document.getElementById("bio").textContent = userData.introduction || "자기소개가 없습니다.";
+
+      } catch (error) {
+        console.error("🚨 프로필 로딩 오류:", error);
+        document.getElementById("bio").textContent = "프로필 정보를 불러올 수 없습니다.";
+      }
+    }
+
+    loadUserProfile();
+  </script>
+
+</body>
+</html>
