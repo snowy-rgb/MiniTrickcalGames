@@ -18,8 +18,8 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// ✅ Imgur API 설정 (여기 Client ID를 변경해야 함)
-const IMGUR_CLIENT_ID = "YOUR_IMGUR_CLIENT_ID";  // 🛑 여기에 Imgur Client ID 입력
+// ✅ Imgur API 설정 (변경 필요)
+const IMGUR_CLIENT_ID = "YOUR_IMGUR_CLIENT_ID";  
 
 // **1️⃣ Firestore에서 프로필 데이터 불러오기**
 async function loadProfile(user) {
@@ -65,7 +65,7 @@ async function loadProfile(user) {
       introduction: "",
       email: user.email || "비공개",
       birthday: null,
-      joinday: serverTimestamp(), // Firestore 자동 시간 기록
+      joinday: serverTimestamp(), 
       profile: { icon: "default-icon.png" }
     };
 
@@ -93,7 +93,7 @@ async function saveProfile() {
 
   // ✅ 기존 `joinday` 값 유지
   const existingData = await getDoc(userDocRef);
-  let joinDate = serverTimestamp(); // 기본값
+  let joinDate = serverTimestamp(); 
   if (existingData.exists() && existingData.data().joinday) {
     joinDate = existingData.data().joinday;
   }
@@ -105,7 +105,7 @@ async function saveProfile() {
       ? new Date(document.getElementById("profile-birthday").value)
       : null,
     email: document.getElementById("email-visibility")?.checked ? user.email : "비공개",
-    joinday: joinDate,  // ✅ 기존 값 유지
+    joinday: joinDate,  
     profile: { icon: iconURL }
   };
 
@@ -141,7 +141,7 @@ async function uploadProfilePicture(file) {
     const data = await response.json();
     if (data.success) {
       console.log("📸 사진 업로드 성공! URL:", data.data.link);
-      return data.data.link; // ✅ 업로드된 URL 반환
+      return data.data.link; 
     } else {
       throw new Error("Imgur 업로드 실패");
     }
@@ -188,3 +188,4 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
+
