@@ -58,6 +58,32 @@
       white-space: pre-wrap;
     }
 
+    .post-tags {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #555;
+    }
+
+    .post-tags .tag {
+      display: inline-block;
+      background: #eee;
+      padding: 5px 10px;
+      margin-right: 5px;
+      border-radius: 5px;
+      font-size: 13px;
+    }
+
+    .post-media {
+      margin-top: 15px;
+    }
+
+    .post-media img, .post-media video, .post-media audio {
+      max-width: 100%;
+      display: block;
+      margin-top: 5px;
+      border-radius: 5px;
+    }
+
     .button-container {
       display: flex;
       justify-content: space-between;
@@ -108,9 +134,6 @@
   <!-- 🔙 돌아가기 버튼 -->
   <div class="back-button" id="backbtn">← 돌아가기</div>
 
-  <div class="post-tags" id="post-tags"></div>
-  <div class="post-media" id="post-media"></div>
-
   <div class="container">
     <h2 id="post-title">게시글 제목</h2>
     <div class="post-meta">
@@ -120,6 +143,11 @@
       </div>
       <span id="post-date">작성일</span>
     </div>
+
+    <!-- 태그 및 미디어 -->
+    <div class="post-tags" id="post-tags"></div>
+    <div class="post-media" id="post-media"></div>
+
     <div class="post-content" id="post-content">게시글 내용</div>
 
     <!-- 수정 및 삭제 버튼 -->
@@ -149,28 +177,12 @@
     const authorName = document.getElementById("author-name");
     const postDate = document.getElementById("post-date");
     const postContent = document.getElementById("post-content");
+    const postTags = document.getElementById("post-tags");
+    const postMedia = document.getElementById("post-media");
     const editBtn = document.getElementById("edit-btn");
     const deleteBtn = document.getElementById("delete-btn");
-    const postTags = document.getElementById("post-tags");
 
-    if (postData.tags && postData.tags.length > 0) {
-      postTags.innerHTML = postData.tags.map(tag => `<span class="tag">#${tag}</span>`).join(" ");
-    }
-
-    const postMedia = document.getElementById("post-media");
-    if (postData.media && postData.media.length > 0) {
-      postData.media.forEach(mediaUrl => {
-        if (mediaUrl.endsWith(".mp4") || mediaUrl.endsWith(".webm")) {
-          postMedia.innerHTML += `<video controls src="${mediaUrl}"></video>`;
-        } else if (mediaUrl.endsWith(".mp3") || mediaUrl.endsWith(".wav")) {
-          postMedia.innerHTML += `<audio controls src="${mediaUrl}"></audio>`;
-        } else {
-          postMedia.innerHTML += `<img src="${mediaUrl}" alt="업로드된 이미지">`;
-        }
-      });
-    }
-
-    let postData = {}; // 🔹 전역 변수로 게시글 데이터 저장
+    let postData = {}; 
 
     async function loadPost() {
       const postRef = doc(db, board, postId);
@@ -182,17 +194,16 @@
           return;
       }
 
-      postData = postSnap.data(); // 🔹 전역 변수에 저장
+      postData = postSnap.data(); 
       postTitle.textContent = postData.title;
       postDate.textContent = `📅 ${new Date(postData.createdAt.seconds * 1000).toLocaleString()}`;
-      postContent.textContent = postData.content;
+      postContent.innerHTML = postData.content; 
 
       if (!postData.authorId) {
           authorName.textContent = "알 수 없는 사용자";
           return;
       }
 
-      // 🔹 Firestore에서 `authorId`(customUID) 기반으로 작성자 정보 가져오기
       const userRef = doc(db, "Trickcal_MIniGames", postData.authorId);
       const userSnap = await getDoc(userRef);
 
@@ -207,7 +218,24 @@
           authorName.textContent = "알 수 없는 사용자";
       }
 
-      // 🔹 게시글 로드가 끝난 후 로그인 상태 확인 (버튼 활성화)
+      // ✅ 태그 추가
+      if (postData.tags && postData.tags.length > 0) {
+        postTags.innerHTML = postData.tags.map(tag => `<span class="tag">#${tag}</span>`).join(" ");
+      }
+
+      // ✅ 미디어 추가
+      if (postData.media && postData.media.length > 0) {
+        postMedia.innerHTML = postData.media.map(mediaUrl => {
+          if (mediaUrl.endsWith(".mp4") || mediaUrl.endsWith(".webm")) {
+            return `<video controls src="${mediaUrl}"></video>`;
+          } else if (mediaUrl.endsWith(".mp3") || mediaUrl.endsWith(".wav")) {
+            return `<audio controls src="${mediaUrl}"></audio>`;
+          } else {
+            return `<img src="${mediaUrl}" alt="업로드된 이미지">`;
+          }
+        }).join("");
+      }
+
       checkUserPermissions();
     }
 
@@ -216,31 +244,12 @@
         if (user && postData.authorId && user.uid === postData.authorId) {
           editBtn.style.display = "inline-block";
           deleteBtn.style.display = "inline-block";
-
-          editBtn.onclick = () => {
-            window.location.href = `post-edit.html?id=${postId}&board=${board}`;
-          };
-
-          deleteBtn.onclick = async () => {
-            if (confirm("정말 삭제하시겠습니까?")) {
-              await deleteDoc(doc(db, board, postId));
-              alert("게시글이 삭제되었습니다.");
-              window.location.href = "bullboard.html";
-            }
-          };
         }
       });
     }
 
     loadPost();
   </script>
-  <script>
-    document.getElementById("backbtn").addEventListener("click", () => {
-      window.location.href = "bullboard.html";
-    });
-  </script>
 
 </body>
 </html>
-
-
