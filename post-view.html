@@ -126,68 +126,72 @@
     </div>
   </div>
 
-  <script type="module">
-    import { db, auth } from "./auth.js";
-    import { getFirestore, doc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-firestore.js";
-    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-auth.js";
+    <script type="module">
+      import { db, auth } from "./auth.js";
+      import { getFirestore, doc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-firestore.js";
+      import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-auth.js";
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const postId = urlParams.get("id");
-    const board = urlParams.get("board"); // "dev_notices" or "community_posts"
+      const urlParams = new URLSearchParams(window.location.search);
+      const postId = urlParams.get("id");
+      const board = urlParams.get("board"); // "dev_notices" or "community_posts"
 
-    if (!postId || !board) {
-      alert("잘못된 접근입니다.");
-      window.location.href = "bullboard.html";
-    }
+      if (!postId || !board) {
+        alert("잘못된 접근입니다.");
+        window.location.href = "bullboard.html";
+      }
 
-    const postTitle = document.getElementById("post-title");
-    const postAuthor = document.getElementById("post-author");
-    const authorIcon = document.getElementById("author-icon");
-    const authorName = document.getElementById("author-name");
-    const postDate = document.getElementById("post-date");
-    const postContent = document.getElementById("post-content");
-    const editBtn = document.getElementById("edit-btn");
-    const deleteBtn = document.getElementById("delete-btn");
+      const postTitle = document.getElementById("post-title");
+      const postAuthor = document.getElementById("post-author");
+      const authorIcon = document.getElementById("author-icon");
+      const authorName = document.getElementById("author-name");
+      const postDate = document.getElementById("post-date");
+      const postContent = document.getElementById("post-content");
+      const editBtn = document.getElementById("edit-btn");
+      const deleteBtn = document.getElementById("delete-btn");
 
-    async function loadPost() {
-      const postRef = doc(db, board, postId);
-      const postSnap = await getDoc(postRef);
+      let postData = {}; // 🔹 전역 변수로 게시글 데이터를 저장
 
-      if (!postSnap.exists()) {
+      async function loadPost() {
+        const postRef = doc(db, board, postId);
+        const postSnap = await getDoc(postRef);
+
+        if (!postSnap.exists()) {
           alert("게시글을 찾을 수 없습니다.");
           window.location.href = "bullboard.html";
           return;
-      }
+        }
 
-      const data = postSnap.data();
-      postTitle.textContent = data.title;
-      postDate.textContent = `📅 ${new Date(data.createdAt.seconds * 1000).toLocaleString()}`;
-      postContent.textContent = data.content;
+        postData = postSnap.data(); // 🔹 게시글 데이터를 전역 변수에 저장
+        postTitle.textContent = postData.title;
+        postDate.textContent = `📅 ${new Date(postData.createdAt.seconds * 1000).toLocaleString()}`;
+        postContent.textContent = postData.content;
 
-      if (!data.authorId) {
+        if (!postData.authorId) {
           authorName.textContent = "알 수 없는 사용자";
           return;
-      }
+        }
 
-      // 🔹 Trickcal_MIniGames 컬렉션에서 작성자 정보 가져오기
-      const userRef = doc(db, "Trickcal_MIniGames", data.authorId);
-      const userSnap = await getDoc(userRef);
+        // 🔹 Trickcal_MIniGames 컬렉션에서 작성자 정보 가져오기
+        const userRef = doc(db, "Trickcal_MIniGames", postData.authorId);
+        const userSnap = await getDoc(userRef);
 
-      if (userSnap.exists()) {
+        if (userSnap.exists()) {
           const userData = userSnap.data();
           authorIcon.src = userData.profile?.icon || "default-icon.png";
           authorName.textContent = userData.username || "익명";
           postAuthor.onclick = () => {
-              window.location.href = `profile.html?uid=${data.authorId}`;
+            window.location.href = `profile.html?uid=${postData.authorId}`;
           };
-      } else {
+        } else {
           authorName.textContent = "알 수 없는 사용자";
+        }
       }
-    }
+
+      loadPost();
 
       // 🔹 현재 로그인한 사용자와 게시글 작성자가 같을 경우 수정/삭제 버튼 표시
       onAuthStateChanged(auth, (user) => {
-        if (user && user.uid === data.authorId) {
+        if (user && postData.authorId && user.uid === postData.authorId) {
           editBtn.style.display = "inline-block";
           deleteBtn.style.display = "inline-block";
 
@@ -197,17 +201,16 @@
 
           deleteBtn.onclick = async () => {
             if (confirm("정말 삭제하시겠습니까?")) {
-              await deleteDoc(postRef);
+              await deleteDoc(doc(db, board, postId));
               alert("게시글이 삭제되었습니다.");
               window.location.href = "bullboard.html";
             }
           };
         }
       });
-    }
 
-    loadPost();
   </script>
+
 
 </body>
 </html>
