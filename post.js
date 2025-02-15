@@ -1,32 +1,32 @@
-import { db } from "./auth.js";
-import {
-  collection,
-  getDocs,
-  addDoc,
-  orderBy,
-  query,
-  serverTimestamp
+import { db, auth } from "./auth.js";  // ✅ auth.js에서 auth 가져오기
+import { 
+    collection, 
+    getDocs, 
+    addDoc, 
+    orderBy, 
+    query, 
+    serverTimestamp 
 } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-firestore.js";
 
 // ✅ 게시글 저장 함수
 export async function savePost(boardType, title, content) {
     try {
-        const user = auth.currentUser;
-        if (!user) {
-            alert("🚨 로그인 후 작성해주세요!");
-            return;
+        if (!boardType || (boardType !== "dev_notices" && boardType !== "community_posts")) {
+            throw new Error("🚨 올바른 게시판을 선택하세요!");
         }
 
-        // 🔹 Firestore에서 `customUID` 가져오기
-        const userDocRef = doc(db, "Trickcal_MIniGames", user.uid);
-        const userDocSnap = await getDoc(userDocRef);
-        const customUID = userDocSnap.exists() ? userDocSnap.data().customUID || user.uid : user.uid;
+        // ✅ 현재 로그인한 사용자의 UID 가져오기
+        const user = auth.currentUser;
+        if (!user) {
+            throw new Error("🚨 로그인이 필요합니다!");
+        }
 
+        // ✅ Firestore에 게시글 저장
         const postCollection = collection(db, boardType);
-        await addDoc(postCollection, {
+        await addDoc(postCollection, {  
             title: title.trim(),
             content: content.trim(),
-            authorId: customUID,  // ✅ `customUID`를 저장
+            authorId: user.uid,  // 🔹 게시글 작성자 ID 저장
             createdAt: serverTimestamp()
         });
 
@@ -35,7 +35,7 @@ export async function savePost(boardType, title, content) {
 
     } catch (error) {
         console.error("❌ 게시글 저장 오류:", error);
-        alert("🚨 게시글 저장 중 오류가 발생했습니다.");
+        alert("🚨 게시글 저장 중 오류가 발생했습니다: " + error.message);
     }
 }
 
