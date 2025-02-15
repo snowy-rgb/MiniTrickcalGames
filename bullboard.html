@@ -125,11 +125,12 @@
   <script type="module">
     import { loadPosts } from "./post.js"; // ✅ 올바르게 import
 
-    let currentBoard = "community_posts"; // 기본적으로 자유게시판
+    window.currentBoard = "community_posts"; // 기본적으로 자유게시판
 
-    // ✅ 게시판 변경 시 실행되는 함수 (window에 등록)
+  // ✅ 게시판 변경 시 실행되는 함수 (window에 등록)
     window.switchBoard = function (board) {
-      currentBoard = board;
+      window.currentBoard = board; // 🔹 전역 변수로 등록하여 어디서든 사용 가능!
+    
       document.getElementById("devTab").classList.toggle("active", board === "dev_notices");
       document.getElementById("freeTab").classList.toggle("active", board === "community_posts");
 
@@ -138,12 +139,13 @@
 
     // ✅ 페이지 로드 시 기본 게시판 불러오기
     document.addEventListener("DOMContentLoaded", () => {
-      switchBoard(currentBoard);
+      switchBoard(window.currentBoard);
     });
   </script>
   <script>
     document.getElementById("write-btn").addEventListener("click", () => {
-      window.location.href = "post.html";
+      console.log("현재 선택된 게시판:", currentBoard); // 디버깅용
+      window.location.href = `post.html?board=${currentBoard}`;
     });
   </script>
 
