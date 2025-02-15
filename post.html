@@ -94,9 +94,14 @@
       background-color: #c9302c;
     }
 
-    .preview img {
-      max-width: 100%;
+    .preview {
       margin-top: 10px;
+    }
+
+    .preview img, .preview video, .preview audio {
+      max-width: 100%;
+      display: block;
+      margin-top: 5px;
     }
   </style>
 </head>
@@ -105,12 +110,10 @@
   <div class="container">
     <h2>게시글 작성</h2>
 
-    <!-- 📌 게시판 종류 자동 표시 -->
     <p id="board-label">📢 개발자 공지</p>
 
     <input type="text" id="post-title" placeholder="제목을 입력하세요">
     
-    <!-- ✅ 툴바 추가 -->
     <div class="toolbar">
       <button onclick="document.getElementById('image-upload').click()">🖼 사진</button>
       <button onclick="document.getElementById('video-upload').click()">🎥 비디오</button>
@@ -118,90 +121,22 @@
       <button onclick="changeFontColor()">🎨 글자 색</button>
     </div>
 
-    <!-- ✅ 파일 업로드 (숨김 처리) -->
-    <input type="file" id="image-upload" accept="image/*" style="display:none">
-    <input type="file" id="video-upload" accept="video/*" style="display:none">
+    <input type="file" id="image-upload" accept="image/*" multiple style="display:none">
+    <input type="file" id="video-upload" accept="video/*" multiple style="display:none">
     
-    <!-- ✅ 미리보기 영역 -->
     <div class="preview" id="preview"></div>
 
     <textarea id="post-content" placeholder="내용을 입력하세요" rows="5"></textarea>
 
-    <!-- ✅ 태그 입력 -->
     <input type="text" id="tag-input" class="tag-input" placeholder="태그 입력 (#으로 구분, 최대 10개)">
 
-    <!-- ✅ 버튼 추가 (등록, 취소) -->
     <div class="button-container">
       <button class="submit-button" id="submit-btn">게시글 등록</button>
       <button class="cancel-button" id="cancel-btn">취소</button>
     </div>
   </div>
 
-  <script type="module">
-    import { savePost } from "./post.js";
-    import { auth } from "./auth.js";
-
-    // ✅ URL에서 게시판 종류 가져오기
-    const urlParams = new URLSearchParams(window.location.search);
-    let boardType = urlParams.get("board") || "community_posts";
-
-    // ✅ 게시판 이름 표시
-    document.getElementById("board-label").textContent = 
-      boardType === "dev_notices" ? "📢 개발자 공지" : "💬 자유 게시판";
-
-    document.getElementById("submit-btn").addEventListener("click", async () => {
-      const title = document.getElementById("post-title").value.trim();
-      const content = document.getElementById("post-content").value.trim();
-      const tags = document.getElementById("tag-input").value.trim().split(/\s*#\s*/).filter(Boolean);
-
-      if (!title || !content) {
-        alert("🚨 제목과 내용을 입력해주세요!");
-        return;
-      }
-
-      if (tags.length > 10) {
-        alert("🚨 태그는 최대 10개까지 입력할 수 있습니다!");
-        return;
-      }
-
-      const user = auth.currentUser;
-      if (!user) {
-        alert("🚨 로그인한 사용자만 글을 작성할 수 있습니다.");
-        return;
-      }
-
-      await savePost(boardType, title, content, tags, user.email);
-    });
-
-    // ✅ 취소 버튼 클릭 시 게시판으로 돌아가기
-    document.getElementById("cancel-btn").addEventListener("click", () => {
-      window.location.href = "bullboard.html";
-    });
-
-    // ✅ 파일 업로드 미리보기
-    document.getElementById("image-upload").addEventListener("change", (event) => {
-      const file = event.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          document.getElementById("preview").innerHTML = `<img src="${e.target.result}" alt="이미지 미리보기">`;
-        };
-        reader.readAsDataURL(file);
-      }
-    });
-
-    document.getElementById("video-upload").addEventListener("change", (event) => {
-      const file = event.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          document.getElementById("preview").innerHTML = `<video controls><source src="${e.target.result}" type="${file.type}"></video>`;
-        };
-        reader.readAsDataURL(file);
-      }
-    });
-
-    // ✅ 글자 크기 변경
+  <script>
     function changeFontSize() {
       const newSize = prompt("변경할 글자 크기를 입력하세요 (예: 16px, 1.2em)");
       if (newSize) {
@@ -209,13 +144,40 @@
       }
     }
 
-    // ✅ 글자 색상 변경
     function changeFontColor() {
       const newColor = prompt("변경할 글자 색상을 입력하세요 (예: red, #ff0000)");
       if (newColor) {
         document.getElementById("post-content").style.color = newColor;
       }
     }
+
+    document.getElementById("image-upload").addEventListener("change", (event) => {
+      const preview = document.getElementById("preview");
+      preview.innerHTML = "";
+      Array.from(event.target.files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = document.createElement("img");
+          img.src = e.target.result;
+          preview.appendChild(img);
+        };
+        reader.readAsDataURL(file);
+      });
+    });
+
+    document.getElementById("video-upload").addEventListener("change", (event) => {
+      const preview = document.getElementById("preview");
+      Array.from(event.target.files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const video = document.createElement("video");
+          video.controls = true;
+          video.src = e.target.result;
+          preview.appendChild(video);
+        };
+        reader.readAsDataURL(file);
+      });
+    });
   </script>
 
 </body>
