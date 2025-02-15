@@ -78,27 +78,41 @@
       window.location.href = "start.html";
     }
 
-    async function loadUserProfile() {
-      try {
-        const userRef = doc(db, "Trickcal_MIniGames", userId);
-        const userSnap = await getDoc(userRef);
+    async function loadPost() {
+      const postRef = doc(db, board, postId);
+      const postSnap = await getDoc(postRef);
 
-        if (!userSnap.exists()) {
-          document.getElementById("username").textContent = "사용자 없음";
-          document.getElementById("bio").textContent = "해당 사용자를 찾을 수 없습니다.";
+      if (!postSnap.exists()) {
+          alert("게시글을 찾을 수 없습니다.");
+          window.location.href = "bullboard.html";
           return;
-        }
+      }
 
-        const userData = userSnap.data();
-        document.getElementById("profile-img").src = userData.profile?.icon || "default-icon.png";
-        document.getElementById("username").textContent = userData.profile?.username || "알 수 없는 사용자";
-        document.getElementById("bio").textContent = userData.introduction || "자기소개가 없습니다.";
+      const postData = postSnap.data();
+      console.log("📌 게시글 데이터:", postData);  // ✅ 게시글 데이터 확인용 로그
 
-      } catch (error) {
-        console.error("🚨 프로필 로딩 오류:", error);
-        document.getElementById("bio").textContent = "프로필 정보를 불러올 수 없습니다.";
+      document.getElementById("post-title").value = postData.title;
+      document.getElementById("post-content").value = postData.content;
+
+      if (!postData.authorId) {
+          alert("작성자를 찾을 수 없습니다.");
+          return;
+      }
+
+      // Firestore에서 작성자 정보 가져오기
+      const userRef = doc(db, "Trickcal_MIniGames", postData.authorId);
+      const userSnap = await getDoc(userRef);
+
+      if (userSnap.exists()) {
+          const userData = userSnap.data();
+          console.log("📌 작성자 데이터:", userData);  // ✅ 작성자 데이터 확인용 로그
+          document.getElementById("author-name").textContent = userData.username || "익명";
+          document.getElementById("author-icon").src = userData.profile?.icon || "default-icon.png";
+      } else {
+          document.getElementById("author-name").textContent = "사용자 없음";
       }
     }
+   
 
     loadUserProfile();
   </script>
