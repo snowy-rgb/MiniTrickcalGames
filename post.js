@@ -8,8 +8,8 @@ import {
     serverTimestamp 
 } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-firestore.js";
 
-// ✅ 게시글 저장 함수
-export async function savePost(boardType, title, content) {
+// ✅ 게시글 저장 함수 (이미지 & 비디오 지원)
+export async function savePost(boardType, title, content, mediaUrls, tags) {
     try {
         if (!boardType || (boardType !== "dev_notices" && boardType !== "community_posts")) {
             throw new Error("🚨 올바른 게시판을 선택하세요!");
@@ -27,7 +27,9 @@ export async function savePost(boardType, title, content) {
             title: title.trim(),
             content: content.trim(),
             authorId: user.uid,  // 🔹 게시글 작성자 ID 저장
-            createdAt: serverTimestamp()
+            createdAt: serverTimestamp(),
+            media: mediaUrls || [],  // 🔥 이미지/비디오 URL 저장
+            tags: tags || []          // 🔥 태그 저장
         });
 
         alert("✅ 게시글이 등록되었습니다!");
