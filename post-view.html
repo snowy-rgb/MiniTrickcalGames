@@ -96,6 +96,7 @@
       border: none;
       border-radius: 5px;
       cursor: pointer;
+      display: none;
     }
 
     .edit-button {
@@ -152,8 +153,8 @@
 
     <!-- 수정 및 삭제 버튼 -->
     <div class="button-container">
-      <button class="edit-button" id="edit-btn" style="display: none;">✏ 수정</button>
-      <button class="delete-button" id="delete-btn" style="display: none;">🗑 삭제</button>
+      <button class="edit-button" id="edit-btn">✏ 수정</button>
+      <button class="delete-button" id="delete-btn">🗑 삭제</button>
     </div>
   </div>
 
@@ -164,7 +165,7 @@
 
     const urlParams = new URLSearchParams(window.location.search);
     const postId = urlParams.get("id");
-    const board = urlParams.get("board"); // "dev_notices" or "community_posts"
+    const board = urlParams.get("board"); 
 
     if (!postId || !board) {
       alert("잘못된 접근입니다.");
@@ -218,12 +219,10 @@
           authorName.textContent = "알 수 없는 사용자";
       }
 
-      // ✅ 태그 추가
       if (postData.tags && postData.tags.length > 0) {
         postTags.innerHTML = postData.tags.map(tag => `<span class="tag">#${tag}</span>`).join(" ");
       }
 
-      // ✅ 미디어 추가
       if (postData.media && postData.media.length > 0) {
         postMedia.innerHTML = postData.media.map(mediaUrl => {
           if (mediaUrl.endsWith(".mp4") || mediaUrl.endsWith(".webm")) {
@@ -244,17 +243,25 @@
         if (user && postData.authorId && user.uid === postData.authorId) {
           editBtn.style.display = "inline-block";
           deleteBtn.style.display = "inline-block";
+
+          editBtn.onclick = () => {
+            window.location.href = `post-edit.html?id=${postId}&board=${board}`;
+          };
+
+          deleteBtn.onclick = async () => {
+            if (confirm("정말 삭제하시겠습니까?")) {
+              await deleteDoc(doc(db, board, postId));
+              alert("게시글이 삭제되었습니다.");
+              window.location.href = "bullboard.html";
+            }
+          };
         }
       });
     }
 
     loadPost();
   </script>
-  <script>
-    document.getElementById("backbtn").addEventListener("click", () => {
-      window.location.href = "bullboard.html";
-    });
-  </script>
 
 </body>
 </html>
+
