@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>게시글 작성</title>
+  <title>게시글 수정</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -20,12 +20,6 @@
       background: white;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
       border-radius: 10px;
-      text-align: left;
-    }
-
-    h2 {
-      text-align: center;
-      margin-bottom: 20px;
     }
 
     input, textarea {
@@ -36,30 +30,25 @@
       border-radius: 5px;
     }
 
-    .toolbar {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 10px;
-    }
-
-    .toolbar button {
-      padding: 8px;
-      border: none;
-      background: #ddd;
-      cursor: pointer;
-      border-radius: 5px;
-    }
-
-    .toolbar button:hover {
-      background: #bbb;
-    }
-
-    .tag-input {
-      width: 100%;
-      padding: 8px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
+    .tag-container {
       margin-top: 10px;
+    }
+
+    .tag {
+      display: inline-block;
+      background: #eee;
+      padding: 5px 10px;
+      margin-right: 5px;
+      border-radius: 5px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .media-preview img, .media-preview video, .media-preview audio {
+      max-width: 100%;
+      display: block;
+      margin-top: 10px;
+      border-radius: 5px;
     }
 
     .button-container {
@@ -68,7 +57,7 @@
       margin-top: 20px;
     }
 
-    .submit-button, .cancel-button {
+    .save-button, .cancel-button {
       padding: 10px 15px;
       font-size: 14px;
       border: none;
@@ -76,12 +65,12 @@
       cursor: pointer;
     }
 
-    .submit-button {
+    .save-button {
       background-color: #007bff;
       color: white;
     }
 
-    .submit-button:hover {
+    .save-button:hover {
       background-color: #0056b3;
     }
 
@@ -93,94 +82,146 @@
     .cancel-button:hover {
       background-color: #c9302c;
     }
-
-    .preview {
-      margin-top: 10px;
-    }
-
-    .preview img, .preview video, .preview audio {
-      max-width: 100%;
-      display: block;
-      margin-top: 5px;
-    }
   </style>
 </head>
 <body>
 
   <div class="container">
-    <h2>게시글 작성</h2>
-
-    <p id="board-label">📢 개발자 공지</p>
-
+    <h2>게시글 수정</h2>
     <input type="text" id="post-title" placeholder="제목을 입력하세요">
-    
-    <div class="toolbar">
-      <button onclick="document.getElementById('image-upload').click()">🖼 사진</button>
-      <button onclick="document.getElementById('video-upload').click()">🎥 비디오</button>
-      <button onclick="changeFontSize()">🔠 글자 크기</button>
-      <button onclick="changeFontColor()">🎨 글자 색</button>
-    </div>
-
-    <input type="file" id="image-upload" accept="image/*" multiple style="display:none">
-    <input type="file" id="video-upload" accept="video/*" multiple style="display:none">
-    
-    <div class="preview" id="preview"></div>
-
     <textarea id="post-content" placeholder="내용을 입력하세요" rows="5"></textarea>
 
-    <input type="text" id="tag-input" class="tag-input" placeholder="태그 입력 (#으로 구분, 최대 10개)">
+    <!-- 🔹 태그 추가 -->
+    <div class="tag-container">
+      <input type="text" id="post-tags" placeholder="태그 입력 (쉼표로 구분)">
+      <div id="tag-list"></div>
+    </div>
+
+    <!-- 🔹 미디어 업로드 -->
+    <div class="media-upload">
+      <input type="file" id="media-upload" multiple accept="image/*, video/*, audio/*">
+      <div class="media-preview" id="media-preview"></div>
+    </div>
 
     <div class="button-container">
-      <button class="submit-button" id="submit-btn">게시글 등록</button>
+      <button class="save-button" id="save-btn">저장</button>
       <button class="cancel-button" id="cancel-btn">취소</button>
     </div>
   </div>
 
-  <script>
-    function changeFontSize() {
-      const newSize = prompt("변경할 글자 크기를 입력하세요 (예: 16px, 1.2em)");
-      if (newSize) {
-        document.getElementById("post-content").style.fontSize = newSize;
+  <script type="module">
+    import { db, auth } from "./auth.js";
+    import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-firestore.js";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-auth.js";
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const postId = urlParams.get("id");
+    const board = urlParams.get("board");
+
+    if (!postId || !board) {
+      alert("잘못된 접근입니다.");
+      window.location.href = "bullboard.html";
+    }
+
+    const postTitle = document.getElementById("post-title");
+    const postContent = document.getElementById("post-content");
+    const postTags = document.getElementById("post-tags");
+    const tagList = document.getElementById("tag-list");
+    const mediaUpload = document.getElementById("media-upload");
+    const mediaPreview = document.getElementById("media-preview");
+    const saveBtn = document.getElementById("save-btn");
+    const cancelBtn = document.getElementById("cancel-btn");
+
+    let postData = {}; 
+
+    async function loadPost() {
+      const postRef = doc(db, board, postId);
+      const postSnap = await getDoc(postRef);
+
+      if (!postSnap.exists()) {
+          alert("게시글을 찾을 수 없습니다.");
+          window.location.href = "bullboard.html";
+          return;
+      }
+
+      postData = postSnap.data();
+      postTitle.value = postData.title;
+      postContent.value = postData.content;
+      
+      // 🔹 기존 태그 불러오기
+      if (postData.tags) {
+        postTags.value = postData.tags.join(", ");
+        tagList.innerHTML = postData.tags.map(tag => `<span class="tag">#${tag}</span>`).join(" ");
+      }
+
+      // 🔹 기존 미디어 불러오기
+      if (postData.media) {
+        postData.media.forEach(mediaUrl => {
+          let mediaElement;
+          if (mediaUrl.endsWith(".mp4") || mediaUrl.endsWith(".webm")) {
+            mediaElement = `<video controls src="${mediaUrl}"></video>`;
+          } else if (mediaUrl.endsWith(".mp3") || mediaUrl.endsWith(".wav")) {
+            mediaElement = `<audio controls src="${mediaUrl}"></audio>`;
+          } else {
+            mediaElement = `<img src="${mediaUrl}" alt="업로드된 이미지">`;
+          }
+          mediaPreview.innerHTML += mediaElement;
+        });
       }
     }
 
-    function changeFontColor() {
-      const newColor = prompt("변경할 글자 색상을 입력하세요 (예: red, #ff0000)");
-      if (newColor) {
-        document.getElementById("post-content").style.color = newColor;
+    // 🔹 수정된 내용 저장
+    saveBtn.addEventListener("click", async () => {
+      const title = postTitle.value.trim();
+      const content = postContent.value.trim();
+      const tags = postTags.value.split(",").map(tag => tag.trim()).filter(tag => tag !== "");
+      let mediaFiles = [];
+
+      if (!title || !content) {
+        alert("🚨 제목과 내용을 입력해주세요!");
+        return;
       }
-    }
 
-    document.getElementById("image-upload").addEventListener("change", (event) => {
-      const preview = document.getElementById("preview");
-      preview.innerHTML = "";
-      Array.from(event.target.files).forEach(file => {
+      // 🔹 새로운 미디어 추가 (파일 선택 시)
+      for (let file of mediaUpload.files) {
         const reader = new FileReader();
-        reader.onload = (e) => {
-          const img = document.createElement("img");
-          img.src = e.target.result;
-          preview.appendChild(img);
-        };
         reader.readAsDataURL(file);
-      });
+        reader.onload = () => {
+          mediaFiles.push(reader.result);
+        };
+      }
+
+      // 🔹 기존 미디어 유지
+      if (postData.media) {
+        mediaFiles = [...postData.media, ...mediaFiles];
+      }
+
+      try {
+        const postRef = doc(db, board, postId);
+        await updateDoc(postRef, {
+          title: title,
+          content: content,
+          tags: tags,
+          media: mediaFiles
+        });
+
+        alert("✅ 게시글이 수정되었습니다!");
+        window.location.href = `post-view.html?id=${postId}&board=${board}`;
+      } catch (error) {
+        console.error("❌ 게시글 수정 오류:", error);
+        alert("🚨 게시글 수정 중 오류가 발생했습니다.");
+      }
     });
 
-    document.getElementById("video-upload").addEventListener("change", (event) => {
-      const preview = document.getElementById("preview");
-      Array.from(event.target.files).forEach(file => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const video = document.createElement("video");
-          video.controls = true;
-          video.src = e.target.result;
-          preview.appendChild(video);
-        };
-        reader.readAsDataURL(file);
-      });
+    cancelBtn.addEventListener("click", () => {
+      window.location.href = `post-view.html?id=${postId}&board=${board}`;
     });
+
+    loadPost();
   </script>
 
 </body>
 </html>
+
 
 
