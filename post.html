@@ -222,15 +222,14 @@
             applyFontSize(size);
         }
     }
-
-    // ✅ 선택한 글자의 크기를 적용하는 함수
+    
+    // ✅ 선택한 글자의 크기만 변경하는 함수
     function applyFontSize(size) {
-        const spans = document.querySelectorAll("#post-content font[size='7']");
-        spans.forEach(span => {
-            span.style.fontSize = size;
+        document.querySelectorAll("#post-content font[size='7']").forEach(span => {
+            span.style.fontSize = size; // ✅ 기존 글자의 크기를 개별적으로 변경
         });
     }
-
+    
     // ✅ 글자 색 변경 함수 (선택된 부분만 변경)
     function setFontColor() {
         const color = prompt("변경할 글자 색상을 입력하세요 (예: red, #ff0000)");
@@ -240,11 +239,13 @@
         }
     }
 
-    // ✅ 새로운 입력이 시작될 때 현재 설정된 스타일 유지
+    // ✅ 새로운 입력이 시작될 때 현재 설정된 크기 & 색 유지 (기존 글자 유지됨!)
     document.getElementById("post-content").addEventListener("keydown", (event) => {
-        document.execCommand("fontSize", false, "7"); // 기본 설정 크기
-        applyFontSize(currentFontSize); // ✅ 현재 크기 적용
-        document.execCommand("foreColor", false, currentFontColor); // ✅ 현재 색상 적용
+        if (event.key.length === 1) { // 🔹 글자 입력 시에만 적용
+            document.execCommand("fontSize", false, "7"); // 기본 설정 크기 적용
+            applyFontSize(currentFontSize); // ✅ 현재 크기 적용 (기존 글자는 변경 X)
+            document.execCommand("foreColor", false, currentFontColor); // ✅ 현재 색상 적용
+        }
     });
 
     // ✅ HTML 버튼에 이벤트 리스너 추가
