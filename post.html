@@ -210,24 +210,43 @@
         }
     });
 
-    let currentFontSize = "10px";
+    let currentFontSize = "16px";
     let currentFontColor = "#000000";
 
+    // ✅ 글자 크기 변경 함수 (선택된 부분만 변경)
     function setFontSize() {
         const size = prompt("변경할 글자 크기를 입력하세요 (예: 16px, 1.2em)");
         if (size) {
             currentFontSize = size;
-            document.getElementById("post-content").style.fontSize = currentFontSize;
+            document.execCommand("fontSize", false, "7"); // 기본 글자 크기 설정
+            applyFontSize(size);
         }
     }
 
+    // ✅ 선택한 글자의 크기를 적용하는 함수
+    function applyFontSize(size) {
+        const spans = document.querySelectorAll("#post-content font[size='7']");
+        spans.forEach(span => {
+            span.style.fontSize = size;
+        });
+    }
+
+    // ✅ 글자 색 변경 함수 (선택된 부분만 변경)
     function setFontColor() {
         const color = prompt("변경할 글자 색상을 입력하세요 (예: red, #ff0000)");
         if (color) {
             currentFontColor = color;
-            document.getElementById("post-content").style.color = currentFontColor;
+            document.execCommand("foreColor", false, color);
         }
     }
+
+    // ✅ 새로운 입력이 시작될 때 현재 설정된 스타일 유지
+    document.getElementById("post-content").addEventListener("keydown", (event) => {
+        document.execCommand("fontSize", false, "7"); // 기본 설정 크기
+        applyFontSize(currentFontSize); // ✅ 현재 크기 적용
+        document.execCommand("foreColor", false, currentFontColor); // ✅ 현재 색상 적용
+    });
+
     // ✅ HTML 버튼에 이벤트 리스너 추가
     document.getElementById("font-size-btn").addEventListener("click", setFontSize);
     document.getElementById("font-color-btn").addEventListener("click", setFontColor);
