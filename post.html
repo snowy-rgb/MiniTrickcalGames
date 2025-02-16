@@ -242,6 +242,25 @@
         }
     }
 
+    // ✅ 새로운 글자가 입력될 때 자동으로 설정한 크기와 색 적용
+    document.getElementById("post-content").addEventListener("keydown", (event) => {
+        if (event.key.length === 1) {  // 🔹 문자 입력 시에만 실행
+            setTimeout(() => {
+                document.execCommand("fontSize", false, "7"); // 기본 크기 적용 후
+                document.execCommand("foreColor", false, currentFontColor);
+            
+                const selection = window.getSelection();
+                if (selection.rangeCount) {
+                    const range = selection.getRangeAt(0);
+                    const span = document.createElement("span");
+                    span.style.fontSize = currentFontSize;
+                    span.style.color = currentFontColor;
+                    range.surroundContents(span);
+                }
+            }, 10);
+        }
+    });
+
     // ✅ 새로운 줄이 추가될 때 현재 스타일 유지 (Enter 키 적용)
     document.getElementById("post-content").addEventListener("keydown", (event) => {
         if (event.key === "Enter") {
