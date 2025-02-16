@@ -77,8 +77,25 @@ async function loadProfile(user) {
         document.getElementById("profile-bio").value = userData.introduction || "";
         document.getElementById("email-display").textContent = userData.email || user.email || "정보 없음";
         document.getElementById("profile-icon-preview").src = userData.profile?.icon || "default-icon.png";
+
+        // ✅ 가입일 (joinday) 표시
+        const joinDateDisplay = document.getElementById("profile-join-date");
+        if (joinDateDisplay) {
+            joinDateDisplay.textContent = userData.joinday
+                ? new Date(userData.joinday.seconds * 1000).toLocaleDateString()
+                : "정보 없음";
+        }
+
+        // ✅ 생일 (birthday) 표시
+        const birthdayInput = document.getElementById("profile-birthday");
+        if (birthdayInput) {
+            birthdayInput.value = userData.birthday
+                ? new Date(userData.birthday.seconds * 1000).toISOString().substring(0, 10)
+                : "";
+        }
     }
 }
+
 
 // **📌 프로필 저장**
 async function saveProfile() {
@@ -93,14 +110,26 @@ async function saveProfile() {
     const profileIconPreview = document.getElementById("profile-icon-preview");
     let iconURL = profileIconPreview ? profileIconPreview.src : "default-icon.png";
 
+    // ✅ 기존 `joinday` 값 유지 (가입일)
     const existingData = await getDoc(userDocRef);
-    let joinDate = existingData.exists() && existingData.data().joinday ? existingData.data().joinday : serverTimestamp();
+    let joinDate = serverTimestamp();  // 기본적으로 현재 시간
+    if (existingData.exists() && existingData.data().joinday) {
+        joinDate = existingData.data().joinday;  // 기존 값 유지
+    }
+
+    // ✅ 생일 값 가져오기 (날짜 입력이 있을 경우)
+    let birthdayValue = document.getElementById("profile-birthday")?.value;
+    let birthday = null;
+    if (birthdayValue) {
+        birthday = new Date(birthdayValue);  // ✅ `Date` 객체로 변환
+    }
 
     const profileData = {
         username: document.getElementById("profile-name")?.value || "",
         introduction: document.getElementById("profile-bio")?.value || "",
         email: user.email,
-        joinday: joinDate,
+        joinday: joinDate,  // ✅ 가입일 유지
+        birthday: birthday,  // ✅ 생일 저장
         profile: { icon: iconURL }
     };
 
