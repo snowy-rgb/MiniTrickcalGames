@@ -28,14 +28,6 @@
       margin-bottom: 20px;
     }
 
-    input, textarea {
-      width: 100%;
-      padding: 10px;
-      margin: 10px 0;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-    }
-
     .toolbar {
       display: flex;
       gap: 10px;
@@ -52,6 +44,15 @@
 
     .toolbar button:hover {
       background: #bbb;
+    }
+
+    .editor {
+      width: 100%;
+      min-height: 150px;
+      border: 1px solid #ccc;
+      padding: 10px;
+      outline: none;
+      white-space: pre-wrap;
     }
 
     .tag-input {
@@ -94,11 +95,7 @@
       background-color: #c9302c;
     }
 
-    .preview {
-      margin-top: 10px;
-    }
-
-    .preview img, .preview video {
+    .editor img, .editor video {
       max-width: 100%;
       display: block;
       margin-top: 5px;
@@ -115,18 +112,16 @@
     <input type="text" id="post-title" placeholder="제목을 입력하세요">
     
     <div class="toolbar">
-      <button onclick="document.getElementById('image-upload').click()">🖼 사진</button>
-      <button onclick="document.getElementById('video-upload').click()">🎥 비디오</button>
-      <button onclick="changeFontSize()">🔠 글자 크기</button>
-      <button onclick="changeFontColor()">🎨 글자 색</button>
+      <button onclick="document.getElementById('media-upload').click()">🖼 사진/비디오</button>
+      <button onclick="setFontSize()">🔠 글자 크기</button>
+      <button onclick="setFontColor()">🎨 글자 색</button>
     </div>
 
-    <input type="file" id="image-upload" accept="image/*" multiple style="display:none">
-    <input type="file" id="video-upload" accept="video/*" multiple style="display:none">
+    <input type="file" id="media-upload" accept="image/*,video/*" multiple style="display:none">
     
-    <div class="preview" id="preview"></div>
-
-    <textarea id="post-content" placeholder="내용을 입력하세요" rows="5"></textarea>
+    <div contenteditable="true" id="post-content" class="editor">
+      여기에서 글을 입력하세요...
+    </div>
 
     <input type="text" id="tag-input" class="tag-input" placeholder="태그 입력 (#으로 구분, 최대 10개)">
 
@@ -140,19 +135,14 @@
     import { db, auth } from "./auth.js";
     import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-firestore.js";
     import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-storage.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-auth.js";
-
-    const storage = getStorage(); // ✅ Firebase Storage 초기화
+    
+    const storage = getStorage();
     const urlParams = new URLSearchParams(window.location.search);
     let boardType = urlParams.get("board") || "community_posts";
 
     document.getElementById("board-label").textContent = 
       boardType === "dev_notices" ? "📢 개발자 공지" : "💬 자유 게시판";
 
-    const submitBtn = document.getElementById("submit-btn");
-    const cancelBtn = document.getElementById("cancel-btn");
-
-    // 🔹 파일을 Firebase Storage에 업로드 후 다운로드 URL 가져오기
     async function uploadFiles(files) {
         const urls = [];
         for (const file of files) {
@@ -164,9 +154,9 @@
         return urls;
     }
 
-    submitBtn.addEventListener("click", async () => {
+    document.getElementById("submit-btn").addEventListener("click", async () => {
         const title = document.getElementById("post-title").value.trim();
-        const content = document.getElementById("post-content").value.trim();
+        const content = document.getElementById("post-content").innerHTML;
         const tags = document.getElementById("tag-input").value
           .split("#")
           .map(tag => tag.trim())
@@ -183,13 +173,8 @@
             return;
         }
 
-        // 🔥 이미지 & 비디오 파일 업로드
-        const imageFiles = document.getElementById("image-upload").files;
-        const videoFiles = document.getElementById("video-upload").files;
-
-        const imageUrls = await uploadFiles(imageFiles);
-        const videoUrls = await uploadFiles(videoFiles);
-        const mediaUrls = [...imageUrls, ...videoUrls]; // 🔹 사진 & 비디오 URL 배열
+        const mediaFiles = document.getElementById("media-upload").files;
+        const mediaUrls = await uploadFiles(mediaFiles);
 
         try {
             await addDoc(collection(db, boardType), {
@@ -198,7 +183,7 @@
                 tags,
                 authorId: user.uid,
                 createdAt: serverTimestamp(),
-                media: mediaUrls // ✅ Firestore에 이미지/비디오 저장
+                media: mediaUrls
             });
 
             alert("✅ 게시글이 등록되었습니다!");
@@ -209,59 +194,37 @@
         }
     });
 
-    cancelBtn.addEventListener("click", () => {
+    document.getElementById("cancel-btn").addEventListener("click", () => {
         window.location.href = "bullboard.html";
     });
 
-  </script>
-
-
-  <script>
-    function changeFontSize() {
-      const newSize = prompt("변경할 글자 크기를 입력하세요 (예: 16px, 1.2em)");
-      if (newSize) {
-        document.getElementById("post-content").style.fontSize = newSize;
-      }
-    }
-
-    function changeFontColor() {
-      const newColor = prompt("변경할 글자 색상을 입력하세요 (예: red, #ff0000)");
-      if (newColor) {
-        document.getElementById("post-content").style.color = newColor;
-      }
-    }
-
-    document.getElementById("image-upload").addEventListener("change", (event) => {
-      const preview = document.getElementById("preview");
-      preview.innerHTML = "";
-      Array.from(event.target.files).forEach(file => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const img = document.createElement("img");
-          img.src = e.target.result;
-          preview.appendChild(img);
-        };
-        reader.readAsDataURL(file);
-      });
+    document.getElementById("media-upload").addEventListener("change", async (event) => {
+        for (let file of event.target.files) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const mediaElement = document.createElement(file.type.startsWith("image") ? "img" : "video");
+                mediaElement.src = e.target.result;
+                if (file.type.startsWith("video")) mediaElement.controls = true;
+                document.getElementById("post-content").appendChild(mediaElement);
+            };
+            reader.readAsDataURL(file);
+        }
     });
 
-    document.getElementById("video-upload").addEventListener("change", (event) => {
-      const preview = document.getElementById("preview");
-      Array.from(event.target.files).forEach(file => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const video = document.createElement("video");
-          video.controls = true;
-          video.src = e.target.result;
-          preview.appendChild(video);
-        };
-        reader.readAsDataURL(file);
-      });
-    });
+    function setFontSize() {
+        const size = prompt("변경할 글자 크기를 입력하세요 (예: 16px, 1.2em)");
+        if (size) document.execCommand("fontSize", false, "7");
+    }
+
+    function setFontColor() {
+        const color = prompt("변경할 글자 색상을 입력하세요 (예: red, #ff0000)");
+        if (color) document.execCommand("foreColor", false, color);
+    }
   </script>
 
 </body>
 </html>
+
 
 
 
