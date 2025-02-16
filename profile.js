@@ -22,10 +22,37 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// ✅ Imgur API 설정 (변경 필요)
-const IMGUR_CLIENT_ID = "YOUR_IMGUR_CLIENT_ID";  
+// ✅ Cloudinary API 설정 (클라우드 네임 변경)
+const CLOUDINARY_CLOUD_NAME = "doji3ykrt"; 
+const CLOUDINARY_UPLOAD_PRESET = "MiniTrickcalGames";  
 
-// **1️⃣ Firestore에서 `customUID` 가져오기**
+// **📌 프로필 사진 업로드 함수 추가**
+async function uploadProfilePicture(file) {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+
+    try {
+        const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/upload`, {
+            method: "POST",
+            body: formData,
+        });
+
+        const data = await response.json();
+        if (data.secure_url) {
+            console.log("✅ 프로필 사진 업로드 성공:", data.secure_url);
+            return data.secure_url;
+        } else {
+            console.error("❌ Cloudinary 업로드 실패:", data);
+            return null;
+        }
+    } catch (error) {
+        console.error("❌ Cloudinary 업로드 오류:", error);
+        return null;
+    }
+}
+
+// **📌 Firestore에서 `customUID` 가져오기**
 async function getCustomUID(user) {
     if (!user) return null;
 
@@ -33,13 +60,13 @@ async function getCustomUID(user) {
     const userDocSnap = await getDoc(userDocRef);
 
     if (userDocSnap.exists()) {
-        return userDocSnap.data().customUID || user.uid;  // ✅ 기존 `customUID` 사용
+        return userDocSnap.data().customUID || user.uid;  
     } else {
-        return user.uid; // 기본적으로 `uid` 사용
+        return user.uid;
     }
 }
 
-// **2️⃣ Firestore에서 프로필 데이터 불러오기**
+// **📌 Firestore에서 프로필 데이터 불러오기**
 async function loadProfile(user) {
     if (!user) {
         console.log("🚨 로그인된 사용자가 없습니다.");
@@ -59,7 +86,6 @@ async function loadProfile(user) {
         document.getElementById("email-display").textContent = userData.email || user.email || "정보 없음";
         document.getElementById("profile-icon-preview").src = userData.profile?.icon || "default-icon.png";
 
-        // ✅ 가입일(joinday) 표시
         const joinDateDisplay = document.getElementById("profile-join-date");
         if (joinDateDisplay) {
             joinDateDisplay.textContent = userData.joinday
@@ -67,19 +93,17 @@ async function loadProfile(user) {
                 : "정보 없음";
         }
 
-        // ✅ 생일(birthday) 표시
         const birthdayInput = document.getElementById("profile-birthday");
         if (birthdayInput) {
             birthdayInput.value = userData.birthday
                 ? new Date(userData.birthday.seconds * 1000).toISOString().substring(0, 10)
                 : "";
         }
-
     } else {
         console.log("🚨 새 사용자 → 새 문서 생성");
 
         const newUserData = {
-            customUID: customUID,  // ✅ Firestore에 `customUID` 저장
+            customUID: customUID,  
             username: user.email.split("@")[0],
             introduction: "",
             email: user.email || "비공개",
@@ -93,7 +117,7 @@ async function loadProfile(user) {
     }
 }
 
-// **3️⃣ 프로필 저장 (Firestore에 저장)**
+// **📌 프로필 저장 (Firestore에 저장)**
 async function saveProfile() {
     const user = auth.currentUser;
     if (!user) {
@@ -111,7 +135,6 @@ async function saveProfile() {
     }
     let iconURL = profileIconPreview.src;
 
-    // ✅ 기존 `joinday` 값 유지
     const existingData = await getDoc(userDocRef);
     let joinDate = serverTimestamp(); 
     if (existingData.exists() && existingData.data().joinday) {
@@ -139,7 +162,7 @@ async function saveProfile() {
     }
 }
 
-// **4️⃣ 로그인 감지 후 `customUID` 사용**
+// **📌 로그인 감지 후 `customUID` 사용**
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         await loadProfile(user);
@@ -148,16 +171,14 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
-// **5️⃣ 이벤트 리스너 설정**
+// **📌 이벤트 리스너 설정**
 document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("save-profile").addEventListener("click", saveProfile);
 
-    // ✅ 프로필 사진 클릭 시 파일 선택 창 열기
     document.getElementById("profile-icon").addEventListener("click", () => {
         document.getElementById("profile-icon-input").click();
     });
 
-    // ✅ 프로필 사진 변경 이벤트 리스너 추가
     document.getElementById("profile-icon-input").addEventListener("change", async (event) => {
         const file = event.target.files[0];
         if (!file) return;
@@ -176,6 +197,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 });
+
 
 
 
