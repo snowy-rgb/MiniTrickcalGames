@@ -112,7 +112,8 @@
     <input type="text" id="post-title" placeholder="제목을 입력하세요">
     
     <div class="toolbar">
-      <button onclick="document.getElementById('media-upload').click()">🖼 사진/비디오</button>
+      <input type="file" id="media-upload" accept="image/*,video/*" multiple style="display:none">
+      <button onclick="document.getElementById('media-upload').click()">🖼 사진 / 🎥 비디오 추가</button>
       <button onclick="setFontSize()">🔠 글자 크기</button>
       <button onclick="setFontColor()">🎨 글자 색</button>
     </div>
