@@ -182,22 +182,58 @@
     });
 
     document.getElementById("media-upload").addEventListener("change", async (event) => {
-        for (let file of event.target.files) {
+        const files = event.target.files;
+        if (!files.length) return;
+
+        for (let file of files) {
             const formData = new FormData();
             formData.append("file", file);
-            formData.append("upload_preset", "YOUR_UPLOAD_PRESET"); // Cloudinary 설정 필요
-            formData.append("cloud_name", "YOUR_CLOUD_NAME");
+            formData.append("upload_preset", "MiniTrickcalGames"); // ✅ Cloudinary 업로드 프리셋 적용
 
-            const response = await fetch("https://api.cloudinary.com/v1_1/YOUR_CLOUD_NAME/upload", {
-                method: "POST",
-                body: formData,
-            });
+            try {
+                const response = await fetch("https://api.cloudinary.com/v1_1/doji3ykrt/upload", {
+                    method: "POST",
+                    body: formData,
+                });
 
-            const data = await response.json();
-            if (data.secure_url) {
-                insertMediaIntoEditor(data.secure_url, file.type);
+                const data = await response.json();
+                if (data.secure_url) {
+                    insertMediaIntoEditor(data.secure_url, file.type);
+                } else {
+                    console.error("❌ 업로드 실패:", data);
+                    alert("🚨 미디어 업로드 중 문제가 발생했습니다.");
+                }
+            } catch (error) {
+                console.error("❌ Cloudinary 업로드 오류:", error);
+                alert("🚨 Cloudinary 업로드 중 문제가 발생했습니다.");
             }
         }
+    });
+
+    let currentFontSize = "16px";
+    let currentFontColor = "#000000";
+
+    function setFontSize() {
+        const size = prompt("변경할 글자 크기를 입력하세요 (예: 16px, 1.2em)");
+        if (size) {
+            currentFontSize = size;
+            document.execCommand("fontSize", false, "7");
+            document.querySelector(".editor").style.fontSize = currentFontSize;
+        }
+    }
+
+    function setFontColor() {
+        const color = prompt("변경할 글자 색상을 입력하세요 (예: red, #ff0000)");
+        if (color) {
+            currentFontColor = color;
+            document.execCommand("foreColor", false, currentFontColor);
+        }
+    }
+
+    // 🔥 새로운 글이 추가될 때 현재 설정한 스타일을 유지
+    document.getElementById("post-content").addEventListener("keydown", (event) => {
+        document.execCommand("fontSize", false, "7");
+        document.execCommand("foreColor", false, currentFontColor);
     });
 
     function insertMediaIntoEditor(url, type) {
@@ -211,12 +247,36 @@
         mediaElement.src = url;
         mediaElement.style.maxWidth = "100%";
         mediaElement.style.marginTop = "5px";
-        mediaElement.contentEditable = "false";
+        mediaElement.contentEditable = "false"; // 🔹 직접 수정 불가
         mediaElement.classList.add("media-item");
 
-        editor.appendChild(mediaElement);
-        editor.appendChild(document.createElement("br"));
+        // 🔥 현재 커서 위치에 미디어 삽입
+        const selection = window.getSelection();
+        if (selection.rangeCount > 0) {
+            const range = selection.getRangeAt(0);
+            range.insertNode(mediaElement);
+            range.insertNode(document.createElement("br")); // 줄바꿈 추가
+            selection.collapseToEnd(); // 🔹 커서를 미디어 뒤로 이동
+        } else {
+            editor.appendChild(mediaElement);
+            editor.appendChild(document.createElement("br")); // 줄바꿈 추가
+        }
     }
+
+    document.getElementById("post-content").addEventListener("keydown", (event) => {
+        if (event.key === "Backspace" || event.key === "Delete") {
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                const node = range.startContainer.parentNode;
+
+                if (node.classList.contains("media-item")) {
+                    node.remove(); // 🔥 미디어 삭제
+                    event.preventDefault(); // 기본 동작 방지
+                }
+            }
+        }
+    });
   </script>
 
 </body>
