@@ -218,16 +218,19 @@
         const size = prompt("변경할 글자 크기를 입력하세요 (예: 16px, 1.2em)");
         if (size) {
             currentFontSize = size;
-            document.execCommand("fontSize", false, "7"); // 기본 글자 크기 설정
             applyFontSize(size);
         }
     }
     
     // ✅ 선택한 글자의 크기만 변경하는 함수
     function applyFontSize(size) {
-        document.querySelectorAll("#post-content font[size='7']").forEach(span => {
-            span.style.fontSize = size; // ✅ 기존 글자의 크기를 개별적으로 변경
-        });
+        const selection = window.getSelection();
+        if (!selection.rangeCount) return;
+      
+        const range = selection.getRangeAt(0);
+        const span = document.createElement("span");
+        span.style.fontSize = size;
+        range.surroundContents(span); // 🔥 선택한 글자만 크기 변경
     }
     
     // ✅ 글자 색 변경 함수 (선택된 부분만 변경)
@@ -238,6 +241,26 @@
             document.execCommand("foreColor", false, color);
         }
     }
+
+    // ✅ 새로운 줄이 추가될 때 현재 스타일 유지 (Enter 키 적용)
+    document.getElementById("post-content").addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+            setTimeout(() => {
+                const selection = window.getSelection();
+                if (!selection.rangeCount) return;
+            
+                const range = selection.getRangeAt(0);
+                const newNode = document.createElement("span");
+                newNode.style.fontSize = currentFontSize;
+                newNode.style.color = currentFontColor;
+                newNode.innerHTML = "<br>";
+                range.insertNode(newNode);
+                range.setStartAfter(newNode);
+                selection.removeAllRanges();
+                selection.addRange(range);
+            }, 10);
+        }
+    });
 
     // ✅ 새로운 입력이 시작될 때 현재 설정된 크기 & 색 유지 (기존 글자 유지됨!)
     document.getElementById("post-content").addEventListener("keydown", (event) => {
