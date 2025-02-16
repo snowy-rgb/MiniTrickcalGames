@@ -22,11 +22,11 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// ✅ Cloudinary API 설정 (클라우드 네임 변경)
-const CLOUDINARY_CLOUD_NAME = "doji3ykrt"; 
-const CLOUDINARY_UPLOAD_PRESET = "MiniTrickcalGames";  
+// ✅ Cloudinary API 설정
+const CLOUDINARY_CLOUD_NAME = "doji3ykrt";
+const CLOUDINARY_UPLOAD_PRESET = "MiniTrickcalGames"; 
 
-// **📌 프로필 사진 업로드 함수 추가**
+// 🔥 **📌 uploadProfilePicture 함수 - Cloudinary 업로드**
 async function uploadProfilePicture(file) {
     const formData = new FormData();
     formData.append("file", file);
@@ -52,27 +52,20 @@ async function uploadProfilePicture(file) {
     }
 }
 
+// 🔥 **📌 이 함수를 전역에서 사용할 수 있도록 추가**
+window.uploadProfilePicture = uploadProfilePicture; 
+
 // **📌 Firestore에서 `customUID` 가져오기**
 async function getCustomUID(user) {
     if (!user) return null;
-
     const userDocRef = doc(db, "Trickcal_MIniGames", user.uid);
     const userDocSnap = await getDoc(userDocRef);
-
-    if (userDocSnap.exists()) {
-        return userDocSnap.data().customUID || user.uid;  
-    } else {
-        return user.uid;
-    }
+    return userDocSnap.exists() ? userDocSnap.data().customUID || user.uid : user.uid;
 }
 
 // **📌 Firestore에서 프로필 데이터 불러오기**
 async function loadProfile(user) {
-    if (!user) {
-        console.log("🚨 로그인된 사용자가 없습니다.");
-        return;
-    }
-
+    if (!user) return;
     const customUID = await getCustomUID(user);
     const userDocRef = doc(db, "Trickcal_MIniGames", customUID);
     const userDocSnap = await getDoc(userDocRef);
@@ -80,44 +73,14 @@ async function loadProfile(user) {
     if (userDocSnap.exists()) {
         const userData = userDocSnap.data();
         console.log("✅ 기존 사용자 데이터 불러오기:", userData);
-
         document.getElementById("profile-name").value = userData.username || "";
         document.getElementById("profile-bio").value = userData.introduction || "";
         document.getElementById("email-display").textContent = userData.email || user.email || "정보 없음";
         document.getElementById("profile-icon-preview").src = userData.profile?.icon || "default-icon.png";
-
-        const joinDateDisplay = document.getElementById("profile-join-date");
-        if (joinDateDisplay) {
-            joinDateDisplay.textContent = userData.joinday
-                ? new Date(userData.joinday.seconds * 1000).toLocaleDateString()
-                : "정보 없음";
-        }
-
-        const birthdayInput = document.getElementById("profile-birthday");
-        if (birthdayInput) {
-            birthdayInput.value = userData.birthday
-                ? new Date(userData.birthday.seconds * 1000).toISOString().substring(0, 10)
-                : "";
-        }
-    } else {
-        console.log("🚨 새 사용자 → 새 문서 생성");
-
-        const newUserData = {
-            customUID: customUID,  
-            username: user.email.split("@")[0],
-            introduction: "",
-            email: user.email || "비공개",
-            birthday: null,
-            joinday: serverTimestamp(), 
-            profile: { icon: "default-icon.png" }
-        };
-
-        await setDoc(userDocRef, newUserData);
-        console.log("✅ 새로운 사용자 데이터 저장 완료!");
     }
 }
 
-// **📌 프로필 저장 (Firestore에 저장)**
+// **📌 프로필 저장**
 async function saveProfile() {
     const user = auth.currentUser;
     if (!user) {
@@ -127,28 +90,17 @@ async function saveProfile() {
 
     const customUID = await getCustomUID(user);
     const userDocRef = doc(db, "Trickcal_MIniGames", customUID);
-
-    let profileIconPreview = document.getElementById("profile-icon-preview");
-    if (!profileIconPreview) {
-        console.error("🚨 'profile-icon-preview' 요소를 찾을 수 없습니다.");
-        return;
-    }
-    let iconURL = profileIconPreview.src;
+    const profileIconPreview = document.getElementById("profile-icon-preview");
+    let iconURL = profileIconPreview ? profileIconPreview.src : "default-icon.png";
 
     const existingData = await getDoc(userDocRef);
-    let joinDate = serverTimestamp(); 
-    if (existingData.exists() && existingData.data().joinday) {
-        joinDate = existingData.data().joinday;
-    }
+    let joinDate = existingData.exists() && existingData.data().joinday ? existingData.data().joinday : serverTimestamp();
 
     const profileData = {
         username: document.getElementById("profile-name")?.value || "",
         introduction: document.getElementById("profile-bio")?.value || "",
-        birthday: document.getElementById("profile-birthday")?.value
-            ? new Date(document.getElementById("profile-birthday").value)
-            : null,
-        email: document.getElementById("email-visibility")?.checked ? user.email : "비공개",
-        joinday: joinDate,  
+        email: user.email,
+        joinday: joinDate,
         profile: { icon: iconURL }
     };
 
@@ -175,15 +127,18 @@ onAuthStateChanged(auth, async (user) => {
 document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("save-profile").addEventListener("click", saveProfile);
 
+    // ✅ 프로필 사진 클릭 시 파일 선택 창 열기
     document.getElementById("profile-icon").addEventListener("click", () => {
         document.getElementById("profile-icon-input").click();
     });
 
+    // ✅ 프로필 사진 변경 이벤트 리스너 추가
     document.getElementById("profile-icon-input").addEventListener("change", async (event) => {
         const file = event.target.files[0];
         if (!file) return;
 
-        const imageUrl = await uploadProfilePicture(file);
+        // 🔥 Cloudinary에 프로필 사진 업로드
+        const imageUrl = await window.uploadProfilePicture(file);
         if (imageUrl) {
             document.getElementById("profile-icon-preview").src = imageUrl;
 
@@ -197,6 +152,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 });
+
 
 
 
