@@ -217,8 +217,7 @@
         const size = prompt("변경할 글자 크기를 입력하세요 (예: 16px, 1.2em)");
         if (size) {
             currentFontSize = size;
-            document.execCommand("fontSize", false, "7");
-            document.querySelector(".editor").style.fontSize = currentFontSize;
+            document.getElementById("post-content").style.fontSize = currentFontSize;
         }
     }
 
@@ -226,7 +225,7 @@
         const color = prompt("변경할 글자 색상을 입력하세요 (예: red, #ff0000)");
         if (color) {
             currentFontColor = color;
-            document.execCommand("foreColor", false, currentFontColor);
+            document.getElementById("post-content").style.color = currentFontColor;
         }
     }
 
@@ -254,6 +253,7 @@
         const selection = window.getSelection();
         if (selection.rangeCount > 0) {
             const range = selection.getRangeAt(0);
+            range.deleteContents(); // 기존 선택 영역 삭제
             range.insertNode(mediaElement);
             range.insertNode(document.createElement("br")); // 줄바꿈 추가
             selection.collapseToEnd(); // 🔹 커서를 미디어 뒤로 이동
@@ -268,11 +268,14 @@
             const selection = window.getSelection();
             if (selection.rangeCount > 0) {
                 const range = selection.getRangeAt(0);
-                const node = range.startContainer.parentNode;
+                const node = range.startContainer;
 
-                if (node.classList.contains("media-item")) {
+                if (node.nodeType === Node.ELEMENT_NODE && node.classList.contains("media-item")) {
                     node.remove(); // 🔥 미디어 삭제
                     event.preventDefault(); // 기본 동작 방지
+                } else if (node.parentNode.classList.contains("media-item")) {
+                    node.parentNode.remove(); // 🔥 부모 요소 삭제
+                    event.preventDefault();
                 }
             }
         }
