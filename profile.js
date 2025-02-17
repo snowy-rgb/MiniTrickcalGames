@@ -81,6 +81,7 @@ async function saveProfile() {
 }
 
 // 🔴 **Firestore에서 프로필 데이터 불러오기 (생일 값 포함)**
+// 🔥 **📌 Firestore에서 프로필 데이터 불러오기**
 async function loadProfile(user) {
     if (!user) return;
     const customUID = await getCustomUID(user);
@@ -102,31 +103,37 @@ async function loadProfile(user) {
         document.getElementById("profile-bio").value = userData.introduction || "";
 
         const emailDisplay = document.getElementById("email-display");
-        if (userData.emailVisible) {
-            emailDisplay.textContent = userData.email || "정보 없음";
-        } else {
-            emailDisplay.textContent = "비공개";
+        if (emailDisplay) {
+            emailDisplay.textContent = userData.emailVisible ? (userData.email || "정보 없음") : "비공개";
         }
 
         document.getElementById("profile-icon-preview").src = userData.profile?.icon || "default-icon.png";
 
-        // 🔴 **생일 불러오기**
+        // 🔴 **생일 불러오기 (요소 확인 후 설정)**
         const birthdayInput = document.getElementById("profile-birthday");
         if (birthdayInput) {
             birthdayInput.value = userData.birthday
                 ? new Date(userData.birthday.seconds * 1000).toISOString().substring(0, 10)
                 : "";
+        } else {
+            console.warn("⚠️ profile-birthday 요소가 HTML에 없음!");
         }
 
-        // 🔴 **가입일 표시**
-        document.getElementById("profile-join-date").textContent = userData.joinday
-            ? new Date(userData.joinday.seconds * 1000).toLocaleDateString()
-            : "정보 없음";
+        // 🔴 **가입일 표시 (요소 확인 후 설정)**
+        const joinDateDisplay = document.getElementById("profile-join-date");
+        if (joinDateDisplay) {
+            joinDateDisplay.textContent = userData.joinday
+                ? new Date(userData.joinday.seconds * 1000).toLocaleDateString()
+                : "정보 없음";
+        } else {
+            console.warn("⚠️ profile-join-date 요소가 HTML에 없음!");
+        }
 
         // 🔴 **수정 모드 & 보기 모드 전환**
         toggleEditMode(false);
     }
 }
+
 
 // 🔴 **보기 모드 & 수정 모드 전환**
 function toggleEditMode(editMode) {
