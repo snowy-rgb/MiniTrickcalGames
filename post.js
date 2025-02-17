@@ -3,9 +3,13 @@ import {
     collection, 
     getDocs, 
     addDoc, 
+    deleteDoc, 
     orderBy, 
     query, 
-    serverTimestamp 
+    serverTimestamp,
+    updateDoc,
+    getDoc,
+    doc
 } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-firestore.js";
 
 // ✅ 게시글 저장 함수 (이미지 & 비디오 지원)
@@ -29,7 +33,10 @@ export async function savePost(boardType, title, content, mediaUrls, tags) {
             authorId: user.uid,  // 🔹 게시글 작성자 ID 저장
             createdAt: serverTimestamp(),
             media: mediaUrls || [],  // 🔥 이미지/비디오 URL 저장
-            tags: tags || []          // 🔥 태그 저장
+            tags: tags || [],        // 🔥 태그 저장
+            views: 0,                // 🔥 조회수 필드 추가
+            likes: 0,                // 🔥 좋아요 초기값
+            dislikes: 0              // 🔥 싫어요 초기값
         });
 
         alert("✅ 게시글이 등록되었습니다!");
@@ -80,8 +87,6 @@ export async function loadPosts(boardType) {
   }
 }
 
-import { getFirestore, collection, addDoc, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-firestore.js";
-
 // 🔥 **댓글 불러오기**
 async function loadComments() {
     const commentsList = document.getElementById("comments-list");
@@ -110,7 +115,7 @@ document.getElementById("add-comment").addEventListener("click", async () => {
     await addDoc(commentsRef, {
         authorId: auth.currentUser.uid,
         content: commentInput,
-        createdAt: new Date()
+        createdAt: serverTimestamp()
     });
 
     document.getElementById("comment-input").value = ""; // 입력칸 초기화
@@ -128,6 +133,7 @@ async function deleteComment(commentId) {
 // 페이지 로드 시 댓글 불러오기
 loadComments();
 
+// 🔥 **좋아요/싫어요 기능**
 const likeBtn = document.getElementById("like-btn");
 const dislikeBtn = document.getElementById("dislike-btn");
 const likeCount = document.getElementById("like-count");
@@ -176,5 +182,6 @@ async function loadLikes() {
 
 // 🔥 **게시글 불러올 때 실행**
 loadLikes();
+
 
 
