@@ -111,35 +111,40 @@
   <div class="profile-container">
     <!-- ✅ 프로필 사진 미리보기 -->
     <div class="profile-icon" id="profile-icon">
-      <input type="file" id="profile-icon-input" style="display: none;">
-      <img id="profile-icon-preview" src="default-icon.png" alt="프로필 사진">
+        <input type="file" id="profile-icon-input" style="display: none;">
+        <img id="profile-icon-preview" src="default-icon.png" alt="프로필 사진">
     </div>
-    <input type="file" id="profile-icon-input" accept="image/*">
+    
+    <!-- ✅ 닉네임 입력 & 표시 분리 -->
+    <div class="profile-name">
+        <p id="profile-display-name">사용자</p>  <!-- 보기 모드 -->
+        <input type="text" id="profile-name" placeholder="이름을 입력하세요" style="display: none;">  <!-- 수정 모드 -->
+    </div>
 
-    <div class="profile-name" id="profile-display-name">
-      <input type="text" id="profile-name" placeholder="이름을 입력하세요">
-    </div>
     <div class="profile-bio">
-      <textarea id="profile-bio" placeholder="소개글을 입력하세요"></textarea>
+        <textarea id="profile-bio" placeholder="소개글을 입력하세요"></textarea>
     </div>
-    <div class="profile-info">
-      <label for="profile-birthday">생일:</label>
-      <input type="date" id="profile-birthday">
-      <label>
-        <input type="checkbox" id="email-visible">
-        이메일 공개하기
-      </label>
-    </div>
-    <div class="info-section">
-      <p><strong>이메일:</strong> <span id="email-display">user@example.com</span></p>
-      <p><strong>생일:</strong> <span id="profile-birthday">정보 없음</span></p>
-      <p><strong>가입일:</strong> <span id="profile-join-date">정보 없음</span></p>
-    </div>
-    <button id="save-profile">저장</button>
-    <button class="cancel-button" onclick="window.location.href='start.html'">취소</button>
-    <button id="edit-profile" style="display: none;">수정</button>
-  </div>
 
-  <script type="module" src="profile.js"></script>
+    <div class="profile-info">
+        <label for="profile-birthday">생일:</label>
+        <input type="date" id="profile-birthday">  <!-- 🔴 여기만 ID 유지 -->
+        <label>
+            <input type="checkbox" id="email-visible"> 이메일 공개하기
+        </label>
+    </div>
+
+    <div class="info-section">
+        <p><strong>이메일:</strong> <span id="email-display">user@example.com</span></p>
+        <p><strong>생일:</strong> <span id="profile-birthday-display">정보 없음</span></p>  <!-- 🔴 ID 변경 -->
+        <p><strong>가입일:</strong> <span id="profile-join-date">정보 없음</span></p>
+    </div>
+
+    <button id="edit-profile">수정</button>
+    <button id="save-profile" style="display: none;">저장</button>
+    <button class="cancel-button" onclick="window.location.href='start.html'">취소</button>
+</div>
+
+<script type="module" src="profile.js"></script>
+
 </body>
 </html>
