@@ -22,7 +22,6 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-
 // **📌 Firestore에서 `customUID` 가져오기**
 async function getCustomUID(user) {
     if (!user) return null;
@@ -31,8 +30,7 @@ async function getCustomUID(user) {
     return userDocSnap.exists() ? userDocSnap.data().customUID || user.uid : user.uid;
 }
 
-
-// 🔥 **📌 Firestore에서 프로필 데이터 불러오기 (이메일 공개 설정 확인 포함)**
+// 🔥 **📌 Firestore에서 프로필 데이터 불러오기 (이름 포함)**
 async function loadProfile(user) {
     if (!user) return;
     const customUID = await getCustomUID(user);
@@ -41,13 +39,20 @@ async function loadProfile(user) {
 
     if (userDocSnap.exists()) {
         const userData = userDocSnap.data();
-        console.log("✅ 기존 사용자 데이터 불러오기:", userData);
+        console.log("✅ 기존 사용자 데이터 불러오기:", userData); // 🔴 디버깅 추가
 
-        // 🔴 **이름(닉네임) 가져오기 - 기본값 "사용자" 설정**
+        // 🔴 **데이터가 올바르게 불러와지는지 확인**
+        if (!userData.username) {
+            console.warn("⚠️ Firestore에서 username을 찾을 수 없음!");
+        }
+
         let usernameDisplay = userData.username || "사용자";
-        document.getElementById("profile-name").value = userData.username || ""; // 🔴 이름 입력칸에 값 설정
+        document.getElementById("profile-name").value = userData.username || ""; 
 
-        document.getElementById("profile-display-name").innerHTML = usernameDisplay; // 🔴 추가: 닉네임 표시용 div
+        if (user.email === "catcat3335@naver.com") {
+            usernameDisplay += ` <span style="color: blue;">-- 개발자</span>`;
+        }
+        document.getElementById("profile-display-name").innerHTML = usernameDisplay;
 
         document.getElementById("profile-bio").value = userData.introduction || "";
 
@@ -59,10 +64,12 @@ async function loadProfile(user) {
         }
 
         document.getElementById("profile-icon-preview").src = userData.profile?.icon || "default-icon.png";
+    } else {
+        console.warn("⚠️ Firestore에서 사용자 데이터가 존재하지 않음!");
     }
 }
 
-// 🔴 **프로필 저장 (이름 포함)**
+// 🔥 **📌 프로필 저장 (이름 포함)**
 async function saveProfile() {
     const user = auth.currentUser;
     if (!user) {
@@ -89,9 +96,13 @@ async function saveProfile() {
 
     let emailVisible = document.getElementById("email-visible").checked;
 
+    // 🔴 **닉네임 값이 실제로 가져와지는지 확인**
+    const usernameInput = document.getElementById("profile-name")?.value || "";
+    console.log("🔴 저장할 username:", usernameInput);
+
     // 🔴 **이름(닉네임) 필드 저장 추가**
     const profileData = {
-        username: document.getElementById("profile-name")?.value || "", // 🔴 저장 시 username 포함
+        username: usernameInput,  // 🔴 저장 시 username 포함
         introduction: document.getElementById("profile-bio")?.value || "",
         email: user.email,
         emailVisible: emailVisible,
@@ -102,6 +113,7 @@ async function saveProfile() {
 
     try {
         await setDoc(userDocRef, profileData, { merge: true });
+        console.log("✅ Firestore에 저장 완료:", profileData); // 🔴 저장 확인용 로그
         alert("✅ 프로필이 저장되었습니다!");
         loadProfile(user);
     } catch (error) {
@@ -110,11 +122,15 @@ async function saveProfile() {
     }
 }
 
-// 🔴 **프로필 닉네임 표시용 div 추가 (HTML에서 필요)**
-/*
-<div id="profile-display-name"></div>  // HTML에 추가해야 함
-<input type="text" id="profile-name">  // 닉네임 입력칸
-*/
+// 🔥 **📌 로그인 감지 후 프로필 자동 로드**
+onAuthStateChanged(auth, async (user) => {
+    if (user) {
+        console.log("✅ 로그인 감지됨:", user);
+        await loadProfile(user);
+    } else {
+        console.log("🚨 사용자가 로그인하지 않았습니다.");
+    }
+});
 
 // ✅ 이벤트 리스너 설정
 document.addEventListener("DOMContentLoaded", () => {
