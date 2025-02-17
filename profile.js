@@ -33,7 +33,6 @@ async function getCustomUID(user) {
 
 
 // 🔥 **📌 Firestore에서 프로필 데이터 불러오기 (이메일 공개 설정 확인 포함)**
-// 🔴 **Firestore에서 프로필 데이터 불러오기 (이름 포함)**
 async function loadProfile(user) {
     if (!user) return;
     const customUID = await getCustomUID(user);
@@ -48,10 +47,6 @@ async function loadProfile(user) {
         let usernameDisplay = userData.username || "사용자";
         document.getElementById("profile-name").value = userData.username || ""; // 🔴 이름 입력칸에 값 설정
 
-        // 🔴 **개발자 표시 추가**
-        if (user.email === "catcat3335@naver.com") {
-            usernameDisplay += ` <span style="color: blue;">-- 개발자</span>`;
-        }
         document.getElementById("profile-display-name").innerHTML = usernameDisplay; // 🔴 추가: 닉네임 표시용 div
 
         document.getElementById("profile-bio").value = userData.introduction || "";
