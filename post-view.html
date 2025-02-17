@@ -221,6 +221,12 @@
           return;
       }
 
+      let usernameDisplay = userData.username || "snowii";
+        if (user.email === "catcat3335@naver.com") {
+            usernameDisplay += ` <span style="color: blue;">-- 개발자</span>`;
+      }
+      
+
       // 🔴 **조회수 증가 (조회할 때마다 +1)**
       if (!postData.views) postData.views = 0; // 기본값 설정
       const newViews = postData.views + 1;
