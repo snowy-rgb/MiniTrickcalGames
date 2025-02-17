@@ -1,81 +1,158 @@
-import { db, auth } from "./auth.js";  // ✅ auth.js에서 auth 가져오기
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-app.js";
 import { 
-    collection, 
-    getDocs, 
-    addDoc, 
-    orderBy, 
-    query, 
-    serverTimestamp 
+    getFirestore, doc, getDoc, setDoc, updateDoc, serverTimestamp 
 } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-firestore.js";
+import { 
+    getAuth, onAuthStateChanged 
+} from "https://www.gstatic.com/firebasejs/11.3.0/firebase-auth.js";
 
-// ✅ 게시글 저장 함수 (이미지 & 비디오 지원)
-export async function savePost(boardType, title, content, mediaUrls, tags) {
-    try {
-        if (!boardType || (boardType !== "dev_notices" && boardType !== "community_posts")) {
-            throw new Error("🚨 올바른 게시판을 선택하세요!");
+// ✅ Firebase 설정
+const firebaseConfig = {
+  apiKey: "AIzaSyA-tApRNQGZ3d1gzGhX5hAdntMsC5d9PrM",
+  authDomain: "minitrickcal.firebaseapp.com",
+  projectId: "minitrickcal",
+  storageBucket: "minitrickcal.firebasestorage.app",
+  messagingSenderId: "891613009633",
+  appId: "1:891613009633:web:1b0888f7641df77424c9a0",
+  measurementId: "G-6BK85ML1RH"
+};
+
+// ✅ Firebase 초기화
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+// 🔥 **📌 Firestore에서 `customUID` 가져오기**
+async function getCustomUID(user) {
+    if (!user) return null;
+    const userDocRef = doc(db, "Trickcal_MIniGames", user.uid);
+    const userDocSnap = await getDoc(userDocRef);
+    return userDocSnap.exists() ? userDocSnap.data().customUID || user.uid : user.uid;
+}
+
+// 🔥 **📌 Firestore에서 프로필 데이터 불러오기**
+async function loadProfile(user) {
+    if (!user) return;
+    const customUID = await getCustomUID(user);
+    const userDocRef = doc(db, "Trickcal_MIniGames", customUID);
+    const userDocSnap = await getDoc(userDocRef);
+
+    if (userDocSnap.exists()) {
+        const userData = userDocSnap.data();
+        console.log("✅ 기존 사용자 데이터 불러오기:", userData);
+
+        let usernameDisplay = userData.username || "사용자";
+
+        // 🔴 **개발자 표시 추가**
+        if (user.email === "catcat3335@naver.com") {
+            usernameDisplay += ` <span style="color: blue;">-- 개발자</span>`;
         }
 
-        // ✅ 현재 로그인한 사용자의 UID 가져오기
-        const user = auth.currentUser;
-        if (!user) {
-            throw new Error("🚨 로그인이 필요합니다!");
+        // 🔴 **닉네임 보기 모드 & 수정 모드 분리**
+        document.getElementById("profile-display-name").innerHTML = usernameDisplay;
+        document.getElementById("profile-name").value = userData.username || "";
+
+        document.getElementById("profile-bio").value = userData.introduction || "";
+
+        const emailDisplay = document.getElementById("email-display");
+        if (userData.emailVisible) {
+            emailDisplay.textContent = userData.email || "정보 없음";
+        } else {
+            emailDisplay.textContent = "비공개";
         }
 
-        // ✅ Firestore에 게시글 저장
-        const postCollection = collection(db, boardType);
-        await addDoc(postCollection, {  
-            title: title.trim(),
-            content: content.trim(),
-            authorId: user.uid,  // 🔹 게시글 작성자 ID 저장
-            createdAt: serverTimestamp(),
-            media: mediaUrls || [],  // 🔥 이미지/비디오 URL 저장
-            tags: tags || []          // 🔥 태그 저장
-        });
+        document.getElementById("profile-icon-preview").src = userData.profile?.icon || "default-icon.png";
 
-        alert("✅ 게시글이 등록되었습니다!");
-        window.location.href = "bullboard.html";
+        // 🔴 **생일 및 가입일 표시**
+        document.getElementById("profile-birthday-display").textContent = userData.birthday 
+            ? new Date(userData.birthday.seconds * 1000).toLocaleDateString() 
+            : "정보 없음";
+        
+        document.getElementById("profile-join-date").textContent = userData.joinday 
+            ? new Date(userData.joinday.seconds * 1000).toLocaleDateString() 
+            : "정보 없음";
 
-    } catch (error) {
-        console.error("❌ 게시글 저장 오류:", error);
-        alert("🚨 게시글 저장 중 오류가 발생했습니다: " + error.message);
+        // 🔴 **보기 모드로 전환**
+        toggleEditMode(false);
     }
 }
 
-// ✅ 게시글 목록 불러오기 함수 (export 추가)
-export async function loadPosts(boardType) {
-  try {
-    if (!boardType || (boardType !== "dev_notices" && boardType !== "community_posts")) {
-      throw new Error("🚨 올바른 게시판을 선택하세요!");
+// 🔥 **📌 프로필 저장 (이름 포함)**
+async function saveProfile() {
+    const user = auth.currentUser;
+    if (!user) {
+        alert("🚨 로그인된 사용자가 없습니다.");
+        return;
     }
 
-    const postCollection = collection(db, boardType);
-    const q = query(postCollection, orderBy("createdAt", "desc"));
-    const querySnapshot = await getDocs(q);
+    const customUID = await getCustomUID(user);
+    const userDocRef = doc(db, "Trickcal_MIniGames", customUID);
+    const profileIconPreview = document.getElementById("profile-icon-preview");
+    let iconURL = profileIconPreview ? profileIconPreview.src : "default-icon.png";
 
-    let posts = [];
-    querySnapshot.forEach((doc) => {
-      posts.push({ id: doc.id, ...doc.data() });
+    const existingData = await getDoc(userDocRef);
+    let joinDate = serverTimestamp();
+    if (existingData.exists() && existingData.data().joinday) {
+        joinDate = existingData.data().joinday;
+    }
+
+    let birthdayValue = document.getElementById("profile-birthday")?.value;
+    let birthday = null;
+    if (birthdayValue) {
+        birthday = new Date(birthdayValue);
+    }
+
+    let emailVisible = document.getElementById("email-visible").checked;
+    let usernameInput = document.getElementById("profile-name").value || "";
+
+    const profileData = {
+        username: usernameInput,
+        introduction: document.getElementById("profile-bio")?.value || "",
+        email: user.email,
+        emailVisible: emailVisible,
+        joinday: joinDate,
+        birthday: birthday,
+        profile: { icon: iconURL }
+    };
+
+    try {
+        await setDoc(userDocRef, profileData, { merge: true });
+        alert("✅ 프로필이 저장되었습니다!");
+        loadProfile(user);
+    } catch (error) {
+        console.error("❌ 프로필 저장 오류:", error);
+        alert("🚨 프로필 저장 중 오류가 발생했습니다.");
+    }
+}
+
+// 🔥 **📌 보기 모드 & 수정 모드 전환**
+function toggleEditMode(editMode) {
+    document.getElementById("profile-name").style.display = editMode ? "block" : "none";
+    document.getElementById("profile-display-name").style.display = editMode ? "none" : "block";
+
+    document.getElementById("save-profile").style.display = editMode ? "block" : "none";
+    document.getElementById("edit-profile").style.display = editMode ? "none" : "block";
+}
+
+// 🔥 **📌 로그인 감지 후 프로필 자동 로드**
+onAuthStateChanged(auth, async (user) => {
+    if (user) {
+        console.log("✅ 로그인 감지됨:", user);
+        await loadProfile(user);
+    } else {
+        console.log("🚨 사용자가 로그인하지 않았습니다.");
+    }
+});
+
+// ✅ 이벤트 리스너 설정
+document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("save-profile").addEventListener("click", () => {
+        saveProfile();
+        toggleEditMode(false);
     });
 
-    const postList = document.getElementById("post-list");
-    postList.innerHTML = ""; // 기존 목록 초기화
+    document.getElementById("edit-profile").addEventListener("click", () => {
+        toggleEditMode(true);
+    });
+});
 
-    if (posts.length === 0) {
-      postList.innerHTML = "<li>아직 게시글이 없습니다.</li>";
-    } else {
-      posts.forEach((post) => {
-        const postItem = document.createElement("li");
-        postItem.className = "post-item";
-        postItem.innerHTML = `
-          <div class="post-title">${post.title}</div>
-          <div class="post-meta">📅 ${new Date(post.createdAt.seconds * 1000).toLocaleString()}</div>
-        `;
-        postItem.onclick = () => window.location.href = `post-view.html?id=${post.id}&board=${boardType}`;
-        postList.appendChild(postItem);
-      });
-    }
-  } catch (error) {
-    console.error("❌ 게시글 불러오기 오류:", error);
-    alert("🚨 게시글을 불러오는 중 오류가 발생했습니다.");
-  }
-}
