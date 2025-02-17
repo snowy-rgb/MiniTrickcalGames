@@ -22,6 +22,16 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
+
+// **📌 Firestore에서 `customUID` 가져오기**
+async function getCustomUID(user) {
+    if (!user) return null;
+    const userDocRef = doc(db, "Trickcal_MIniGames", user.uid);
+    const userDocSnap = await getDoc(userDocRef);
+    return userDocSnap.exists() ? userDocSnap.data().customUID || user.uid : user.uid;
+}
+
+
 // 🔥 **📌 Firestore에서 프로필 데이터 불러오기 (이메일 공개 설정 확인 포함)**
 async function loadProfile(user) {
     if (!user) return;
@@ -36,7 +46,7 @@ async function loadProfile(user) {
         // 🔴 **닉네임 + 개발자 태그 추가**
         let usernameDisplay = userData.username || "사용자";
         if (user.email === "catcat3335@naver.com") {
-            usernameDisplay += ` <span style="color: blue;">-- 개발자</span>`;
+            usernameDisplay += ` <span style="color: red;"> -- 개발자</span>`;
         }
         document.getElementById("profile-name").innerHTML = usernameDisplay;
 
