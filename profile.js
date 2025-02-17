@@ -22,48 +22,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// ✅ Cloudinary API 설정
-const CLOUDINARY_CLOUD_NAME = "doji3ykrt";
-const CLOUDINARY_UPLOAD_PRESET = "MiniTrickcalGames"; 
-
-// 🔥 **📌 uploadProfilePicture 함수 - Cloudinary 업로드**
-async function uploadProfilePicture(file) {
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
-
-    try {
-        const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/upload`, {
-            method: "POST",
-            body: formData,
-        });
-
-        const data = await response.json();
-        if (data.secure_url) {
-            console.log("✅ 프로필 사진 업로드 성공:", data.secure_url);
-            return data.secure_url;
-        } else {
-            console.error("❌ Cloudinary 업로드 실패:", data);
-            return null;
-        }
-    } catch (error) {
-        console.error("❌ Cloudinary 업로드 오류:", error);
-        return null;
-    }
-}
-
-// 🔥 **📌 이 함수를 전역에서 사용할 수 있도록 추가**
-window.uploadProfilePicture = uploadProfilePicture; 
-
-// **📌 Firestore에서 `customUID` 가져오기**
-async function getCustomUID(user) {
-    if (!user) return null;
-    const userDocRef = doc(db, "Trickcal_MIniGames", user.uid);
-    const userDocSnap = await getDoc(userDocRef);
-    return userDocSnap.exists() ? userDocSnap.data().customUID || user.uid : user.uid;
-}
-
-// **📌 Firestore에서 프로필 데이터 불러오기**
+// 🔥 **📌 Firestore에서 프로필 데이터 불러오기 (이메일 공개 설정 확인 포함)**
 async function loadProfile(user) {
     if (!user) return;
     const customUID = await getCustomUID(user);
@@ -73,9 +32,24 @@ async function loadProfile(user) {
     if (userDocSnap.exists()) {
         const userData = userDocSnap.data();
         console.log("✅ 기존 사용자 데이터 불러오기:", userData);
-        document.getElementById("profile-name").value = userData.username || "";
+
+        // 🔴 **닉네임 + 개발자 태그 추가**
+        let usernameDisplay = userData.username || "사용자";
+        if (user.email === "catcat3335@naver.com") {
+            usernameDisplay += ` <span style="color: blue;">-- 개발자</span>`;
+        }
+        document.getElementById("profile-name").innerHTML = usernameDisplay;
+
         document.getElementById("profile-bio").value = userData.introduction || "";
-        document.getElementById("email-display").textContent = userData.email || user.email || "정보 없음";
+
+        // 🔴 **이메일 공개 여부 확인**
+        const emailDisplay = document.getElementById("email-display");
+        if (userData.emailVisible) {  // Firestore에서 emailVisible이 true인지 확인
+            emailDisplay.textContent = userData.email || user.email || "정보 없음";
+        } else {
+            emailDisplay.textContent = "";  // 이메일 숨김 처리
+        }
+
         document.getElementById("profile-icon-preview").src = userData.profile?.icon || "default-icon.png";
 
         // ✅ 가입일 (joinday) 표시
@@ -96,8 +70,7 @@ async function loadProfile(user) {
     }
 }
 
-
-// **📌 프로필 저장**
+// 🔥 **📌 프로필 저장 (이메일 공개 여부 저장 추가)**
 async function saveProfile() {
     const user = auth.currentUser;
     if (!user) {
@@ -112,24 +85,28 @@ async function saveProfile() {
 
     // ✅ 기존 `joinday` 값 유지 (가입일)
     const existingData = await getDoc(userDocRef);
-    let joinDate = serverTimestamp();  // 기본적으로 현재 시간
+    let joinDate = serverTimestamp();
     if (existingData.exists() && existingData.data().joinday) {
-        joinDate = existingData.data().joinday;  // 기존 값 유지
+        joinDate = existingData.data().joinday;
     }
 
-    // ✅ 생일 값 가져오기 (날짜 입력이 있을 경우)
+    // ✅ 생일 값 가져오기
     let birthdayValue = document.getElementById("profile-birthday")?.value;
     let birthday = null;
     if (birthdayValue) {
-        birthday = new Date(birthdayValue);  // ✅ `Date` 객체로 변환
+        birthday = new Date(birthdayValue);
     }
+
+    // 🔴 **이메일 공개 여부 가져오기**
+    let emailVisible = document.getElementById("email-visible").checked;
 
     const profileData = {
         username: document.getElementById("profile-name")?.value || "",
         introduction: document.getElementById("profile-bio")?.value || "",
         email: user.email,
-        joinday: joinDate,  // ✅ 가입일 유지
-        birthday: birthday,  // ✅ 생일 저장
+        emailVisible: emailVisible,  // 🔴 이메일 공개 여부 추가
+        joinday: joinDate,
+        birthday: birthday,
         profile: { icon: iconURL }
     };
 
@@ -155,31 +132,6 @@ onAuthStateChanged(auth, async (user) => {
 // **📌 이벤트 리스너 설정**
 document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("save-profile").addEventListener("click", saveProfile);
-
-    // ✅ 프로필 사진 클릭 시 파일 선택 창 열기
-    document.getElementById("profile-icon").addEventListener("click", () => {
-        document.getElementById("profile-icon-input").click();
-    });
-
-    // ✅ 프로필 사진 변경 이벤트 리스너 추가
-    document.getElementById("profile-icon-input").addEventListener("change", async (event) => {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        // 🔥 Cloudinary에 프로필 사진 업로드
-        const imageUrl = await window.uploadProfilePicture(file);
-        if (imageUrl) {
-            document.getElementById("profile-icon-preview").src = imageUrl;
-
-            const user = auth.currentUser;
-            if (user) {
-                const customUID = await getCustomUID(user);
-                const userDocRef = doc(db, "Trickcal_MIniGames", customUID);
-                await updateDoc(userDocRef, { "profile.icon": imageUrl });
-                console.log("✅ Firestore 프로필 이미지 URL 업데이트 완료!");
-            }
-        }
-    });
 });
 
 
