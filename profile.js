@@ -43,34 +43,63 @@ async function loadProfile(user) {
 
         let usernameDisplay = userData.username || "사용자";
 
-        // 🔥 HTML 요소가 존재하는지 체크 후 닉네임 표시
-        const displayNameElement = document.getElementById("profile-display-name");
-        if (displayNameElement) {
-            if (user.email === "catcat3335@naver.com") {
-                usernameDisplay += ` <span style="color: blue;">-- 개발자</span>`;
-            }
-            displayNameElement.innerHTML = usernameDisplay;
-        } else {
-            console.warn("⚠️ profile-display-name 요소가 없음!");
+        // 🔥 개발자 표시 추가
+        if (user.email === "catcat3335@naver.com") {
+            usernameDisplay += ` <span style="color: blue;">-- 개발자</span>`;
         }
 
-        document.getElementById("profile-name").value = userData.username || ""; 
-        document.getElementById("profile-bio").value = userData.introduction || "";
+        // 🔴 **요소가 존재하는지 확인 후 설정**
+        const profileNameInput = document.getElementById("profile-name");
+        if (profileNameInput) {
+            profileNameInput.value = userData.username || "";
+        } else {
+            console.warn("⚠️ profile-name 요소가 HTML에 없음!");
+        }
+
+        const displayNameElement = document.getElementById("profile-display-name");
+        if (displayNameElement) {
+            displayNameElement.innerHTML = usernameDisplay;
+        } else {
+            console.warn("⚠️ profile-display-name 요소가 HTML에 없음!");
+        }
+
+        const bioInput = document.getElementById("profile-bio");
+        if (bioInput) {
+            bioInput.value = userData.introduction || "";
+        }
 
         const emailDisplay = document.getElementById("email-display");
         if (emailDisplay) {
-            if (userData.emailVisible) {
-                emailDisplay.textContent = userData.email || user.email || "정보 없음";
-            } else {
-                emailDisplay.textContent = "";
-            }
+            emailDisplay.textContent = userData.emailVisible ? (userData.email || "정보 없음") : "비공개";
         }
 
-        document.getElementById("profile-icon-preview").src = userData.profile?.icon || "default-icon.png";
+        const profileIconPreview = document.getElementById("profile-icon-preview");
+        if (profileIconPreview) {
+            profileIconPreview.src = userData.profile?.icon || "default-icon.png";
+        }
+
+        // 🔴 **생일 및 가입일 표시 (요소 체크)**
+        const birthdayDisplay = document.getElementById("profile-birthday-display");
+        if (birthdayDisplay) {
+            birthdayDisplay.textContent = userData.birthday
+                ? new Date(userData.birthday.seconds * 1000).toLocaleDateString()
+                : "정보 없음";
+        }
+
+        const joinDateDisplay = document.getElementById("profile-join-date");
+        if (joinDateDisplay) {
+            joinDateDisplay.textContent = userData.joinday
+                ? new Date(userData.joinday.seconds * 1000).toLocaleDateString()
+                : "정보 없음";
+        }
+
+        // 🔴 **보기 모드로 전환**
+        toggleEditMode(false);
     } else {
         console.warn("⚠️ Firestore에서 사용자 데이터가 존재하지 않음!");
     }
 }
+
 
 
 // 🔥 **📌 프로필 저장 (이름 포함)**
