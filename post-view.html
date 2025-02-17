@@ -207,6 +207,16 @@
           return;
       }
 
+      // 🔴 **조회수 증가 (조회할 때마다 +1)**
+      if (!postData.views) postData.views = 0; // 기본값 설정
+      const newViews = postData.views + 1;
+
+      await updateDoc(postRef, { views: newViews });
+
+      document.getElementById("post-views").textContent = `👀 ${newViews} views`;
+
+      checkUserPermissions();
+
       const userRef = doc(db, "Trickcal_MIniGames", postData.authorId);
       const userSnap = await getDoc(userRef);
 
