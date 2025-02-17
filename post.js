@@ -107,19 +107,28 @@ async function loadComments() {
 }
 
 // 🔥 **댓글 작성**
-document.getElementById("add-comment").addEventListener("click", async () => {
-    const commentInput = document.getElementById("comment-input").value;
-    if (!commentInput.trim()) return alert("댓글을 입력하세요!");
+document.addEventListener("DOMContentLoaded", () => {
+    const addCommentBtn = document.getElementById("add-comment");
+    if (addCommentBtn) {
+        addCommentBtn.addEventListener("click", async () => {
+            const commentInput = document.getElementById("comment-input");
+            if (!commentInput || !commentInput.value.trim()) {
+                return alert("댓글을 입력하세요!");
+            }
 
-    const commentsRef = collection(db, `${board}/${postId}/comments`);
-    await addDoc(commentsRef, {
-        authorId: auth.currentUser.uid,
-        content: commentInput,
-        createdAt: serverTimestamp()
-    });
+            const commentsRef = collection(db, `${board}/${postId}/comments`);
+            await addDoc(commentsRef, {
+                authorId: auth.currentUser.uid,
+                content: commentInput.value,
+                createdAt: serverTimestamp()
+            });
 
-    document.getElementById("comment-input").value = ""; // 입력칸 초기화
-    loadComments(); // 댓글 새로고침
+            commentInput.value = ""; // 입력칸 초기화
+            loadComments(); // 댓글 새로고침
+        });
+    } else {
+        console.error("❌ 댓글 작성 버튼 (#add-comment) 요소를 찾을 수 없습니다!");
+    }
 });
 
 // 🔥 **댓글 삭제**
