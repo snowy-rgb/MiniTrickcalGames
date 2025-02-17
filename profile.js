@@ -31,78 +31,6 @@ async function getCustomUID(user) {
 }
 
 // 🔥 **📌 Firestore에서 프로필 데이터 불러오기 (이름 포함)**
-async function loadProfile(user) {
-    if (!user) return;
-    const customUID = await getCustomUID(user);
-    const userDocRef = doc(db, "Trickcal_MIniGames", customUID);
-    const userDocSnap = await getDoc(userDocRef);
-
-    if (userDocSnap.exists()) {
-        const userData = userDocSnap.data();
-        console.log("✅ 기존 사용자 데이터 불러오기:", userData);
-
-        let usernameDisplay = userData.username || "사용자";
-
-        // 🔥 개발자 표시 추가
-        if (user.email === "catcat3335@naver.com") {
-            usernameDisplay += ` <span style="color: blue;">-- 개발자</span>`;
-        }
-
-        // 🔴 **요소가 존재하는지 확인 후 설정**
-        const profileNameInput = document.getElementById("profile-name");
-        if (profileNameInput) {
-            profileNameInput.value = userData.username || "";
-        } else {
-            console.warn("⚠️ profile-name 요소가 HTML에 없음!");
-        }
-
-        const displayNameElement = document.getElementById("profile-display-name");
-        if (displayNameElement) {
-            displayNameElement.innerHTML = usernameDisplay;
-        } else {
-            console.warn("⚠️ profile-display-name 요소가 HTML에 없음!");
-        }
-
-        const bioInput = document.getElementById("profile-bio");
-        if (bioInput) {
-            bioInput.value = userData.introduction || "";
-        }
-
-        const emailDisplay = document.getElementById("email-display");
-        if (emailDisplay) {
-            emailDisplay.textContent = userData.emailVisible ? (userData.email || "정보 없음") : "비공개";
-        }
-
-        const profileIconPreview = document.getElementById("profile-icon-preview");
-        if (profileIconPreview) {
-            profileIconPreview.src = userData.profile?.icon || "default-icon.png";
-        }
-
-        // 🔴 **생일 및 가입일 표시 (요소 체크)**
-        const birthdayDisplay = document.getElementById("profile-birthday-display");
-        if (birthdayDisplay) {
-            birthdayDisplay.textContent = userData.birthday
-                ? new Date(userData.birthday.seconds * 1000).toLocaleDateString()
-                : "정보 없음";
-        }
-
-        const joinDateDisplay = document.getElementById("profile-join-date");
-        if (joinDateDisplay) {
-            joinDateDisplay.textContent = userData.joinday
-                ? new Date(userData.joinday.seconds * 1000).toLocaleDateString()
-                : "정보 없음";
-        }
-
-        // 🔴 **보기 모드로 전환**
-        toggleEditMode(false);
-    } else {
-        console.warn("⚠️ Firestore에서 사용자 데이터가 존재하지 않음!");
-    }
-}
-
-
-
-// 🔥 **📌 프로필 저장 (이름 포함)**
 async function saveProfile() {
     const user = auth.currentUser;
     if (!user) {
@@ -121,39 +49,108 @@ async function saveProfile() {
         joinDate = existingData.data().joinday;
     }
 
+    // 🔴 **생일 값 가져오기**
     let birthdayValue = document.getElementById("profile-birthday")?.value;
     let birthday = null;
     if (birthdayValue) {
-        birthday = new Date(birthdayValue);
+        birthday = new Date(birthdayValue); // 날짜 형식으로 저장
     }
 
     let emailVisible = document.getElementById("email-visible").checked;
+    let usernameInput = document.getElementById("profile-name").value || "";
 
-    // 🔴 **닉네임 값이 실제로 가져와지는지 확인**
-    const usernameInput = document.getElementById("profile-name")?.value || "";
-    console.log("🔴 저장할 username:", usernameInput);
-
-    // 🔴 **이름(닉네임) 필드 저장 추가**
     const profileData = {
-        username: usernameInput,  // 🔴 저장 시 username 포함
+        username: usernameInput,
         introduction: document.getElementById("profile-bio")?.value || "",
         email: user.email,
         emailVisible: emailVisible,
         joinday: joinDate,
-        birthday: birthday,
+        birthday: birthday, // 🔴 생일 값 저장
         profile: { icon: iconURL }
     };
 
     try {
         await setDoc(userDocRef, profileData, { merge: true });
-        console.log("✅ Firestore에 저장 완료:", profileData); // 🔴 저장 확인용 로그
+        console.log("✅ Firestore에 저장 완료:", profileData);
         alert("✅ 프로필이 저장되었습니다!");
-        loadProfile(user);
+        loadProfile(user); // 🔴 저장 후 다시 불러오기
     } catch (error) {
         console.error("❌ 프로필 저장 오류:", error);
         alert("🚨 프로필 저장 중 오류가 발생했습니다.");
     }
 }
+
+// 🔴 **Firestore에서 프로필 데이터 불러오기 (생일 값 포함)**
+async function loadProfile(user) {
+    if (!user) return;
+    const customUID = await getCustomUID(user);
+    const userDocRef = doc(db, "Trickcal_MIniGames", customUID);
+    const userDocSnap = await getDoc(userDocRef);
+
+    if (userDocSnap.exists()) {
+        const userData = userDocSnap.data();
+        console.log("✅ 기존 사용자 데이터 불러오기:", userData);
+
+        let usernameDisplay = userData.username || "사용자";
+        if (user.email === "catcat3335@naver.com") {
+            usernameDisplay += ` <span style="color: blue;">-- 개발자</span>`;
+        }
+
+        document.getElementById("profile-display-name").innerHTML = usernameDisplay;
+        document.getElementById("profile-name").value = userData.username || "";
+
+        document.getElementById("profile-bio").value = userData.introduction || "";
+
+        const emailDisplay = document.getElementById("email-display");
+        if (userData.emailVisible) {
+            emailDisplay.textContent = userData.email || "정보 없음";
+        } else {
+            emailDisplay.textContent = "비공개";
+        }
+
+        document.getElementById("profile-icon-preview").src = userData.profile?.icon || "default-icon.png";
+
+        // 🔴 **생일 불러오기**
+        const birthdayInput = document.getElementById("profile-birthday");
+        if (birthdayInput) {
+            birthdayInput.value = userData.birthday
+                ? new Date(userData.birthday.seconds * 1000).toISOString().substring(0, 10)
+                : "";
+        }
+
+        // 🔴 **가입일 표시**
+        document.getElementById("profile-join-date").textContent = userData.joinday
+            ? new Date(userData.joinday.seconds * 1000).toLocaleDateString()
+            : "정보 없음";
+
+        // 🔴 **수정 모드 & 보기 모드 전환**
+        toggleEditMode(false);
+    }
+}
+
+// 🔴 **보기 모드 & 수정 모드 전환**
+function toggleEditMode(editMode) {
+    // 수정 모드에서는 닉네임 입력 가능
+    document.getElementById("profile-name").style.display = editMode ? "block" : "none";
+    document.getElementById("profile-display-name").style.display = editMode ? "none" : "block";
+
+    // 저장 버튼과 수정 버튼 표시 변경
+    document.getElementById("save-profile").style.display = editMode ? "block" : "none";
+    document.getElementById("edit-profile").style.display = editMode ? "none" : "block";
+}
+
+// ✅ 이벤트 리스너 설정
+document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("save-profile").addEventListener("click", () => {
+        saveProfile();
+        toggleEditMode(false);
+    });
+
+    document.getElementById("edit-profile").addEventListener("click", () => {
+        toggleEditMode(true);
+    });
+});
+
 
 // 🔥 **📌 로그인 감지 후 프로필 자동 로드**
 onAuthStateChanged(auth, async (user) => {
