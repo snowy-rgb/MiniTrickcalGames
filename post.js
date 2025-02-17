@@ -80,3 +80,101 @@ export async function loadPosts(boardType) {
   }
 }
 
+import { getFirestore, collection, addDoc, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-firestore.js";
+
+// 🔥 **댓글 불러오기**
+async function loadComments() {
+    const commentsList = document.getElementById("comments-list");
+    commentsList.innerHTML = ""; // 기존 댓글 삭제 후 다시 로드
+
+    const commentsRef = collection(db, `${board}/${postId}/comments`);
+    const commentsSnap = await getDocs(commentsRef);
+
+    commentsSnap.forEach((doc) => {
+        const comment = doc.data();
+        const commentElement = document.createElement("div");
+        commentElement.innerHTML = `
+            <p><strong>${comment.authorId}</strong>: ${comment.content}</p>
+            <button onclick="deleteComment('${doc.id}')">삭제</button>
+        `;
+        commentsList.appendChild(commentElement);
+    });
+}
+
+// 🔥 **댓글 작성**
+document.getElementById("add-comment").addEventListener("click", async () => {
+    const commentInput = document.getElementById("comment-input").value;
+    if (!commentInput.trim()) return alert("댓글을 입력하세요!");
+
+    const commentsRef = collection(db, `${board}/${postId}/comments`);
+    await addDoc(commentsRef, {
+        authorId: auth.currentUser.uid,
+        content: commentInput,
+        createdAt: new Date()
+    });
+
+    document.getElementById("comment-input").value = ""; // 입력칸 초기화
+    loadComments(); // 댓글 새로고침
+});
+
+// 🔥 **댓글 삭제**
+async function deleteComment(commentId) {
+    if (!confirm("댓글을 삭제하시겠습니까?")) return;
+    const commentRef = doc(db, `${board}/${postId}/comments`, commentId);
+    await deleteDoc(commentRef);
+    loadComments();
+}
+
+// 페이지 로드 시 댓글 불러오기
+loadComments();
+
+const likeBtn = document.getElementById("like-btn");
+const dislikeBtn = document.getElementById("dislike-btn");
+const likeCount = document.getElementById("like-count");
+const dislikeCount = document.getElementById("dislike-count");
+
+async function updateLikes(type) {
+    const postRef = doc(db, board, postId);
+    const postSnap = await getDoc(postRef);
+
+    if (!postSnap.exists()) return;
+    let postData = postSnap.data();
+
+    if (!postData.likes) postData.likes = 0;
+    if (!postData.dislikes) postData.dislikes = 0;
+
+    if (type === "like") {
+        postData.likes += 1;
+    } else {
+        postData.dislikes += 1;
+    }
+
+    await updateDoc(postRef, {
+        likes: postData.likes,
+        dislikes: postData.dislikes
+    });
+
+    likeCount.textContent = postData.likes;
+    dislikeCount.textContent = postData.dislikes;
+}
+
+// 🔥 **좋아요/싫어요 버튼 이벤트 리스너**
+likeBtn.addEventListener("click", () => updateLikes("like"));
+dislikeBtn.addEventListener("click", () => updateLikes("dislike"));
+
+// 🔥 **게시글 불러올 때 좋아요/싫어요 반영**
+async function loadLikes() {
+    const postRef = doc(db, board, postId);
+    const postSnap = await getDoc(postRef);
+
+    if (!postSnap.exists()) return;
+    let postData = postSnap.data();
+
+    likeCount.textContent = postData.likes || 0;
+    dislikeCount.textContent = postData.dislikes || 0;
+}
+
+// 🔥 **게시글 불러올 때 실행**
+loadLikes();
+
+
