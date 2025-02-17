@@ -39,28 +39,31 @@ async function loadProfile(user) {
 
     if (userDocSnap.exists()) {
         const userData = userDocSnap.data();
-        console.log("✅ 기존 사용자 데이터 불러오기:", userData); // 🔴 디버깅 추가
-
-        // 🔴 **데이터가 올바르게 불러와지는지 확인**
-        if (!userData.username) {
-            console.warn("⚠️ Firestore에서 username을 찾을 수 없음!");
-        }
+        console.log("✅ 기존 사용자 데이터 불러오기:", userData);
 
         let usernameDisplay = userData.username || "사용자";
-        document.getElementById("profile-name").value = userData.username || ""; 
 
-        if (user.email === "catcat3335@naver.com") {
-            usernameDisplay += ` <span style="color: blue;">-- 개발자</span>`;
+        // 🔥 HTML 요소가 존재하는지 체크 후 닉네임 표시
+        const displayNameElement = document.getElementById("profile-display-name");
+        if (displayNameElement) {
+            if (user.email === "catcat3335@naver.com") {
+                usernameDisplay += ` <span style="color: blue;">-- 개발자</span>`;
+            }
+            displayNameElement.innerHTML = usernameDisplay;
+        } else {
+            console.warn("⚠️ profile-display-name 요소가 없음!");
         }
-        document.getElementById("profile-display-name").innerHTML = usernameDisplay;
 
+        document.getElementById("profile-name").value = userData.username || ""; 
         document.getElementById("profile-bio").value = userData.introduction || "";
 
         const emailDisplay = document.getElementById("email-display");
-        if (userData.emailVisible) {
-            emailDisplay.textContent = userData.email || user.email || "정보 없음";
-        } else {
-            emailDisplay.textContent = "";
+        if (emailDisplay) {
+            if (userData.emailVisible) {
+                emailDisplay.textContent = userData.email || user.email || "정보 없음";
+            } else {
+                emailDisplay.textContent = "";
+            }
         }
 
         document.getElementById("profile-icon-preview").src = userData.profile?.icon || "default-icon.png";
@@ -68,6 +71,7 @@ async function loadProfile(user) {
         console.warn("⚠️ Firestore에서 사용자 데이터가 존재하지 않음!");
     }
 }
+
 
 // 🔥 **📌 프로필 저장 (이름 포함)**
 async function saveProfile() {
