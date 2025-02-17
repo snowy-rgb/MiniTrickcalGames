@@ -33,6 +33,7 @@ async function getCustomUID(user) {
 
 
 // 🔥 **📌 Firestore에서 프로필 데이터 불러오기 (이메일 공개 설정 확인 포함)**
+// 🔴 **Firestore에서 프로필 데이터 불러오기 (이름 포함)**
 async function loadProfile(user) {
     if (!user) return;
     const customUID = await getCustomUID(user);
@@ -43,44 +44,30 @@ async function loadProfile(user) {
         const userData = userDocSnap.data();
         console.log("✅ 기존 사용자 데이터 불러오기:", userData);
 
-        // 🔴 **닉네임 + 개발자 태그 추가**
+        // 🔴 **이름(닉네임) 가져오기 - 기본값 "사용자" 설정**
         let usernameDisplay = userData.username || "사용자";
+        document.getElementById("profile-name").value = userData.username || ""; // 🔴 이름 입력칸에 값 설정
+
+        // 🔴 **개발자 표시 추가**
         if (user.email === "catcat3335@naver.com") {
-            usernameDisplay += ` <span style="color: red;"> -- 개발자</span>`;
+            usernameDisplay += ` <span style="color: blue;">-- 개발자</span>`;
         }
-        document.getElementById("profile-name").innerHTML = usernameDisplay;
+        document.getElementById("profile-display-name").innerHTML = usernameDisplay; // 🔴 추가: 닉네임 표시용 div
 
         document.getElementById("profile-bio").value = userData.introduction || "";
 
-        // 🔴 **이메일 공개 여부 확인**
         const emailDisplay = document.getElementById("email-display");
-        if (userData.emailVisible) {  // Firestore에서 emailVisible이 true인지 확인
+        if (userData.emailVisible) {
             emailDisplay.textContent = userData.email || user.email || "정보 없음";
         } else {
-            emailDisplay.textContent = "";  // 이메일 숨김 처리
+            emailDisplay.textContent = "";
         }
 
         document.getElementById("profile-icon-preview").src = userData.profile?.icon || "default-icon.png";
-
-        // ✅ 가입일 (joinday) 표시
-        const joinDateDisplay = document.getElementById("profile-join-date");
-        if (joinDateDisplay) {
-            joinDateDisplay.textContent = userData.joinday
-                ? new Date(userData.joinday.seconds * 1000).toLocaleDateString()
-                : "정보 없음";
-        }
-
-        // ✅ 생일 (birthday) 표시
-        const birthdayInput = document.getElementById("profile-birthday");
-        if (birthdayInput) {
-            birthdayInput.value = userData.birthday
-                ? new Date(userData.birthday.seconds * 1000).toISOString().substring(0, 10)
-                : "";
-        }
     }
 }
 
-// 🔥 **📌 프로필 저장 (이메일 공개 여부 저장 추가)**
+// 🔴 **프로필 저장 (이름 포함)**
 async function saveProfile() {
     const user = auth.currentUser;
     if (!user) {
@@ -93,28 +80,26 @@ async function saveProfile() {
     const profileIconPreview = document.getElementById("profile-icon-preview");
     let iconURL = profileIconPreview ? profileIconPreview.src : "default-icon.png";
 
-    // ✅ 기존 `joinday` 값 유지 (가입일)
     const existingData = await getDoc(userDocRef);
     let joinDate = serverTimestamp();
     if (existingData.exists() && existingData.data().joinday) {
         joinDate = existingData.data().joinday;
     }
 
-    // ✅ 생일 값 가져오기
     let birthdayValue = document.getElementById("profile-birthday")?.value;
     let birthday = null;
     if (birthdayValue) {
         birthday = new Date(birthdayValue);
     }
 
-    // 🔴 **이메일 공개 여부 가져오기**
     let emailVisible = document.getElementById("email-visible").checked;
 
+    // 🔴 **이름(닉네임) 필드 저장 추가**
     const profileData = {
-        username: document.getElementById("profile-name")?.value || "",
+        username: document.getElementById("profile-name")?.value || "", // 🔴 저장 시 username 포함
         introduction: document.getElementById("profile-bio")?.value || "",
         email: user.email,
-        emailVisible: emailVisible,  // 🔴 이메일 공개 여부 추가
+        emailVisible: emailVisible,
         joinday: joinDate,
         birthday: birthday,
         profile: { icon: iconURL }
@@ -130,19 +115,17 @@ async function saveProfile() {
     }
 }
 
-// **📌 로그인 감지 후 `customUID` 사용**
-onAuthStateChanged(auth, async (user) => {
-    if (user) {
-        await loadProfile(user);
-    } else {
-        console.log("🚨 사용자가 로그인하지 않았습니다.");
-    }
-});
+// 🔴 **프로필 닉네임 표시용 div 추가 (HTML에서 필요)**
+/*
+<div id="profile-display-name"></div>  // HTML에 추가해야 함
+<input type="text" id="profile-name">  // 닉네임 입력칸
+*/
 
-// **📌 이벤트 리스너 설정**
+// ✅ 이벤트 리스너 설정
 document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("save-profile").addEventListener("click", saveProfile);
 });
+
 
 
 
