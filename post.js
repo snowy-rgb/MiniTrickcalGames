@@ -168,54 +168,88 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 // 🔥 **좋아요/싫어요 기능**
-const likeBtn = document.getElementById("like-btn");
-const dislikeBtn = document.getElementById("dislike-btn");
-const likeCount = document.getElementById("like-count");
-const dislikeCount = document.getElementById("dislike-count");
+document.addEventListener("DOMContentLoaded", () => {
+    console.log("✅ DOMContentLoaded 실행됨!");
 
-async function updateLikes(type) {
-    const postRef = doc(db, board, postId);
-    const postSnap = await getDoc(postRef);
+    // 🌟 현재 페이지 확인 (bullboard.html인지 post-view.html인지)
+    const currentPage = window.location.pathname;
+    console.log("📌 현재 페이지:", currentPage);
 
-    if (!postSnap.exists()) return;
-    let postData = postSnap.data();
-
-    if (!postData.likes) postData.likes = 0;
-    if (!postData.dislikes) postData.dislikes = 0;
-
-    if (type === "like") {
-        postData.likes += 1;
-    } else {
-        postData.dislikes += 1;
+    if (!currentPage.includes("post-view.html")) {
+        console.log("🚨 현재 페이지는 post-view.html이 아니므로 댓글 및 좋아요/싫어요 기능 실행 안함!");
+        return;
     }
 
-    await updateDoc(postRef, {
-        likes: postData.likes,
-        dislikes: postData.dislikes
-    });
+    // ✅ post-view.html에서만 실행될 코드
+    console.log("✅ post-view.html 감지됨. 댓글 및 좋아요/싫어요 기능 실행 시작!");
 
-    likeCount.textContent = postData.likes;
-    dislikeCount.textContent = postData.dislikes;
-}
+    const commentsList = document.getElementById("comments-list");
+    const addCommentBtn = document.getElementById("add-comment");
+    const commentInput = document.getElementById("comment-input");
+    const likeBtn = document.getElementById("like-btn");
+    const dislikeBtn = document.getElementById("dislike-btn");
+    const likeCount = document.getElementById("like-count");
+    const dislikeCount = document.getElementById("dislike-count");
 
-// 🔥 **좋아요/싫어요 버튼 이벤트 리스너**
-likeBtn.addEventListener("click", () => updateLikes("like"));
-dislikeBtn.addEventListener("click", () => updateLikes("dislike"));
+    if (!commentsList) {
+        console.error("❌ 댓글 리스트 (#comments-list) 요소를 찾을 수 없습니다!");
+        return;
+    }
 
-// 🔥 **게시글 불러올 때 좋아요/싫어요 반영**
-async function loadLikes() {
-    const postRef = doc(db, board, postId);
-    const postSnap = await getDoc(postRef);
+    if (!addCommentBtn) {
+        console.error("❌ 댓글 작성 버튼 (#add-comment) 요소를 찾을 수 없습니다!");
+        return;
+    }
 
-    if (!postSnap.exists()) return;
-    let postData = postSnap.data();
+    if (!likeBtn || !dislikeBtn) {
+        console.error("❌ 좋아요/싫어요 버튼 요소를 찾을 수 없습니다!");
+        return;
+    }
 
-    likeCount.textContent = postData.likes || 0;
-    dislikeCount.textContent = postData.dislikes || 0;
-}
+    // 🔥 **좋아요/싫어요 기능**
+    async function updateLikes(type) {
+        const postRef = doc(db, board, postId);
+        const postSnap = await getDoc(postRef);
 
-// 🔥 **게시글 불러올 때 실행**
-loadLikes();
+        if (!postSnap.exists()) return;
+        let postData = postSnap.data();
 
+        if (!postData.likes) postData.likes = 0;
+        if (!postData.dislikes) postData.dislikes = 0;
+
+        if (type === "like") {
+            postData.likes += 1;
+        } else {
+            postData.dislikes += 1;
+        }
+
+        await updateDoc(postRef, {
+            likes: postData.likes,
+            dislikes: postData.dislikes
+        });
+
+        likeCount.textContent = postData.likes;
+        dislikeCount.textContent = postData.dislikes;
+    }
+
+    // 🔥 **좋아요/싫어요 버튼 이벤트 리스너 추가**
+    likeBtn.addEventListener("click", () => updateLikes("like"));
+    dislikeBtn.addEventListener("click", () => updateLikes("dislike"));
+
+    // 🔥 **게시글 불러올 때 좋아요/싫어요 반영**
+    async function loadLikes() {
+        const postRef = doc(db, board, postId);
+        const postSnap = await getDoc(postRef);
+
+        if (!postSnap.exists()) return;
+        let postData = postSnap.data();
+
+        likeCount.textContent = postData.likes || 0;
+        dislikeCount.textContent = postData.dislikes || 0;
+    }
+
+    // 🔥 **페이지 로드 시 실행**
+    loadLikes();
+});
 
 
