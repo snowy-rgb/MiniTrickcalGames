@@ -87,77 +87,70 @@ export async function loadPosts(boardType) {
   }
 }
 
-// 🔥 **댓글 불러오기**
-async function loadComments() {
+// 🔥 **댓글 작성**
+document.addEventListener("DOMContentLoaded", () => {
     const commentsList = document.getElementById("comments-list");
-    
+    const addCommentBtn = document.getElementById("add-comment");
+    const commentInput = document.getElementById("comment-input");
+
     if (!commentsList) {
         console.error("❌ 댓글 리스트 (#comments-list) 요소를 찾을 수 없습니다!");
         return;
     }
 
-    commentsList.innerHTML = ""; // 기존 댓글 삭제 후 다시 로드
-
-    const commentsRef = collection(db, `${board}/${postId}/comments`);
-    const commentsSnap = await getDocs(commentsRef);
-
-    commentsSnap.forEach((doc) => {
-        const comment = doc.data();
-        const commentElement = document.createElement("div");
-        commentElement.innerHTML = `
-            <p><strong>${comment.authorId}</strong>: ${comment.content}</p>
-            <button onclick="deleteComment('${doc.id}')">삭제</button>
-        `;
-        commentsList.appendChild(commentElement);
-    });
-}
-
-
-// 🔥 **댓글 작성**
-document.addEventListener("DOMContentLoaded", () => {
-    const addCommentBtn = document.getElementById("add-comment");
-    const commentsList = document.getElementById("comments-list");
-
-    // 🔴 댓글 버튼이 존재하는지 확인 후 이벤트 추가!
-    if (addCommentBtn) {
-        addCommentBtn.addEventListener("click", async () => {
-            const commentInput = document.getElementById("comment-input");
-            if (!commentInput || !commentInput.value.trim()) {
-                return alert("댓글을 입력하세요!");
-            }
-
-            const commentsRef = collection(db, `${board}/${postId}/comments`);
-            await addDoc(commentsRef, {
-                authorId: auth.currentUser.uid,
-                content: commentInput.value,
-                createdAt: serverTimestamp()
-            });
-
-            commentInput.value = ""; // 입력칸 초기화
-            loadComments(); // 댓글 새로고침
-        });
-    } else {
+    if (!addCommentBtn) {
         console.error("❌ 댓글 작성 버튼 (#add-comment) 요소를 찾을 수 없습니다!");
+        return;
     }
 
-    // 🔴 댓글 리스트가 존재하는지 확인 후 로드!
-    if (commentsList) {
-        loadComments();
-    } else {
-        console.error("❌ 댓글 리스트 (#comments-list) 요소를 찾을 수 없습니다!");
+    // 🔥 **댓글 불러오기 함수**
+    async function loadComments() {
+        commentsList.innerHTML = ""; // 기존 댓글 삭제 후 다시 로드
+
+        const commentsRef = collection(db, `${board}/${postId}/comments`);
+        const commentsSnap = await getDocs(commentsRef);
+
+        commentsSnap.forEach((doc) => {
+            const comment = doc.data();
+            const commentElement = document.createElement("div");
+            commentElement.innerHTML = `
+                <p><strong>${comment.authorId}</strong>: ${comment.content}</p>
+                <button onclick="deleteComment('${doc.id}')">삭제</button>
+            `;
+            commentsList.appendChild(commentElement);
+        });
     }
+
+    // 🔥 **댓글 작성 이벤트 리스너 추가**
+    addCommentBtn.addEventListener("click", async () => {
+        if (!commentInput || !commentInput.value.trim()) {
+            alert("댓글을 입력하세요!");
+            return;
+        }
+
+        const commentsRef = collection(db, `${board}/${postId}/comments`);
+        await addDoc(commentsRef, {
+            authorId: auth.currentUser.uid,
+            content: commentInput.value,
+            createdAt: serverTimestamp()
+        });
+
+        commentInput.value = ""; // 입력칸 초기화
+        loadComments(); // 댓글 새로고침
+    });
+
+    // 🔥 **댓글 삭제 함수**
+    async function deleteComment(commentId) {
+        if (!confirm("댓글을 삭제하시겠습니까?")) return;
+        const commentRef = doc(db, `${board}/${postId}/comments`, commentId);
+        await deleteDoc(commentRef);
+        loadComments();
+    }
+
+    // **페이지 로드 시 댓글 불러오기**
+    loadComments();
 });
 
-// 🔥 **댓글 삭제**
-async function deleteComment(commentId) {
-    if (!confirm("댓글을 삭제하시겠습니까?")) return;
-    const commentRef = doc(db, `${board}/${postId}/comments`, commentId);
-    await deleteDoc(commentRef);
-    loadComments();
-}
-
-// 페이지 로드 시 댓글 불러오기
-loadComments();
 
 // 🔥 **좋아요/싫어요 기능**
 const likeBtn = document.getElementById("like-btn");
