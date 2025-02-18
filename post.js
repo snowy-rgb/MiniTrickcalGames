@@ -1,161 +1,119 @@
 import { db, auth } from "./auth.js";
-import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-firestore.js";
 
-// ✅ Cloudinary API 설정
-const CLOUDINARY_CLOUD_NAME = "doji3ykrt";
-const CLOUDINARY_UPLOAD_PRESET = "MiniTrickcalGames";
+// 🔥 URL에서 게시글 ID & 게시판 타입 가져오기
+const urlParams = new URLSearchParams(window.location.search);
+const postId = urlParams.get("id");
+const board = urlParams.get("board");
 
-// ✅ 게시글 정보
-const submitBtn = document.getElementById("submit-btn");
-const cancelBtn = document.getElementById("cancel-btn");
-const postTitle = document.getElementById("post-title");
-const postContent = document.getElementById("post-content");
-const mediaUpload = document.getElementById("media-upload");
-
-// ✅ 현재 글자 스타일 설정
-let currentFontSize = "16px";
-let currentFontColor = "#000000";
-
-// 🔹 글자 크기 변경
-function setFontSize() {
-    const size = prompt("변경할 글자 크기를 입력하세요 (예: 16px, 1.2em)");
-    if (size) {
-        currentFontSize = size;
-        document.execCommand("fontSize", false, "7"); // 기본 크기 설정
-        document.querySelector(".editor").style.fontSize = currentFontSize;
-    }
-}
-
-// 🔹 글자 색 변경
-function setFontColor() {
-    const color = prompt("변경할 글자 색을 입력하세요 (예: red, #ff0000)");
-    if (color) {
-        currentFontColor = color;
-        document.execCommand("foreColor", false, currentFontColor);
-    }
-}
-
-// 🔥 새로운 글이 추가될 때 현재 스타일 유지
-postContent.addEventListener("keydown", () => {
-    document.execCommand("fontSize", false, "7");
-    document.execCommand("foreColor", false, currentFontColor);
-});
-
-// 🔹 미디어 업로드 & Cloudinary 저장
-mediaUpload.addEventListener("change", async (event) => {
-    const files = event.target.files;
-    if (!files.length) return;
-
-    for (let file of files) {
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
-
-        try {
-            const response = await fetch(https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/upload, {
-                method: "POST",
-                body: formData,
-            });
-
-            const data = await response.json();
-            if (data.secure_url) {
-                insertMediaIntoEditor(data.secure_url, file.type);
-            } else {
-                console.error("❌ 업로드 실패:", data);
-                alert("🚨 미디어 업로드 실패");
-            }
-        } catch (error) {
-            console.error("❌ Cloudinary 업로드 오류:", error);
-            alert("🚨 Cloudinary 업로드 중 오류 발생");
-        }
-    }
-});
-
-// 🔹 미디어 삽입 (현재 커서 위치에 추가)
-function insertMediaIntoEditor(url, type) {
-    const editor = postContent;
-    const mediaElement = document.createElement(type.startsWith("image") ? "img" : "video");
-
-    if (type.startsWith("video")) {
-        mediaElement.controls = true;
-    }
-
-    mediaElement.src = url;
-    mediaElement.style.maxWidth = "100%";
-    mediaElement.style.marginTop = "5px";
-    mediaElement.contentEditable = "false"; // 직접 수정 방지
-    mediaElement.classList.add("media-item");
-
-    // 🔥 현재 커서 위치에 미디어 삽입
-    const selection = window.getSelection();
-    if (selection.rangeCount > 0) {
-        const range = selection.getRangeAt(0);
-        range.insertNode(mediaElement);
-        range.insertNode(document.createElement("br")); // 줄바꿈 추가
-        selection.collapseToEnd(); // 커서를 미디어 뒤로 이동
-    } else {
-        editor.appendChild(mediaElement);
-        editor.appendChild(document.createElement("br")); // 줄바꿈 추가
-    }
-}
-
-// 🔥 미디어 삭제 (Backspace/Delete 키로 삭제)
-postContent.addEventListener("keydown", (event) => {
-    if (event.key === "Backspace" || event.key === "Delete") {
-        const selection = window.getSelection();
-        if (selection.rangeCount > 0) {
-            const range = selection.getRangeAt(0);
-            const node = range.startContainer.parentNode;
-
-            if (node.classList.contains("media-item")) {
-                node.remove(); // 미디어 삭제
-                event.preventDefault(); // 기본 동작 방지
-            }
-        }
-    }
-});
-
-// 🔥 게시글 저장
-submitBtn.addEventListener("click", async () => {
-    const title = postTitle.value.trim();
-    const content = postContent.innerHTML;
-    const tags = document.getElementById("tag-input").value
-        .split("#")
-        .map(tag => tag.trim())
-        .filter(tag => tag !== "");
-
-    if (!title || !content) {
-        alert("🚨 제목과 내용을 입력하세요!");
-        return;
-    }
-
-    const user = auth.currentUser;
-    if (!user) {
-        alert("🚨 로그인한 사용자만 글을 작성할 수 있습니다.");
-        return;
-    }
-
-    try {
-        await addDoc(collection(db, "community_posts"), {
-            title,
-            content,
-            tags,
-            authorId: user.uid,
-            createdAt: serverTimestamp(),
-        });
-
-        alert("✅ 게시글이 등록되었습니다!");
-        window.location.href = "bullboard.html";
-    } catch (error) {
-        console.error("❌ 게시글 저장 오류:", error);
-        alert("🚨 게시글 저장 중 오류 발생");
-    }
-});
-
-// 🔹 취소 버튼 클릭 시 게시판으로 이동
-cancelBtn.addEventListener("click", () => {
+if (!postId || !board) {
+    alert("🚨 잘못된 접근입니다.");
     window.location.href = "bullboard.html";
-});
+}
+
+// 🔥 게시글 요소 가져오기
+const postTitle = document.getElementById("post-title");
+const postAuthor = document.getElementById("post-author");
+const authorIcon = document.getElementById("author-icon");
+const authorName = document.getElementById("author-name");
+const postDate = document.getElementById("post-date");
+const postContent = document.getElementById("post-content");
+const postTags = document.getElementById("post-tags");
+const postMedia = document.getElementById("post-media");
+const editBtn = document.getElementById("edit-btn");
+const deleteBtn = document.getElementById("delete-btn");
+
+// 🔥 게시글 불러오기 함수
+async function loadPosts() {
+    console.log("📌 게시글 불러오는 중...");
+
+    const postRef = doc(db, board, postId);
+    const postSnap = await getDoc(postRef);
+
+    if (!postSnap.exists()) {
+        alert("🚨 게시글을 찾을 수 없습니다.");
+        window.location.href = "bullboard.html";
+        return;
+    }
+
+    const postData = postSnap.data();
+    console.log("✅ 불러온 게시글 데이터:", postData);
+
+    // 🔹 게시글 정보 표시
+    postTitle.textContent = postData.title;
+    postDate.textContent = `📅 ${new Date(postData.createdAt.seconds * 1000).toLocaleString()}`;
+    postContent.innerHTML = postData.content;
+
+    // 🔹 태그 표시
+    if (postData.tags && postData.tags.length > 0) {
+        postTags.innerHTML = postData.tags.map(tag => `<span class="tag">#${tag}</span>`).join(" ");
+    } else {
+        postTags.innerHTML = "<span>📌 태그 없음</span>";
+    }
+
+    // 🔹 미디어 표시
+    if (postData.media && postData.media.length > 0) {
+        postMedia.innerHTML = postData.media.map(mediaUrl => {
+            if (mediaUrl.endsWith(".mp4") || mediaUrl.endsWith(".webm")) {
+                return `<video controls src="${mediaUrl}"></video>`;
+            } else if (mediaUrl.endsWith(".mp3") || mediaUrl.endsWith(".wav")) {
+                return `<audio controls src="${mediaUrl}"></audio>`;
+            } else {
+                return `<img src="${mediaUrl}" alt="업로드된 이미지">`;
+            }
+        }).join("");
+    }
+
+    // 🔹 작성자 정보 가져오기
+    const userRef = doc(db, "users", postData.authorId);
+    const userSnap = await getDoc(userRef);
+
+    if (userSnap.exists()) {
+        const userData = userSnap.data();
+        authorIcon.src = userData.profile?.icon || "default-icon.png";
+        authorName.textContent = userData.username || "익명";
+        postAuthor.onclick = () => {
+            window.location.href = `profile.html?uid=${postData.authorId}`;
+        };
+    } else {
+        authorName.textContent = "알 수 없는 사용자";
+    }
+
+    // 🔥 조회수 증가
+    if (!postData.views) postData.views = 0;
+    const newViews = postData.views + 1;
+    await updateDoc(postRef, { views: newViews });
+    document.getElementById("post-views").textContent = `👀 ${newViews} views`;
+
+    // 🔥 수정/삭제 버튼 체크
+    checkUserPermissions(postData.authorId);
+}
+
+// 🔥 사용자 권한 확인 (작성자만 수정/삭제 가능)
+function checkUserPermissions(authorId) {
+    onAuthStateChanged(auth, (user) => {
+        if (user && user.uid === authorId) {
+            editBtn.style.display = "inline-block";
+            deleteBtn.style.display = "inline-block";
+
+            editBtn.onclick = () => {
+                window.location.href = `post-edit.html?id=${postId}&board=${board}`;
+            };
+
+            deleteBtn.onclick = async () => {
+                if (confirm("정말 삭제하시겠습니까?")) {
+                    await deleteDoc(doc(db, board, postId));
+                    alert("게시글이 삭제되었습니다.");
+                    window.location.href = "bullboard.html";
+                }
+            };
+        }
+    });
+}
+
+// 🔥 페이지 로드 시 게시글 불러오기 실행
+loadPosts();
+
 
 
 
