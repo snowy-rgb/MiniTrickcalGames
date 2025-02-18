@@ -89,7 +89,19 @@ export async function loadPosts(boardType) {
 
 // 🔥 **댓글 작성**
 document.addEventListener("DOMContentLoaded", () => {
-    console.log("✅ DOM 로드 완료!");
+    console.log("✅ DOMContentLoaded 실행됨!");
+
+    // 🌟 현재 페이지 확인 (bullboard.html인지 post-view.html인지)
+    const currentPage = window.location.pathname;
+    console.log("📌 현재 페이지:", currentPage);
+
+    if (!currentPage.includes("post-view.html")) {
+        console.log("🚨 현재 페이지는 post-view.html이 아니므로 댓글 기능 실행 안함!");
+        return;
+    }
+
+    // ✅ post-view.html에서만 실행될 코드
+    console.log("✅ post-view.html 감지됨. 댓글 기능 실행 시작!");
 
     const commentsList = document.getElementById("comments-list");
     const addCommentBtn = document.getElementById("add-comment");
@@ -105,8 +117,9 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
-    // 🔥 **댓글 불러오기**
+    // 🔥 댓글 불러오기
     async function loadComments() {
+        console.log("📝 댓글 불러오는 중...");
         commentsList.innerHTML = ""; // 기존 댓글 삭제 후 다시 로드
 
         const commentsRef = collection(db, `${board}/${postId}/comments`);
@@ -123,7 +136,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // 🔥 **댓글 작성**
+    // 🔥 댓글 작성
     addCommentBtn.addEventListener("click", async () => {
         if (!commentInput || !commentInput.value.trim()) {
             alert("댓글을 입력하세요!");
@@ -141,7 +154,7 @@ document.addEventListener("DOMContentLoaded", () => {
         loadComments(); // 댓글 새로고침
     });
 
-    // 🔥 **댓글 삭제**
+    // 🔥 댓글 삭제
     async function deleteComment(commentId) {
         if (!confirm("댓글을 삭제하시겠습니까?")) return;
         const commentRef = doc(db, `${board}/${postId}/comments`, commentId);
@@ -149,7 +162,7 @@ document.addEventListener("DOMContentLoaded", () => {
         loadComments();
     }
 
-    // **페이지 로드 시 댓글 불러오기**
+    // 🔥 페이지 로드 시 댓글 불러오기
     loadComments();
 });
 
