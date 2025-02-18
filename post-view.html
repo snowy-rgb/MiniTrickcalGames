@@ -178,6 +178,7 @@
     import { db, auth } from "./auth.js";
     import { getFirestore, doc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-firestore.js";
     import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-auth.js";
+    import { updateDoc } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-firestore.js";
 
     const urlParams = new URLSearchParams(window.location.search);
     const postId = urlParams.get("id");
@@ -205,27 +206,37 @@
       const postRef = doc(db, board, postId);
       const postSnap = await getDoc(postRef);
 
+      if (userSnap.exists()) {
+          const userData = userSnap.data();  // ✅ userData가 여기서 정의됨.
+          authorIcon.src = userData.profile?.icon || "default-icon.png";
+    
+          let usernameDisplay = userData.username || "snowii";
+          if (user.email === "catcat3335@naver.com") {
+              usernameDisplay += ` <span style="color: blue;">-- 개발자</span>`;
+          }
+    
+          authorName.innerHTML = usernameDisplay;
+          postAuthor.onclick = () => {
+              window.location.href = `profile.html?uid=${postData.authorId}`;
+          };
+      } else {
+          authorName.textContent = "알 수 없는 사용자";
+      }
+
+      const postRef = doc(db, board, postId);
+      const postSnap = await getDoc(postRef);
+
       if (!postSnap.exists()) {
-          alert("게시글을 찾을 수 없습니다.");
+           alert("게시글을 찾을 수 없습니다.");
           window.location.href = "bullboard.html";
           return;
       }
 
-      postData = postSnap.data(); 
+      postData = postSnap.data();
       postTitle.textContent = postData.title;
       postDate.textContent = `📅 ${new Date(postData.createdAt.seconds * 1000).toLocaleString()}`;
-      postContent.innerHTML = postData.content; 
+      postContent.innerHTML = postData.content;
 
-      if (!postData.authorId) {
-          authorName.textContent = "알 수 없는 사용자";
-          return;
-      }
-
-      let usernameDisplay = userData.username || "snowii";
-        if (user.email === "catcat3335@naver.com") {
-            usernameDisplay += ` <span style="color: blue;">-- 개발자</span>`;
-      }
-      
 
       // 🔴 **조회수 증가 (조회할 때마다 +1)**
       if (!postData.views) postData.views = 0; // 기본값 설정
@@ -234,8 +245,6 @@
       await updateDoc(postRef, { views: newViews });
 
       document.getElementById("post-views").textContent = `👀 ${newViews} views`;
-
-      checkUserPermissions();
 
       const userRef = doc(db, "Trickcal_MIniGames", postData.authorId);
       const userSnap = await getDoc(userRef);
@@ -251,11 +260,11 @@
           authorName.textContent = "알 수 없는 사용자";
       }
 
-      if (postData.tags && postData.tags.length > 0) {
+      if (postData && postData.tags && postData.tags.length > 0) {
         postTags.innerHTML = postData.tags.map(tag => `<span class="tag">#${tag}</span>`).join(" ");
       }
 
-      if (postData.media && postData.media.length > 0) {
+      if (postData && postData.media && postData.media.length > 0) {
         postMedia.innerHTML = postData.media.map(mediaUrl => {
           if (mediaUrl.endsWith(".mp4") || mediaUrl.endsWith(".webm")) {
             return `<video controls src="${mediaUrl}"></video>`;
