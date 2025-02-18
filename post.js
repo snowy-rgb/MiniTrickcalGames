@@ -90,6 +90,12 @@ export async function loadPosts(boardType) {
 // 🔥 **댓글 불러오기**
 async function loadComments() {
     const commentsList = document.getElementById("comments-list");
+    
+    if (!commentsList) {
+        console.error("❌ 댓글 리스트 (#comments-list) 요소를 찾을 수 없습니다!");
+        return;
+    }
+
     commentsList.innerHTML = ""; // 기존 댓글 삭제 후 다시 로드
 
     const commentsRef = collection(db, `${board}/${postId}/comments`);
@@ -106,9 +112,13 @@ async function loadComments() {
     });
 }
 
+
 // 🔥 **댓글 작성**
 document.addEventListener("DOMContentLoaded", () => {
     const addCommentBtn = document.getElementById("add-comment");
+    const commentsList = document.getElementById("comments-list");
+
+    // 🔴 댓글 버튼이 존재하는지 확인 후 이벤트 추가!
     if (addCommentBtn) {
         addCommentBtn.addEventListener("click", async () => {
             const commentInput = document.getElementById("comment-input");
@@ -128,6 +138,13 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     } else {
         console.error("❌ 댓글 작성 버튼 (#add-comment) 요소를 찾을 수 없습니다!");
+    }
+
+    // 🔴 댓글 리스트가 존재하는지 확인 후 로드!
+    if (commentsList) {
+        loadComments();
+    } else {
+        console.error("❌ 댓글 리스트 (#comments-list) 요소를 찾을 수 없습니다!");
     }
 });
 
