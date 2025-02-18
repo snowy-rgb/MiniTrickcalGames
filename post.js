@@ -61,6 +61,13 @@ async function loadPost() {
 
     console.log("✅ 게시글 내용이 성공적으로 표시됨!");
 }
+console.log("🔍 게시글 데이터 확인:", postData);
+
+if (!postData.authorId) {
+    console.warn("⚠ 게시글에 authorId가 없습니다!");
+    return;
+}
+
 
 // 🔥 `DOMContentLoaded` 이벤트 내에서 `loadPost()` 실행
 document.addEventListener("DOMContentLoaded", () => {
