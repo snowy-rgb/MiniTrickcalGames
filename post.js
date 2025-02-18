@@ -12,120 +12,98 @@ import {
     doc
 } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-firestore.js";
 
+// ✅ URL에서 'board'와 'postId' 값 가져오기 (게시판 & 게시글 ID)
 const urlParams = new URLSearchParams(window.location.search);
-const board = urlParams.get("board"); // URL에서 'board' 값 가져오기
-const postId = urlParams.get("id");  // URL에서 'id' 값 가져오기
+const board = urlParams.get("board");
+const postId = urlParams.get("id");
 
-
-// ✅ 게시글 저장 함수 (이미지 & 비디오 지원)
-export async function savePost(boardType, title, content, mediaUrls, tags) {
-    try {
-        if (!boardType || (boardType !== "dev_notices" && boardType !== "community_posts")) {
-            throw new Error("🚨 올바른 게시판을 선택하세요!");
-        }
-
-        // ✅ 현재 로그인한 사용자의 UID 가져오기
-        const user = auth.currentUser;
-        if (!user) {
-            throw new Error("🚨 로그인이 필요합니다!");
-        }
-
-        // ✅ Firestore에 게시글 저장
-        const postCollection = collection(db, boardType);
-        await addDoc(postCollection, {  
-            title: title.trim(),
-            content: content.trim(),
-            authorId: user.uid,  // 🔹 게시글 작성자 ID 저장
-            createdAt: serverTimestamp(),
-            media: mediaUrls || [],  // 🔥 이미지/비디오 URL 저장
-            tags: tags || [],        // 🔥 태그 저장
-            views: 0,                // 🔥 조회수 필드 추가
-            likes: 0,                // 🔥 좋아요 초기값
-            dislikes: 0              // 🔥 싫어요 초기값
-        });
-
-        alert("✅ 게시글이 등록되었습니다!");
-        window.location.href = "bullboard.html";
-
-    } catch (error) {
-        console.error("❌ 게시글 저장 오류:", error);
-        alert("🚨 게시글 저장 중 오류가 발생했습니다: " + error.message);
-    }
-}
-
-// ✅ 게시글 목록 불러오기 함수 (export 추가)
-export async function loadPosts(boardType) {
-  try {
-    if (!boardType || (boardType !== "dev_notices" && boardType !== "community_posts")) {
-      throw new Error("🚨 올바른 게시판을 선택하세요!");
-    }
-
-    const postCollection = collection(db, boardType);
-    const q = query(postCollection, orderBy("createdAt", "desc"));
-    const querySnapshot = await getDocs(q);
-
-    let posts = [];
-    querySnapshot.forEach((doc) => {
-      posts.push({ id: doc.id, ...doc.data() });
-    });
-
-    const postList = document.getElementById("post-list");
-    postList.innerHTML = ""; // 기존 목록 초기화
-
-    if (posts.length === 0) {
-      postList.innerHTML = "<li>아직 게시글이 없습니다.</li>";
-    } else {
-      posts.forEach((post) => {
-        const postItem = document.createElement("li");
-        postItem.className = "post-item";
-        postItem.innerHTML = `
-          <div class="post-title">${post.title}</div>
-          <div class="post-meta">📅 ${new Date(post.createdAt.seconds * 1000).toLocaleString()}</div>
-        `;
-        postItem.onclick = () => window.location.href = `post-view.html?id=${post.id}&board=${boardType}`;
-        postList.appendChild(postItem);
-      });
-    }
-  } catch (error) {
-    console.error("❌ 게시글 불러오기 오류:", error);
-    alert("🚨 게시글을 불러오는 중 오류가 발생했습니다.");
-  }
-}
-
-// 🔥 **댓글 작성**
+// ✅ DOM이 완전히 로드되면 실행
 document.addEventListener("DOMContentLoaded", () => {
     console.log("✅ DOMContentLoaded 실행됨!");
 
-    // 🌟 현재 페이지 확인 (bullboard.html인지 post-view.html인지)
+    // ✅ 현재 페이지 확인 (bullboard.html인지 post-view.html인지)
     const currentPage = window.location.pathname;
     console.log("📌 현재 페이지:", currentPage);
 
-    if (!currentPage.includes("post-view.html")) {
-        console.log("🚨 현재 페이지는 post-view.html이 아니므로 댓글 기능 실행 안함!");
+    if (!board || !postId) {
+        console.error("🚨 URL에서 게시판 정보(board) 또는 게시글 ID(postId)를 가져오지 못했습니다!");
         return;
     }
 
-    // ✅ post-view.html에서만 실행될 코드
-    console.log("✅ post-view.html 감지됨. 댓글 기능 실행 시작!");
+    console.log(`📌 현재 게시판: ${board}, 게시글 ID: ${postId}`);
 
+    // ✅ bullboard.html이면 게시글 목록만 불러옴 (댓글 & 좋아요/싫어요 제외)
+    if (!currentPage.includes("post-view.html")) {
+        console.log("🚨 현재 페이지는 bullboard.html이므로 댓글 및 좋아요 기능 실행 안함!");
+        loadPosts(board); // 게시글 목록 불러오기 실행
+        return;
+    }
+
+    // ✅ post-view.html에서만 실행되는 코드
+    console.log("✅ post-view.html 감지됨. 댓글 및 좋아요/싫어요 기능 실행 시작!");
+
+    // 🔥 **댓글 기능 실행**
+    setupComments();
+
+    // 🔥 **좋아요/싫어요 기능 실행**
+    setupLikes();
+});
+
+// 🔥 **게시글 목록 불러오기 함수**
+export async function loadPosts(boardType) {
+    try {
+        if (!boardType) {
+            console.error("🚨 게시판(boardType)이 올바르게 설정되지 않았습니다.");
+            return;
+        }
+
+        const postCollection = collection(db, boardType);
+        const q = query(postCollection, orderBy("createdAt", "desc"));
+        const querySnapshot = await getDocs(q);
+
+        let posts = [];
+        querySnapshot.forEach((doc) => {
+            posts.push({ id: doc.id, ...doc.data() });
+        });
+
+        const postList = document.getElementById("post-list");
+        postList.innerHTML = ""; // 기존 목록 초기화
+
+        if (posts.length === 0) {
+            postList.innerHTML = "<li>아직 게시글이 없습니다.</li>";
+        } else {
+            posts.forEach((post) => {
+                const postItem = document.createElement("li");
+                postItem.className = "post-item";
+                postItem.innerHTML = `
+                    <div class="post-title">${post.title}</div>
+                    <div class="post-meta">📅 ${new Date(post.createdAt.seconds * 1000).toLocaleString()}</div>
+                `;
+                postItem.onclick = () => window.location.href = `post-view.html?id=${post.id}&board=${boardType}`;
+                postList.appendChild(postItem);
+            });
+        }
+    } catch (error) {
+        console.error("❌ 게시글 불러오기 오류:", error);
+        alert("🚨 게시글을 불러오는 중 오류가 발생했습니다.");
+    }
+}
+
+// 🔥 **댓글 기능 설정**
+function setupComments() {
     const commentsList = document.getElementById("comments-list");
     const addCommentBtn = document.getElementById("add-comment");
     const commentInput = document.getElementById("comment-input");
 
-    if (!commentsList) {
-        console.error("❌ 댓글 리스트 (#comments-list) 요소를 찾을 수 없습니다!");
+    if (!commentsList || !addCommentBtn) {
+        console.error("❌ 댓글 관련 요소를 찾을 수 없습니다!");
         return;
     }
 
-    if (!addCommentBtn) {
-        console.error("❌ 댓글 작성 버튼 (#add-comment) 요소를 찾을 수 없습니다!");
-        return;
-    }
-
-    // 🔥 댓글 불러오기
+    // 🔥 **댓글 불러오기**
     async function loadComments() {
         console.log("📝 댓글 불러오는 중...");
-        commentsList.innerHTML = ""; // 기존 댓글 삭제 후 다시 로드
+        commentsList.innerHTML = "";
 
         const commentsRef = collection(db, `${board}/${postId}/comments`);
         const commentsSnap = await getDocs(commentsRef);
@@ -141,7 +119,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // 🔥 댓글 작성
+    // 🔥 **댓글 작성**
     addCommentBtn.addEventListener("click", async () => {
         if (!commentInput || !commentInput.value.trim()) {
             alert("댓글을 입력하세요!");
@@ -155,11 +133,11 @@ document.addEventListener("DOMContentLoaded", () => {
             createdAt: serverTimestamp()
         });
 
-        commentInput.value = ""; // 입력칸 초기화
+        commentInput.value = "";
         loadComments(); // 댓글 새로고침
     });
 
-    // 🔥 댓글 삭제
+    // 🔥 **댓글 삭제**
     async function deleteComment(commentId) {
         if (!confirm("댓글을 삭제하시겠습니까?")) return;
         const commentRef = doc(db, `${board}/${postId}/comments`, commentId);
@@ -167,51 +145,23 @@ document.addEventListener("DOMContentLoaded", () => {
         loadComments();
     }
 
-    // 🔥 페이지 로드 시 댓글 불러오기
+    // 🔥 **페이지 로드 시 댓글 불러오기**
     loadComments();
-});
+}
 
-
-// 🔥 **좋아요/싫어요 기능**
-document.addEventListener("DOMContentLoaded", () => {
-    console.log("✅ DOMContentLoaded 실행됨!");
-
-    // 🌟 현재 페이지 확인 (bullboard.html인지 post-view.html인지)
-    const currentPage = window.location.pathname;
-    console.log("📌 현재 페이지:", currentPage);
-
-    if (!currentPage.includes("post-view.html")) {
-        console.log("🚨 현재 페이지는 post-view.html이 아니므로 댓글 및 좋아요/싫어요 기능 실행 안함!");
-        return;
-    }
-
-    // ✅ post-view.html에서만 실행될 코드
-    console.log("✅ post-view.html 감지됨. 댓글 및 좋아요/싫어요 기능 실행 시작!");
-
-    const commentsList = document.getElementById("comments-list");
-    const addCommentBtn = document.getElementById("add-comment");
-    const commentInput = document.getElementById("comment-input");
+// 🔥 **좋아요/싫어요 기능 설정**
+function setupLikes() {
     const likeBtn = document.getElementById("like-btn");
     const dislikeBtn = document.getElementById("dislike-btn");
     const likeCount = document.getElementById("like-count");
     const dislikeCount = document.getElementById("dislike-count");
-
-    if (!commentsList) {
-        console.error("❌ 댓글 리스트 (#comments-list) 요소를 찾을 수 없습니다!");
-        return;
-    }
-
-    if (!addCommentBtn) {
-        console.error("❌ 댓글 작성 버튼 (#add-comment) 요소를 찾을 수 없습니다!");
-        return;
-    }
 
     if (!likeBtn || !dislikeBtn) {
         console.error("❌ 좋아요/싫어요 버튼 요소를 찾을 수 없습니다!");
         return;
     }
 
-    // 🔥 **좋아요/싫어요 기능**
+    // 🔥 **좋아요/싫어요 업데이트**
     async function updateLikes(type) {
         const postRef = doc(db, board, postId);
         const postSnap = await getDoc(postRef);
@@ -255,6 +205,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // 🔥 **페이지 로드 시 실행**
     loadLikes();
-});
+}
+
 
 
