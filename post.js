@@ -12,6 +12,11 @@ import {
     doc
 } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-firestore.js";
 
+const urlParams = new URLSearchParams(window.location.search);
+const board = urlParams.get("board"); // URL에서 'board' 값 가져오기
+const postId = urlParams.get("id");  // URL에서 'id' 값 가져오기
+
+
 // ✅ 게시글 저장 함수 (이미지 & 비디오 지원)
 export async function savePost(boardType, title, content, mediaUrls, tags) {
     try {
