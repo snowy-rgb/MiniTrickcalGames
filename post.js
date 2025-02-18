@@ -17,6 +17,58 @@ const urlParams = new URLSearchParams(window.location.search);
 const board = urlParams.get("board");
 const postId = urlParams.get("id");
 
+// ✅ 게시글 불러오기 함수 (loadPost)
+async function loadPost() {
+    console.log("🔍 loadPost() 실행됨!");
+
+    if (!board || !postId) {
+        console.error("🚨 게시판(board) 또는 게시글 ID(postId)가 정의되지 않았습니다!");
+        return;
+    }
+
+    const postRef = doc(db, board, postId);
+    const postSnap = await getDoc(postRef);
+
+    if (!postSnap.exists()) {
+        console.error("🚨 Firestore에서 게시글을 찾을 수 없습니다! ID:", postId);
+        alert("게시글을 찾을 수 없습니다.");
+        window.location.href = "bullboard.html";
+        return;
+    }
+
+    // ✅ 게시글 데이터 불러오기
+    const postData = postSnap.data();
+    console.log("✅ 게시글 데이터:", postData);
+
+    if (!postData.content) {
+        console.warn("⚠ 게시글에 내용(content)이 없습니다!");
+        return;
+    }
+
+    // ✅ DOM 요소에 게시글 내용 적용
+    const postTitle = document.getElementById("post-title");
+    const postDate = document.getElementById("post-date");
+    const postContent = document.getElementById("post-content");
+
+    if (!postTitle || !postDate || !postContent) {
+        console.error("❌ 게시글 제목, 날짜, 내용 요소를 찾을 수 없습니다!");
+        return;
+    }
+
+    postTitle.textContent = postData.title;
+    postDate.textContent = `📅 ${new Date(postData.createdAt.seconds * 1000).toLocaleString()}`;
+    postContent.innerHTML = postData.content;
+
+    console.log("✅ 게시글 내용이 성공적으로 표시됨!");
+}
+
+// 🔥 `DOMContentLoaded` 이벤트 내에서 `loadPost()` 실행
+document.addEventListener("DOMContentLoaded", () => {
+    if (window.location.pathname.includes("post-view.html")) {
+        loadPost(); // 게시글 불러오기 실행
+    }
+});
+
 // ✅ DOM이 완전히 로드되면 실행
 document.addEventListener("DOMContentLoaded", () => {
     console.log("✅ DOMContentLoaded 실행됨!");
