@@ -89,6 +89,8 @@ export async function loadPosts(boardType) {
 
 // 🔥 **댓글 작성**
 document.addEventListener("DOMContentLoaded", () => {
+    console.log("✅ DOM 로드 완료!");
+
     const commentsList = document.getElementById("comments-list");
     const addCommentBtn = document.getElementById("add-comment");
     const commentInput = document.getElementById("comment-input");
@@ -103,7 +105,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
-    // 🔥 **댓글 불러오기 함수**
+    // 🔥 **댓글 불러오기**
     async function loadComments() {
         commentsList.innerHTML = ""; // 기존 댓글 삭제 후 다시 로드
 
@@ -121,7 +123,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // 🔥 **댓글 작성 이벤트 리스너 추가**
+    // 🔥 **댓글 작성**
     addCommentBtn.addEventListener("click", async () => {
         if (!commentInput || !commentInput.value.trim()) {
             alert("댓글을 입력하세요!");
@@ -139,7 +141,7 @@ document.addEventListener("DOMContentLoaded", () => {
         loadComments(); // 댓글 새로고침
     });
 
-    // 🔥 **댓글 삭제 함수**
+    // 🔥 **댓글 삭제**
     async function deleteComment(commentId) {
         if (!confirm("댓글을 삭제하시겠습니까?")) return;
         const commentRef = doc(db, `${board}/${postId}/comments`, commentId);
