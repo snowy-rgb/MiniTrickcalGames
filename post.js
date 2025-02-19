@@ -207,6 +207,16 @@ export async function updateViews(boardType, postId) {
     }
 }
 
+const urlParams = new URLSearchParams(window.location.search);
+const board = urlParams.get("board"); 
+const postId = urlParams.get("id");
+
+console.log("✅ board:", board);
+console.log("✅ postId:", postId);
+
+if (!board || !postId) {
+    console.error("❌ 게시판 또는 게시글 ID가 정의되지 않았습니다.");
+}
 
 
 
