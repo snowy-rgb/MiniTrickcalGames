@@ -80,6 +80,132 @@ export async function loadPosts(boardType) {
   }
 }
 
+// 🔥 댓글 불러오기
+export async function loadComments(boardType, postId) {
+    try {
+        const commentsRef = collection(db, `${boardType}/${postId}/comments`);
+        const commentsSnap = await getDocs(commentsRef);
+
+        const commentsList = document.getElementById("comments-list");
+        commentsList.innerHTML = ""; // 기존 댓글 초기화
+
+        if (commentsSnap.empty) {
+            commentsList.innerHTML = "<p>아직 댓글이 없습니다.</p>";
+        } else {
+            commentsSnap.forEach((doc) => {
+                const comment = doc.data();
+                const commentElement = document.createElement("div");
+                commentElement.innerHTML = `
+                    <p><strong>${comment.authorId}</strong>: ${comment.content}</p>
+                    <button onclick="deleteComment('${boardType}', '${postId}', '${doc.id}')">삭제</button>
+                `;
+                commentsList.appendChild(commentElement);
+            });
+        }
+    } catch (error) {
+        console.error("❌ 댓글 불러오기 오류:", error);
+        alert("🚨 댓글을 불러오는 중 오류가 발생했습니다.");
+    }
+}
+
+// 🔥 댓글 작성
+document.getElementById("add-comment").addEventListener("click", async () => {
+    const commentInput = document.getElementById("comment-input").value;
+    if (!commentInput.trim()) return alert("🚨 댓글을 입력하세요!");
+
+    const user = auth.currentUser;
+    if (!user) return alert("🚨 로그인이 필요합니다!");
+
+    try {
+        const commentsRef = collection(db, `${board}/${postId}/comments`);
+        await addDoc(commentsRef, {
+            authorId: user.uid,
+            content: commentInput.trim(),
+            createdAt: serverTimestamp(),
+        });
+
+        document.getElementById("comment-input").value = ""; // 입력칸 초기화
+        loadComments(board, postId); // 댓글 새로고침
+    } catch (error) {
+        console.error("❌ 댓글 저장 오류:", error);
+        alert("🚨 댓글 저장 중 오류 발생");
+    }
+});
+
+// 🔥 댓글 삭제
+export async function deleteComment(boardType, postId, commentId) {
+    if (!confirm("정말로 댓글을 삭제하시겠습니까?")) return;
+
+    try {
+        const commentRef = doc(db, `${boardType}/${postId}/comments`, commentId);
+        await deleteDoc(commentRef);
+        loadComments(boardType, postId);
+    } catch (error) {
+        console.error("❌ 댓글 삭제 오류:", error);
+        alert("🚨 댓글 삭제 중 오류 발생");
+    }
+}
+
+const likeBtn = document.getElementById("like-btn");
+const dislikeBtn = document.getElementById("dislike-btn");
+const likeCount = document.getElementById("like-count");
+const dislikeCount = document.getElementById("dislike-count");
+
+// 🔥 좋아요/싫어요 불러오기
+export async function loadLikes(boardType, postId) {
+    const postRef = doc(db, boardType, postId);
+    const postSnap = await getDoc(postRef);
+
+    if (postSnap.exists()) {
+        let postData = postSnap.data();
+        likeCount.textContent = postData.likes || 0;
+        dislikeCount.textContent = postData.dislikes || 0;
+    }
+}
+
+// 🔥 좋아요/싫어요 업데이트
+async function updateLikes(type) {
+    const postRef = doc(db, board, postId);
+    const postSnap = await getDoc(postRef);
+
+    if (!postSnap.exists()) return;
+    let postData = postSnap.data();
+
+    if (!postData.likes) postData.likes = 0;
+    if (!postData.dislikes) postData.dislikes = 0;
+
+    if (type === "like") {
+        postData.likes += 1;
+    } else {
+        postData.dislikes += 1;
+    }
+
+    await updateDoc(postRef, {
+        likes: postData.likes,
+        dislikes: postData.dislikes
+    });
+
+    likeCount.textContent = postData.likes;
+    dislikeCount.textContent = postData.dislikes;
+}
+
+// 🔥 버튼 이벤트 추가
+likeBtn.addEventListener("click", () => updateLikes("like"));
+dislikeBtn.addEventListener("click", () => updateLikes("dislike"));
+
+export async function updateViews(boardType, postId) {
+    const postRef = doc(db, boardType, postId);
+    const postSnap = await getDoc(postRef);
+
+    if (postSnap.exists()) {
+        let postData = postSnap.data();
+        const newViews = (postData.views || 0) + 1;
+
+        await updateDoc(postRef, { views: newViews });
+
+        document.getElementById("post-views").textContent = `조회수 ${newViews} views`;
+    }
+}
 
 
 
