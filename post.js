@@ -107,29 +107,38 @@ export async function loadComments(boardType, postId) {
         alert("🚨 댓글을 불러오는 중 오류가 발생했습니다.");
     }
 }
+//댓글 작성
+document.addEventListener("DOMContentLoaded", () => {
+    console.log("✅ DOMContentLoaded 실행됨!");
 
-// 🔥 댓글 작성
-document.getElementById("add-comment").addEventListener("click", async () => {
-    const commentInput = document.getElementById("comment-input").value;
-    if (!commentInput.trim()) return alert("🚨 댓글을 입력하세요!");
-
-    const user = auth.currentUser;
-    if (!user) return alert("🚨 로그인이 필요합니다!");
-
-    try {
-        const commentsRef = collection(db, `${board}/${postId}/comments`);
-        await addDoc(commentsRef, {
-            authorId: user.uid,
-            content: commentInput.trim(),
-            createdAt: serverTimestamp(),
-        });
-
-        document.getElementById("comment-input").value = ""; // 입력칸 초기화
-        loadComments(board, postId); // 댓글 새로고침
-    } catch (error) {
-        console.error("❌ 댓글 저장 오류:", error);
-        alert("🚨 댓글 저장 중 오류 발생");
+    const addCommentBtn = document.getElementById("add-comment");
+    if (!addCommentBtn) {
+        console.error("❌ 댓글 작성 버튼 (#add-comment) 요소를 찾을 수 없습니다!");
+        return;
     }
+
+    addCommentBtn.addEventListener("click", async () => {
+        const commentInput = document.getElementById("comment-input").value;
+        if (!commentInput.trim()) return alert("🚨 댓글을 입력하세요!");
+
+        const user = auth.currentUser;
+        if (!user) return alert("🚨 로그인이 필요합니다!");
+
+        try {
+            const commentsRef = collection(db, `${board}/${postId}/comments`);
+            await addDoc(commentsRef, {
+                authorId: user.uid,
+                content: commentInput.trim(),
+                createdAt: serverTimestamp(),
+            });
+
+            document.getElementById("comment-input").value = ""; // 입력칸 초기화
+            loadComments(board, postId); // 댓글 새로고침
+        } catch (error) {
+            console.error("❌ 댓글 저장 오류:", error);
+            alert("🚨 댓글 저장 중 오류 발생");
+        }
+    });
 });
 
 // 🔥 댓글 삭제
