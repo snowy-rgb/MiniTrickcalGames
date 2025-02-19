@@ -274,6 +274,9 @@
     }
 
     loadPost();
+    loadComments(board, postId);
+    loadLikes(board, postId);
+    updateViews(board, postId);
   </script>
   <script>
     document.getElementById("backbtn").addEventListener("click", () => {
