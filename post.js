@@ -80,6 +80,63 @@ export async function loadPosts(boardType) {
   }
 }
 
+// 🔥 조회수 증가 함수 (이 함수가 정의되지 않아서 오류 발생했음)
+export async function updateViews(boardType, postId) {
+    try {
+        const postRef = doc(db, boardType, postId);
+        const postSnap = await getDoc(postRef);
+
+        if (postSnap.exists()) {
+            let postData = postSnap.data();
+            const newViews = (postData.views || 0) + 1;
+
+            await updateDoc(postRef, { views: newViews });
+
+            document.getElementById("post-views").textContent = `조회수 ${newViews} views`;
+            console.log(`✅ 조회수 업데이트됨: ${newViews}`);
+        }
+    } catch (error) {
+        console.error("❌ 조회수 업데이트 오류:", error);
+    }
+}
+
+// ✅ `DOMContentLoaded` 이벤트 리스너 내부에서 `updateViews()` 실행
+document.addEventListener("DOMContentLoaded", () => {
+    console.log("✅ DOMContentLoaded 실행됨!");
+
+    // 현재 페이지 확인
+    const currentPage = window.location.pathname;
+    console.log("📌 현재 페이지:", currentPage);
+
+    if (currentPage.includes("post-view.html")) {
+        console.log("✅ post-view.html 감지됨. 게시글 상세 보기 실행!");
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const board = urlParams.get("board"); 
+        const postId = urlParams.get("id");
+
+        console.log("✅ board:", board);
+        console.log("✅ postId:", postId);
+
+        if (!board || !postId) {
+            console.error("❌ 게시판 또는 게시글 ID가 정의되지 않았습니다.");
+            return;
+        }
+
+        // ✅ 📌 조회수 업데이트 (여기서 오류 발생했었음)
+        updateViews(board, postId);
+
+        // ✅ 좋아요/싫어요 불러오기
+        loadLikes(board, postId);
+
+        // ✅ 댓글 불러오기
+        loadComments(board, postId);
+    } else {
+        console.log("⚠️ 해당 페이지에서는 post.js 기능이 실행되지 않음.");
+    }
+});
+
+
 // 🔥 댓글 불러오기
 export async function loadComments(boardType, postId) {
     try {
@@ -107,6 +164,8 @@ export async function loadComments(boardType, postId) {
         alert("🚨 댓글을 불러오는 중 오류가 발생했습니다.");
     }
 }
+
+
 //댓글 작성
 document.addEventListener("DOMContentLoaded", () => {
     console.log("✅ DOMContentLoaded 실행됨!");
