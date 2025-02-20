@@ -111,6 +111,7 @@ export async function loadComments(boardType, postId) {
 document.addEventListener("DOMContentLoaded", () => {
     console.log("✅ DOMContentLoaded 실행됨!");
 
+    // 현재 페이지 확인
     const currentPage = window.location.pathname;
     console.log("📌 현재 페이지:", currentPage);
 
@@ -118,17 +119,24 @@ document.addEventListener("DOMContentLoaded", () => {
         console.log("✅ bullboard.html 감지됨. 게시글 목록 불러오기 실행!");
 
         const boardType = "community_posts";  // 기본 게시판 타입 설정
-        loadPosts(boardType);  // bullboard.html에서만 실행
+        loadPosts(boardType);  // 게시글 목록 불러오기 실행
 
     } else if (currentPage.includes("post-view.html")) {
         console.log("✅ post-view.html 감지됨. 게시글 상세 보기 실행!");
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const board = urlParams.get("board"); 
+        const postId = urlParams.get("id");
+
+        console.log("✅ board:", board);
+        console.log("✅ postId:", postId);
 
         if (!board || !postId) {
             console.error("❌ 게시판 또는 게시글 ID가 정의되지 않았습니다.");
             return;
         }
 
-        // ✅ 게시글 조회수 업데이트
+        // ✅ 게시글 조회수 증가
         updateViews(board, postId);
 
         // ✅ 좋아요/싫어요 불러오기
@@ -163,12 +171,24 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             });
         } else {
-            console.error("❌ 댓글 작성 버튼 (#add-comment) 요소를 찾을 수 없습니다!");
+            console.error("❌ 댓글 작성 버튼 (#add-comment) 요소를 찾을 수 없습니다! 현재 페이지:", currentPage);
+        }
+
+        // ✅ 좋아요/싫어요 버튼 이벤트 추가
+        const likeBtn = document.getElementById("like-btn");
+        const dislikeBtn = document.getElementById("dislike-btn");
+
+        if (likeBtn && dislikeBtn) {
+            likeBtn.addEventListener("click", () => updateLikes("like"));
+            dislikeBtn.addEventListener("click", () => updateLikes("dislike"));
+        } else {
+            console.error("❌ 좋아요/싫어요 버튼 요소를 찾을 수 없습니다!");
         }
     } else {
         console.log("⚠️ 해당 페이지에서는 post.js 기능이 실행되지 않음.");
     }
 });
+
 
 const likeBtn = document.getElementById("like-btn");
 const dislikeBtn = document.getElementById("dislike-btn");
