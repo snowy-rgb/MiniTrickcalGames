@@ -145,7 +145,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // ✅ 댓글 불러오기
         loadComments(board, postId);
 
-        // ✅ 댓글 작성 기능 추가
+        // ✅ 댓글 작성 기능 추가 (post-view.html에서만 실행)
         const addCommentBtn = document.getElementById("add-comment");
         if (addCommentBtn) {
             addCommentBtn.addEventListener("click", async () => {
@@ -171,10 +171,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             });
         } else {
-            console.error("❌ 댓글 작성 버튼 (#add-comment) 요소를 찾을 수 없습니다! 현재 페이지:", currentPage);
+            console.warn("⚠️ 현재 페이지에는 댓글 작성 버튼이 없습니다! (무시 가능)");
         }
 
-        // ✅ 좋아요/싫어요 버튼 이벤트 추가
+        // ✅ 좋아요/싫어요 버튼 이벤트 추가 (post-view.html에서만 실행)
         const likeBtn = document.getElementById("like-btn");
         const dislikeBtn = document.getElementById("dislike-btn");
 
@@ -182,12 +182,13 @@ document.addEventListener("DOMContentLoaded", () => {
             likeBtn.addEventListener("click", () => updateLikes("like"));
             dislikeBtn.addEventListener("click", () => updateLikes("dislike"));
         } else {
-            console.error("❌ 좋아요/싫어요 버튼 요소를 찾을 수 없습니다!");
+            console.warn("⚠️ 현재 페이지에는 좋아요/싫어요 버튼이 없습니다! (무시 가능)");
         }
     } else {
         console.log("⚠️ 해당 페이지에서는 post.js 기능이 실행되지 않음.");
     }
 });
+
 
 
 const likeBtn = document.getElementById("like-btn");
