@@ -11,6 +11,28 @@ import {
     getDoc
 } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-firestore.js";
 
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-app.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-auth.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-firestore.js";  // ✅ Firestore 추가
+import { getStorage } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-storage.js";  // ✅ Firebase Storage 추가
+
+// ✅ Firebase 설정
+const firebaseConfig = {
+  apiKey: "AIzaSyA-tApRNQGZ3d1gzGhX5hAdntMsC5d9PrM",
+  authDomain: "minitrickcal.firebaseapp.com",
+  projectId: "minitrickcal",
+  storageBucket: "minitrickcal.firebasestorage.app",
+  messagingSenderId: "891613009633",
+  appId: "1:891613009633:web:1b0888f7641df77424c9a0",
+  measurementId: "G-6BK85ML1RH"
+};
+
+// ✅ Firebase 초기화
+const app = initializeApp(firebaseConfig);
+export const auth = getAuth(app);
+export const db = getFirestore(app);  // ✅ Firestore 추가
+export const storage = getStorage(app);  // ✅ Storage 추가
+
 // ✅ 게시글 저장 함수 (이미지 & 비디오 지원)
 export async function savePost(boardType, title, content, mediaUrls, tags) {
     try {
