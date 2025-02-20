@@ -111,49 +111,64 @@ export async function loadComments(boardType, postId) {
 document.addEventListener("DOMContentLoaded", () => {
     console.log("✅ DOMContentLoaded 실행됨!");
 
-    const addCommentBtn = document.getElementById("add-comment");
-    if (!addCommentBtn) {
-        console.error("❌ 댓글 작성 버튼 (#add-comment) 요소를 찾을 수 없습니다!");
-        return;
-    }
+    const currentPage = window.location.pathname;
+    console.log("📌 현재 페이지:", currentPage);
 
-    addCommentBtn.addEventListener("click", async () => {
-        const commentInput = document.getElementById("comment-input").value;
-        if (!commentInput.trim()) return alert("🚨 댓글을 입력하세요!");
+    if (currentPage.includes("bullboard.html")) {
+        console.log("✅ bullboard.html 감지됨. 게시글 목록 불러오기 실행!");
 
-        const user = auth.currentUser;
-        if (!user) return alert("🚨 로그인이 필요합니다!");
+        const boardType = "community_posts";  // 기본 게시판 타입 설정
+        loadPosts(boardType);  // bullboard.html에서만 실행
 
-        try {
-            const commentsRef = collection(db, `${board}/${postId}/comments`);
-            await addDoc(commentsRef, {
-                authorId: user.uid,
-                content: commentInput.trim(),
-                createdAt: serverTimestamp(),
-            });
+    } else if (currentPage.includes("post-view.html")) {
+        console.log("✅ post-view.html 감지됨. 게시글 상세 보기 실행!");
 
-            document.getElementById("comment-input").value = ""; // 입력칸 초기화
-            loadComments(board, postId); // 댓글 새로고침
-        } catch (error) {
-            console.error("❌ 댓글 저장 오류:", error);
-            alert("🚨 댓글 저장 중 오류 발생");
+        if (!board || !postId) {
+            console.error("❌ 게시판 또는 게시글 ID가 정의되지 않았습니다.");
+            return;
         }
-    });
-});
 
-// 🔥 댓글 삭제
-export async function deleteComment(boardType, postId, commentId) {
-    if (!confirm("정말로 댓글을 삭제하시겠습니까?")) return;
+        // ✅ 게시글 조회수 업데이트
+        updateViews(board, postId);
 
-    try {
-        const commentRef = doc(db, `${boardType}/${postId}/comments`, commentId);
-        await deleteDoc(commentRef);
-        loadComments(boardType, postId);
-    } catch (error) {
-        console.error("❌ 댓글 삭제 오류:", error);
-        alert("🚨 댓글 삭제 중 오류 발생");
+        // ✅ 좋아요/싫어요 불러오기
+        loadLikes(board, postId);
+
+        // ✅ 댓글 불러오기
+        loadComments(board, postId);
+
+        // ✅ 댓글 작성 기능 추가
+        const addCommentBtn = document.getElementById("add-comment");
+        if (addCommentBtn) {
+            addCommentBtn.addEventListener("click", async () => {
+                const commentInput = document.getElementById("comment-input").value;
+                if (!commentInput.trim()) return alert("🚨 댓글을 입력하세요!");
+
+                const user = auth.currentUser;
+                if (!user) return alert("🚨 로그인이 필요합니다!");
+
+                try {
+                    const commentsRef = collection(db, `${board}/${postId}/comments`);
+                    await addDoc(commentsRef, {
+                        authorId: user.uid,
+                        content: commentInput.trim(),
+                        createdAt: serverTimestamp(),
+                    });
+
+                    document.getElementById("comment-input").value = ""; // 입력칸 초기화
+                    loadComments(board, postId); // 댓글 새로고침
+                } catch (error) {
+                    console.error("❌ 댓글 저장 오류:", error);
+                    alert("🚨 댓글 저장 중 오류 발생");
+                }
+            });
+        } else {
+            console.error("❌ 댓글 작성 버튼 (#add-comment) 요소를 찾을 수 없습니다!");
+        }
+    } else {
+        console.log("⚠️ 해당 페이지에서는 post.js 기능이 실행되지 않음.");
     }
-}
+});
 
 const likeBtn = document.getElementById("like-btn");
 const dislikeBtn = document.getElementById("dislike-btn");
