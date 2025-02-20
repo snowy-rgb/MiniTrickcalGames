@@ -6,6 +6,9 @@ import {
     orderBy, 
     query, 
     serverTimestamp 
+    doc,  // 🔥 `doc`을 가져오지 않아서 오류 발생했음
+    updateDoc,  // 🔥 `updateDoc`도 필요함
+    getDoc  // 🔥 `getDoc`도 필요함
 } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-firestore.js";
 
 // ✅ 게시글 저장 함수 (이미지 & 비디오 지원)
