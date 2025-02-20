@@ -234,23 +234,6 @@ async function updateLikes(type) {
     dislikeCount.textContent = postData.dislikes;
 }
 
-// 🔥 버튼 이벤트 추가
-likeBtn.addEventListener("click", () => updateLikes("like"));
-dislikeBtn.addEventListener("click", () => updateLikes("dislike"));
-
-export async function updateViews(boardType, postId) {
-    const postRef = doc(db, boardType, postId);
-    const postSnap = await getDoc(postRef);
-
-    if (postSnap.exists()) {
-        let postData = postSnap.data();
-        const newViews = (postData.views || 0) + 1;
-
-        await updateDoc(postRef, { views: newViews });
-
-        document.getElementById("post-views").textContent = `조회수 ${newViews} views`;
-    }
-}
 
 const urlParams = new URLSearchParams(window.location.search);
 const board = urlParams.get("board"); 
