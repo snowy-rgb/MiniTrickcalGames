@@ -225,7 +225,7 @@ document.addEventListener("DOMContentLoaded", () => {
         console.log("✅ bullboard.html 감지됨. 게시글 목록 불러오기 실행!");
 
         const boardType = "community_posts";  // 기본 게시판 타입 설정
-        loadPosts(boardType);  // 게시글 목록 불러오기 실행
+        loadPost();  // 게시글 목록 불러오기 실행
 
     } else if (currentPage.includes("post-view.html")) {
         console.log("✅ post-view.html 감지됨. 게시글 상세 보기 실행!");
