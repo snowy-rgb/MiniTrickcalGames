@@ -199,7 +199,7 @@
 
   <!-- 로고 영역 -->
   <div class="logo-container">
-    <h2>MiniTrickcalGames</h2>
+    <h2 id="logo1">MiniTrickcalGames</h2>
   </div>
 
   <!-- 메뉴 영역 -->
@@ -235,13 +235,11 @@
       window.location.href = "mail.html"; // 원하는 페이지로 이동!
     });
 
-    document.addEventListener("DOMContentLoaded", () => {
-      // 모든 .logo 요소를 선택한 후 각각에 이벤트 리스너 추가
-      document.querySelectorAll('.logo').forEach(logo => {
-        logo.addEventListener("click", () => {
-          window.location.href = "logo.html";
-        });
-      });
+    document.getElementById("logo1").addEventListener("click", () => {
+      window.location.href = "logo.html"; // logo to logo.html(getById - logo1) 
+    });
+
+    
 
       // ✅ Firebase에서 프로필 데이터 불러오기 (사용자 로그인 상태 확인)
       fetchUserProfile();
@@ -258,6 +256,7 @@
         console.error("🚨 프로필 데이터를 불러오는 중 오류 발생:", error);
       }
     }
+    
   </script>
 
 </body>
