@@ -29,7 +29,6 @@ const firebaseConfig = {
 
 // ✅ Firebase 초기화
 const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
 export const db = getFirestore(app);  // ✅ Firestore 추가
 export const storage = getStorage(app);  // ✅ Storage 추가
 
@@ -333,4 +332,4 @@ if (!board || !postId) {
 
 
 
-//업데이트 - 0.1.20
+//업데이트 - 0.1.21
