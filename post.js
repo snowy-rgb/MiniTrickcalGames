@@ -65,15 +65,39 @@ export async function savePost(boardType, title, content, mediaUrls, tags) {
 }
 
 // ✅ 게시글 목록 불러오기 함수 (export 추가)
-export async function loadPost(boardType) {
+export async function loadPost() {
   try {
     if (!boardType || (boardType !== "dev_notices" && boardType !== "community_posts")) {
       throw new Error("🚨 올바른 게시판을 선택하세요!");
     }
+    
+    console.log("🔥 Firestore 요청 확인: ", board, postId);
 
     const postCollection = collection(db, boardType);
     const q = query(postCollection, orderBy("createdAt", "desc"));
     const querySnapshot = await getDocs(q);
+
+    if (!postSnap.exists()) {
+        console.error("❌ Firestore 문서 없음:", board, postId);
+        alert("게시글을 찾을 수 없습니다.");
+        window.location.href = "bullboard.html";
+        return;
+    }
+
+    postData = postSnap.data();
+    console.log("✅ Firestore 데이터 불러옴:", postData);
+
+    postTitle.textContent = postData.title || "제목 없음";
+    postContent.innerHTML = postData.content || "내용 없음";
+
+    console.log("📌 게시글 제목:", postData.title);
+    console.log("📌 게시글 내용:", postData.content);
+
+    setTimeout(() => {
+        console.log("✅ 1초 후 제목:", document.getElementById("post-title").textContent);
+        console.log("✅ 1초 후 내용:", document.getElementById("post-content").innerHTML);
+    }, 1000);
+
 
     let posts = [];
     querySnapshot.forEach((doc) => {
