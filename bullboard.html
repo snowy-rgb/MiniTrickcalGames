@@ -134,7 +134,7 @@
       document.getElementById("devTab").classList.toggle("active", board === "dev_notices");
       document.getElementById("freeTab").classList.toggle("active", board === "community_posts");
 
-      loadPosts(board); // 게시판 변경 시 게시글 로드
+      loadPost(); // 게시판 변경 시 게시글 로드
     };
 
     // ✅ 페이지 로드 시 기본 게시판 불러오기
