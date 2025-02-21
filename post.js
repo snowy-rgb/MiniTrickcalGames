@@ -65,39 +65,17 @@ export async function savePost(boardType, title, content, mediaUrls, tags) {
 }
 
 // ✅ 게시글 목록 불러오기 함수 (export 추가)
-export async function loadPost() {
+export async function loadPost(board) {
   try {
     if (!board || (board !== "dev_notices" && board !== "community_posts")) {
       throw new Error("🚨 올바른 게시판을 선택하세요!");
     }
-    
-    console.log("🔥 Firestore 요청 확인: ", board, postId);
 
-    const postCollection = collection(db, boardType);
+    console.log("🔥 Firestore 요청 확인: ", board);
+
+    const postCollection = collection(db, board);
     const q = query(postCollection, orderBy("createdAt", "desc"));
     const querySnapshot = await getDocs(q);
-
-    if (!postSnap.exists()) {
-        console.error("❌ Firestore 문서 없음:", board, postId);
-        alert("게시글을 찾을 수 없습니다.");
-        window.location.href = "bullboard.html";
-        return;
-    }
-
-    postData = postSnap.data();
-    console.log("✅ Firestore 데이터 불러옴:", postData);
-
-    postTitle.textContent = postData.title || "제목 없음";
-    postContent.innerHTML = postData.content || "내용 없음";
-
-    console.log("📌 게시글 제목:", postData.title);
-    console.log("📌 게시글 내용:", postData.content);
-
-    setTimeout(() => {
-        console.log("✅ 1초 후 제목:", document.getElementById("post-title").textContent);
-        console.log("✅ 1초 후 내용:", document.getElementById("post-content").innerHTML);
-    }, 1000);
-
 
     let posts = [];
     querySnapshot.forEach((doc) => {
@@ -117,7 +95,7 @@ export async function loadPost() {
           <div class="post-title">${post.title}</div>
           <div class="post-meta">📅 ${new Date(post.createdAt.seconds * 1000).toLocaleString()}</div>
         `;
-        postItem.onclick = () => window.location.href = `post-view.html?id=${post.id}&board=${boardType}`;
+        postItem.onclick = () => window.location.href = `post-view.html?id=${post.id}&board=${board}`;
         postList.appendChild(postItem);
       });
     }
@@ -126,6 +104,7 @@ export async function loadPost() {
     alert("🚨 게시글을 불러오는 중 오류가 발생했습니다.");
   }
 }
+
 
 // 🔥 조회수 증가 함수 (이 함수가 정의되지 않아서 오류 발생했음)
 export async function updateViews(boardType, postId) {
@@ -151,11 +130,16 @@ export async function updateViews(boardType, postId) {
 document.addEventListener("DOMContentLoaded", () => {
     console.log("✅ DOMContentLoaded 실행됨!");
 
-    // 현재 페이지 확인
     const currentPage = window.location.pathname;
     console.log("📌 현재 페이지:", currentPage);
 
-    if (currentPage.includes("post-view.html")) {
+    if (currentPage.includes("bullboard.html")) {
+        console.log("✅ bullboard.html 감지됨. 게시글 목록 불러오기 실행!");
+
+        const board = "community_posts";  // 기본 게시판 타입 설정
+        loadPost(board);  // 🟢 `board` 값을 전달!
+
+    } else if (currentPage.includes("post-view.html")) {
         console.log("✅ post-view.html 감지됨. 게시글 상세 보기 실행!");
 
         const urlParams = new URLSearchParams(window.location.search);
@@ -170,18 +154,14 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        // ✅ 📌 조회수 업데이트 (여기서 오류 발생했었음)
         updateViews(board, postId);
-
-        // ✅ 좋아요/싫어요 불러오기
         loadLikes(board, postId);
-
-        // ✅ 댓글 불러오기
         loadComments(board, postId);
     } else {
         console.log("⚠️ 해당 페이지에서는 post.js 기능이 실행되지 않음.");
     }
 });
+
 
 
 // 🔥 댓글 불러오기
