@@ -29,7 +29,6 @@ const firebaseConfig = {
 
 // ✅ Firebase 초기화
 const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app);  // ✅ Firestore 추가
 export const storage = getStorage(app);  // ✅ Storage 추가
 
 // ✅ 게시글 저장 함수 (이미지 & 비디오 지원)
