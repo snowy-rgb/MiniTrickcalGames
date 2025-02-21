@@ -65,7 +65,7 @@ export async function savePost(boardType, title, content, mediaUrls, tags) {
 }
 
 // ✅ 게시글 목록 불러오기 함수 (export 추가)
-export async function loadPosts(boardType) {
+export async function loadPost(boardType) {
   try {
     if (!boardType || (boardType !== "dev_notices" && boardType !== "community_posts")) {
       throw new Error("🚨 올바른 게시판을 선택하세요!");
