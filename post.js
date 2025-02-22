@@ -275,6 +275,37 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
+document.addEventListener("DOMContentLoaded", () => {
+    console.log("✅ DOMContentLoaded 실행됨!");
+
+    const currentPage = window.location.pathname;
+    console.log("📌 현재 페이지:", currentPage);
+
+    if (currentPage.includes("post-view.html")) {  // 🟢 오직 post-view.html에서만 실행됨
+        console.log("✅ post-view.html 감지됨. 게시글 상세 보기 실행!");
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const board = urlParams.get("board"); 
+        const postId = urlParams.get("id");
+
+        console.log("✅ board:", board);
+        console.log("✅ postId:", postId);
+
+        if (!board || !postId) {
+            console.error("❌ 게시판 또는 게시글 ID가 정의되지 않았습니다.");
+            return;
+        }
+
+        updateViews(board, postId);
+        loadLikes(board, postId);
+        loadComments(board, postId);
+        loadPost(board, postId);  // ✅ 게시글 불러오기 실행
+    } else {
+        console.log("⚠️ 해당 페이지에서는 post.js 기능이 실행되지 않음.");
+    }
+});
+
+
 
 
 const likeBtn = document.getElementById("like-btn");
