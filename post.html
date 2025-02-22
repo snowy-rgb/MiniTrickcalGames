@@ -118,13 +118,16 @@
     </div>
 
     <input type="file" id="media-upload" accept="image/*,video/*" multiple style="display:none">
-    
-    <div contenteditable="true" id="post-content" class="editor">
-      여기에서 글을 입력하세요...
-    </div>
 
+    <!-- 내용 -->
+    <div contenteditable="true" id="post-content" class="editor" placeholder="여기에서 글을 입력하세요...">
+      
+    </div>
+    
+    <!-- 태그 -->
     <input type="text" id="tag-input" class="tag-input" placeholder="태그 입력 (#으로 구분, 최대 10개)">
 
+    <!-- 버튼 -->
     <div class="button-container">
       <button class="submit-button" id="submit-btn">게시글 등록</button>
       <button class="cancel-button" id="cancel-btn">취소</button>
