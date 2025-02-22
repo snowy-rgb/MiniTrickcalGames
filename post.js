@@ -275,6 +275,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
+//post 불러오기(post-view)
 document.addEventListener("DOMContentLoaded", () => {
     console.log("✅ DOMContentLoaded 실행됨!");
 
