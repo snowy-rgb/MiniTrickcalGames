@@ -249,10 +249,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // re:end111- 582AFX90Cy
 // 🔥 댓글 불러오기
+// 🔥 댓글 불러오기 (최신순 정렬)
 export async function loadComments(boardType, postId) {
     try {
         const commentsRef = collection(db, `${boardType}/${postId}/comments`);
-        const commentsSnap = await getDocs(commentsRef);
+        const q = query(commentsRef, orderBy("createdAt", "desc")); // 🔥 최신순 정렬 추가!
+        const commentsSnap = await getDocs(q);
 
         const commentsList = document.getElementById("comments-list");
         commentsList.innerHTML = ""; // 기존 댓글 초기화
@@ -306,6 +308,7 @@ export async function loadComments(boardType, postId) {
         alert("🚨 댓글을 불러오는 중 오류가 발생했습니다.");
     }
 }
+
 
 
 //댓글 작성
