@@ -99,10 +99,71 @@ export async function loadPosts(board) {
         postList.appendChild(postItem);
       });
     }
-  } catch (error) {
-    console.error("❌ 게시글 불러오기 오류:", error);
-    alert("🚨 게시글을 불러오는 중 오류가 발생했습니다.");
-  }
+  } 
+}
+
+export async function loadPost(board, postId) {
+    console.log("🔥 loadPost() 실행됨! board:", board, "postId:", postId);
+
+    if (!board || !postId) {
+        console.error("❌ board 또는 postId가 없습니다!");
+        return;
+    }
+
+    const postRef = doc(db, board, postId);
+    console.log("📌 Firestore 문서 요청:", postRef.path);
+
+    try {
+        const postSnap = await getDoc(postRef);
+
+        if (!postSnap.exists()) {
+            console.error("❌ Firestore 문서 없음:", board, postId);
+            alert("게시글을 찾을 수 없습니다.");
+            window.location.href = "bullboard.html";
+            return;
+        }
+
+        const postData = postSnap.data();
+        console.log("✅ Firestore 데이터 불러옴:", postData);
+
+        document.getElementById("post-title").textContent = postData.title || "제목 없음";
+        document.getElementById("post-content").innerHTML = postData.content || "내용 없음";
+        document.getElementById("post-date").textContent = `📅 ${new Date(postData.createdAt.seconds * 1000).toLocaleString()}`;
+
+        // ✅ 작성자 정보 가져오기 (authorId를 Firestore에서 조회)
+        if (postData.authorId) {
+            const userRef = doc(db, "users", postData.authorId);
+            const userSnap = await getDoc(userRef);
+            if (userSnap.exists()) {
+                const userData = userSnap.data();
+                document.getElementById("author-name").textContent = userData.username || "익명";
+                document.getElementById("author-icon").src = userData.profile?.icon || "default-icon.png";
+            } else {
+                document.getElementById("author-name").textContent = "알 수 없는 사용자";
+            }
+        }
+
+        // ✅ 태그 표시
+        if (postData.tags && postData.tags.length > 0) {
+            document.getElementById("post-tags").innerHTML = postData.tags.map(tag => `<span class="tag">#${tag}</span>`).join(" ");
+        }
+
+        // ✅ 미디어 표시
+        if (postData.media && postData.media.length > 0) {
+            document.getElementById("post-media").innerHTML = postData.media.map(mediaUrl => {
+                if (mediaUrl.endsWith(".mp4") || mediaUrl.endsWith(".webm")) {
+                    return `<video controls src="${mediaUrl}"></video>`;
+                } else if (mediaUrl.endsWith(".mp3") || mediaUrl.endsWith(".wav")) {
+                    return `<audio controls src="${mediaUrl}"></audio>`;
+                } else {
+                    return `<img src="${mediaUrl}" alt="업로드된 이미지">`;
+                }
+            }).join("");
+        }
+
+    } catch (error) {
+        console.error("❌ Firestore에서 데이터 가져오기 오류:", error);
+    }
 }
 
 
