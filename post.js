@@ -99,7 +99,9 @@ export async function loadPosts(board) {
         postList.appendChild(postItem);
       });
     }
-  } 
+  } catch (error) {
+       console.error("❌ 게시글 로드 중 오류:", error);
+  }
 }
 
 export async function loadPost(board, postId) {
