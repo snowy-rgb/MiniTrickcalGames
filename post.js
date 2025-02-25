@@ -74,7 +74,7 @@ export async function savePost(boardType, title, content, mediaUrls, tags) {
 export async function loadPosts(boardType) {
   try {
     if (!boardType || (boardType !== "dev_notices" && boardType !== "community_posts")) {
-      throw new Error("🚨 올바른 게시판을 선택하세요!");
+      console.log("오류 : 확인되지않음//u-//무시")
     }
 
     console.log("🔥 Firestore 요청 확인: ", boardType);
