@@ -416,40 +416,126 @@ const dislikeCount = document.getElementById("dislike-count");
 
 // 🔥 좋아요/싫어요 불러오기
 export async function loadLikes(boardType, postId) {
-    const postRef = doc(db, boardType, postId);
-    const postSnap = await getDoc(postRef);
+    try {
+        const postRef = doc(db, boardType, postId);
+        const postSnap = await getDoc(postRef);
 
-    if (postSnap.exists()) {
+        if (!postSnap.exists()) return;
+
         let postData = postSnap.data();
+        const user = auth.currentUser;
+
+        if (!user) return;
+
+        // 🔥 좋아요/싫어요 개수 업데이트
         likeCount.textContent = postData.likes || 0;
         dislikeCount.textContent = postData.dislikes || 0;
+
+        // ✅ 현재 사용자가 좋아요/싫어요를 눌렀는지 확인
+        let userLikes = postData.likedUsers || {};
+        let userDislikes = postData.dislikedUsers || {};
+
+        if (userLikes[user.uid]) {
+            likeBtn.style.backgroundColor = "green";
+        } else {
+            likeBtn.style.backgroundColor = "";
+        }
+
+        if (userDislikes[user.uid]) {
+            dislikeBtn.style.backgroundColor = "green";
+        } else {
+            dislikeBtn.style.backgroundColor = "";
+        }
+
+        // 🔥 버튼 이벤트 리스너 추가 (중복 방지)
+        likeBtn.onclick = () => updateLikes(boardType, postId, "like");
+        dislikeBtn.onclick = () => updateLikes(boardType, postId, "dislike");
+    } catch (error) {
+        console.error("❌ 좋아요/싫어요 불러오기 오류:", error);
     }
 }
 
 // 🔥 좋아요/싫어요 업데이트
-async function updateLikes(type) {
-    const postRef = doc(db, board, postId);
-    const postSnap = await getDoc(postRef);
+async function updateLikes(boardType, postId, type) {
+    try {
+        const postRef = doc(db, boardType, postId);
+        const postSnap = await getDoc(postRef);
 
-    if (!postSnap.exists()) return;
-    let postData = postSnap.data();
+        if (!postSnap.exists()) return;
 
-    if (!postData.likes) postData.likes = 0;
-    if (!postData.dislikes) postData.dislikes = 0;
+        let postData = postSnap.data();
+        const user = auth.currentUser;
 
-    if (type === "like") {
-        postData.likes += 1;
-    } else {
-        postData.dislikes += 1;
+        if (!user) {
+            alert("🚨 로그인이 필요합니다!");
+            return;
+        }
+
+        if (user.uid === postData.authorId) {
+            alert("🚨 자신의 게시글에는 좋아요/싫어요를 누를 수 없습니다!");
+            return;
+        }
+
+        let userLikes = postData.likedUsers || {};
+        let userDislikes = postData.dislikedUsers || {};
+
+        let likes = postData.likes || 0;
+        let dislikes = postData.dislikes || 0;
+
+        if (type === "like") {
+            if (userLikes[user.uid]) {
+                // 🔥 좋아요 취소
+                delete userLikes[user.uid];
+                likes -= 1;
+                likeBtn.style.backgroundColor = "";
+            } else {
+                // 🔥 좋아요 추가
+                userLikes[user.uid] = true;
+                likes += 1;
+                likeBtn.style.backgroundColor = "green";
+
+                // ❌ 싫어요가 눌려 있다면 취소
+                if (userDislikes[user.uid]) {
+                    delete userDislikes[user.uid];
+                    dislikes -= 1;
+                    dislikeBtn.style.backgroundColor = "";
+                }
+            }
+        } else if (type === "dislike") {
+            if (userDislikes[user.uid]) {
+                // 🔥 싫어요 취소
+                delete userDislikes[user.uid];
+                dislikes -= 1;
+                dislikeBtn.style.backgroundColor = "";
+            } else {
+                // 🔥 싫어요 추가
+                userDislikes[user.uid] = true;
+                dislikes += 1;
+                dislikeBtn.style.backgroundColor = "green";
+
+                // ❌ 좋아요가 눌려 있다면 취소
+                if (userLikes[user.uid]) {
+                    delete userLikes[user.uid];
+                    likes -= 1;
+                    likeBtn.style.backgroundColor = "";
+                }
+            }
+        }
+
+        // 🔥 Firestore 업데이트
+        await updateDoc(postRef, {
+            likes: likes,
+            dislikes: dislikes,
+            likedUsers: userLikes,
+            dislikedUsers: userDislikes
+        });
+
+        // 🔥 UI 업데이트
+        likeCount.textContent = likes;
+        dislikeCount.textContent = dislikes;
+    } catch (error) {
+        console.error("❌ 좋아요/싫어요 업데이트 오류:", error);
     }
-
-    await updateDoc(postRef, {
-        likes: postData.likes,
-        dislikes: postData.dislikes
-    });
-
-    likeCount.textContent = postData.likes;
-    dislikeCount.textContent = postData.dislikes;
 }
 
 
