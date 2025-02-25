@@ -373,7 +373,24 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
+document.addEventListener("DOMContentLoaded", () => {
+    console.log("✅ DOMContentLoaded 실행됨!");
 
+    const urlParams = new URLSearchParams(window.location.search);
+    const board = urlParams.get("board"); 
+    const postId = urlParams.get("id");
+
+    console.log("📌 board:", board);
+    console.log("📌 postId:", postId);
+
+    if (!board || !postId) {
+        console.error("❌ board 또는 postId가 없습니다!");
+        return;
+    }
+
+    // ✅ 인자를 명확하게 전달하여 실행
+    loadPost(board, postId);
+});
 
 
 const likeBtn = document.getElementById("like-btn");
