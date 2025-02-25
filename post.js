@@ -44,12 +44,18 @@ export async function savePost(boardType, title, content, mediaUrls, tags) {
             throw new Error("🚨 로그인이 필요합니다!");
         }
 
+        const userRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userRef);
+        let userData = userSnap.exists() ? userSnap.data() : { username: "익명", profile: { icon: "default-icon.png" } };
+
         // ✅ Firestore에 게시글 저장
         const postCollection = collection(db, boardType);
         await addDoc(postCollection, {  
             title: title.trim(),
             content: content.trim(),
             authorId: user.uid,  // 🔹 게시글 작성자 ID 저장
+            authorName: userData.username,  // 🔥 사용자 이름 저장
+            authorIcon: userData.profile.icon, 
             createdAt: serverTimestamp(),
             media: mediaUrls || [],  // 🔥 이미지/비디오 URL 저장
             tags: tags || []          // 🔥 태그 저장
