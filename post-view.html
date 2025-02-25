@@ -172,10 +172,29 @@
       <button id="add-comment">댓글 작성</button>
   </div>
 
-  <script type="module" src="post.js" defer>
+  <script type="module" defer>
     import { db, auth } from "./auth.js";
     import { getFirestore, doc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-firestore.js";
     import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-auth.js";
+    import { loadPost } from "./post.js";
+
+    document.addEventListener("DOMContentLoaded", () => {
+        console.log("✅ post-view.html DOMContentLoaded 실행됨!");
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const board = urlParams.get("board"); 
+        const postId = urlParams.get("id");
+
+        console.log("✅ URL에서 가져온 값 - board:", board);
+        console.log("✅ URL에서 가져온 값 - postId:", postId);
+
+        if (!board || !postId) {
+            console.error("❌ 게시판 또는 게시글 ID가 정의되지 않았습니다.");
+            return;
+        }
+
+        loadPost(board, postId); // ✅ Firestore에서 게시글 불러오기
+    });
 
     const urlParams = new URLSearchParams(window.location.search);
     const postId = urlParams.get("id");
