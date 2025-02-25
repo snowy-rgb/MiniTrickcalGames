@@ -247,6 +247,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 
+// re:end111- 582AFX90Cy
 // 🔥 댓글 불러오기
 export async function loadComments(boardType, postId) {
     try {
@@ -259,15 +260,46 @@ export async function loadComments(boardType, postId) {
         if (commentsSnap.empty) {
             commentsList.innerHTML = "<p>아직 댓글이 없습니다.</p>";
         } else {
-            commentsSnap.forEach((doc) => {
-                const comment = doc.data();
+            for (const docSnap of commentsSnap.docs) {
+                const commentData = docSnap.data();
                 const commentElement = document.createElement("div");
+                commentElement.className = "comment-box"; // 🔥 댓글 칸 스타일 적용
+
+                // ✅ Firestore에서 작성자의 프로필 정보 가져오기
+                let username = "익명";
+                let userIcon = "default-icon.png";
+
+                if (commentData.authorId) {
+                    const userRef = doc(db, "Trickcal_MIniGames", commentData.authorId);
+                    const userSnap = await getDoc(userRef);
+                    if (userSnap.exists()) {
+                        const userData = userSnap.data();
+                        username = userData.username || "익명";
+                        userIcon = userData.profile?.icon || "default-icon.png";
+                    }
+                }
+
+                // ✅ 작성 시간 변환
+                const createdAt = commentData.createdAt?.seconds
+                    ? new Date(commentData.createdAt.seconds * 1000).toLocaleString()
+                    : "날짜 없음";
+
+                // ✅ 댓글 UI 구성
                 commentElement.innerHTML = `
-                    <p><strong>${comment.authorId}</strong>: ${comment.content}</p>
-                    <button onclick="deleteComment('${boardType}', '${postId}', '${doc.id}')">삭제</button>
+                    <div class="comment-header">
+                        <img src="${userIcon}" alt="프로필 사진" class="comment-profile">
+                        <div class="comment-info">
+                            <span class="comment-username">${username}</span>
+                            <span class="comment-time">${createdAt}</span>
+                        </div>
+                    </div>
+                    <div class="comment-content">
+                        ${commentData.content}
+                    </div>
                 `;
+
                 commentsList.appendChild(commentElement);
-            });
+            }
         }
     } catch (error) {
         console.error("❌ 댓글 불러오기 오류:", error);
