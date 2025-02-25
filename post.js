@@ -142,22 +142,28 @@ export async function loadPost(board, postId) {
         document.getElementById("post-title").textContent = postData.title || "제목 없음";
         document.getElementById("post-content").innerHTML = postData.content || "내용 없음";
         document.getElementById("post-date").textContent = `📅 ${new Date(postData.createdAt.seconds * 1000).toLocaleString()}`;
-
-        // ✅ Firestore에서 불러온 사용자 정보 바로 사용
-        document.getElementById("author-name").textContent = postData.authorName || "알 수 없는 사용자";
-        document.getElementById("author-icon").src = postData.authorIcon || "default-icon.png";
-        // re:end2
+        
 
         // ✅ 작성자 정보 가져오기 (authorId를 Firestore에서 조회)
-        if (postData.authorId) {
-            const userRef = doc(db, "users", postData.authorId);
+       if (postData.authorId) {
+            const userRef = doc(db, "Trickcal_MIniGames", postData.authorId);
             const userSnap = await getDoc(userRef);
             if (userSnap.exists()) {
                 const userData = userSnap.data();
-                document.getElementById("author-name").textContent = userData.username || postData.authorName;
-                document.getElementById("author-icon").src = userData.profile?.icon || postData.authorIcon;
+                console.log("✅ Firestore에서 사용자 정보 가져옴:", userData);
+
+                // 🔥 UI 업데이트 (닉네임 & 프로필 사진)
+                document.getElementById("author-name").textContent = userData.username || "알 수 없는 사용자";
+                document.getElementById("author-icon").src = userData.profile?.icon || "default-icon.png";
+            } else {
+                console.warn("⚠️ Firestore에서 사용자 정보를 찾을 수 없음! 기본값 사용");
+                document.getElementById("author-name").textContent = "알 수 없는 사용자";
+                document.getElementById("author-icon").src = "default-icon.png";
             }
+        } else {
+            console.warn("⚠️ 게시글에 authorId가 없음! 기본값 사용");
         }
+
 
         // ✅ 태그 표시
         if (postData.tags && postData.tags.length > 0) {
