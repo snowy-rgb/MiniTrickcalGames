@@ -128,14 +128,33 @@
     window.currentBoard = "community_posts"; // 기본적으로 자유게시판
 
   // ✅ 게시판 변경 시 실행되는 함수 (window에 등록)
-    window.switchBoard = function (board) {
-      window.currentBoard = board; // 🔹 전역 변수로 등록하여 어디서든 사용 가능!
-    
-      document.getElementById("devTab").classList.toggle("active", board === "dev_notices");
-      document.getElementById("freeTab").classList.toggle("active", board === "community_posts");
+  // ✅ 게시판 변경 시 실행되는 함수
+  window.switchBoard = function (boardType) {
+    console.log("📌 게시판 전환 요청:", boardType);
+  
+    // 🔥 boardType이 올바르게 전달되었는지 확인
+    if (!boardType || (boardType !== "dev_notices" && boardType !== "community_posts")) {
+      console.error("❌ 올바른 게시판을 선택하세요!");
+      return;
+    }
+  
+    window.currentBoard = boardType; // 전역 변수 업데이트
+  
+    // ✅ URL 업데이트 (현재 페이지의 board 값을 변경)
+    const url = new URL(window.location.href);
+    url.searchParams.set("board", boardType);
+    window.history.pushState({}, "", url);
+  
+    // ✅ 탭 버튼 스타일 업데이트
+    document.getElementById("devTab").classList.toggle("active", boardType === "dev_notices");
+    document.getElementById("freeTab").classList.toggle("active", boardType === "community_posts");
+  
+    console.log("✅ 게시판 변경됨: ", boardType);
+  
+    // ✅ Firestore에서 게시글 불러오기 (boardType을 명확하게 전달)
+    loadPosts(boardType);
+  };
 
-      loadPosts(); // 게시판 변경 시 게시글 로드
-    };
 
     // ✅ 페이지 로드 시 기본 게시판 불러오기
     document.addEventListener("DOMContentLoaded", () => {
