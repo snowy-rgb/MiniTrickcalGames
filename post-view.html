@@ -218,59 +218,6 @@
 
     let postData = {}; 
 
-    async function loadPost() {
-      const postRef = doc(db, board, postId);
-      const postSnap = await getDoc(postRef);
-
-      if (!postSnap.exists()) {
-          alert("게시글을 찾을 수 없습니다.");
-          window.location.href = "bullboard.html";
-          return;
-      }
-
-      postData = postSnap.data(); 
-      postTitle.textContent = postData.title;
-      postDate.textContent = `📅 ${new Date(postData.createdAt.seconds * 1000).toLocaleString()}`;
-      postContent.innerHTML = postData.content; 
-
-      if (!postData.authorId) {
-          authorName.textContent = "알 수 없는 사용자";
-          return;
-      }
-
-      const userRef = doc(db, "Trickcal_MIniGames", postData.authorId);
-      const userSnap = await getDoc(userRef);
-
-      if (userSnap.exists()) {
-          const userData = userSnap.data();
-          authorIcon.src = userData.profile?.icon || "default-icon.png";
-          authorName.textContent = userData.username || "익명";
-          postAuthor.onclick = () => {
-              window.location.href = `profile.html?uid=${postData.authorId}`;
-          };
-      } else {
-          authorName.textContent = "알 수 없는 사용자";
-      }
-
-      if (postData.tags && postData.tags.length > 0) {
-        postTags.innerHTML = postData.tags.map(tag => `<span class="tag">#${tag}</span>`).join(" ");
-      }
-
-      if (postData.media && postData.media.length > 0) {
-        postMedia.innerHTML = postData.media.map(mediaUrl => {
-          if (mediaUrl.endsWith(".mp4") || mediaUrl.endsWith(".webm")) {
-            return `<video controls src="${mediaUrl}"></video>`;
-          } else if (mediaUrl.endsWith(".mp3") || mediaUrl.endsWith(".wav")) {
-            return `<audio controls src="${mediaUrl}"></audio>`;
-          } else {
-            return `<img src="${mediaUrl}" alt="업로드된 이미지">`;
-          }
-        }).join("");
-      }
-
-      checkUserPermissions();
-    }
-
     function checkUserPermissions() {
       onAuthStateChanged(auth, (user) => {
         if (user && postData.authorId && user.uid === postData.authorId) {
