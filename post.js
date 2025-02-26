@@ -598,27 +598,18 @@ async function updateCommentLikes(boardType, postId, commentId, type) {
 
 // 🔥 댓글 삭제 기능 (작성자만 삭제 가능)
 async function deleteComment(boardType, postId, commentId) {
+    if (!confirm("정말 이 댓글을 삭제하시겠습니까?")) return;
+
     try {
-        const commentRef = doc(db, `${boardType}/${postId}/comments`, commentId);
-        const commentSnap = await getDoc(commentRef);
-
-        if (!commentSnap.exists()) return;
-
-        const user = auth.currentUser;
-        if (!user || user.uid !== commentSnap.data().authorId) {
-            alert("🚨 본인이 작성한 댓글만 삭제할 수 있습니다!");
-            return;
-        }
-
-        if (confirm("정말 삭제하시겠습니까?")) {
-            await deleteDoc(commentRef);
-            alert("✅ 댓글이 삭제되었습니다.");
-            loadComments(boardType, postId); // 🔄 댓글 다시 불러오기
-        }
+        await deleteDoc(doc(db, `${boardType}/${postId}/comments`, commentId));
+        alert("🗑 댓글이 삭제되었습니다.");
+        loadComments(boardType, postId); // 댓글 새로고침
     } catch (error) {
         console.error("❌ 댓글 삭제 오류:", error);
+        alert("🚨 댓글 삭제 중 오류가 발생했습니다.");
     }
 }
+
 
 //cloudinaryToFile
 async function uploadToCloudinary(file) {
