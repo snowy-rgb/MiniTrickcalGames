@@ -31,7 +31,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const storage = getStorage(app);  // ✅ Storage 추가
 
-import { storage } from "./auth.js";
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-storage.js";
 
 document.getElementById("comment-media-upload").addEventListener("change", async function (event) {
