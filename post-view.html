@@ -272,7 +272,10 @@
     body {
         padding-bottom: 80px; /* 댓글 입력 칸만큼 여백 추가 */
     }
-
+    #comment-input {
+        max-height: 150px; /* 입력이 너무 길어지지 않도록 최대 높이 설정 */
+        overflow-y: auto;
+    }
 
   </style>
   <link rel="icon" href="https://www.google.com/favicon.ico" type="image/x-icon">
