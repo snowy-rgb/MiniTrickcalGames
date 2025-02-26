@@ -276,6 +276,50 @@
         max-height: 150px; /* 입력이 너무 길어지지 않도록 최대 높이 설정 */
         overflow-y: auto;
     }
+    /* 🔥 댓글 옵션 (톱니바퀴) */
+    .comment-options {
+        position: relative;
+        margin-left: auto;
+        cursor: pointer;
+        font-size: 18px;
+        padding: 5px;
+        color: gray;
+        transition: 0.2s;
+    }
+    
+    .comment-options:hover {
+        color: black;
+    }
+    
+    /* 🔥 댓글 옵션 메뉴 */
+    .comment-menu {
+        display: none;
+        position: absolute;
+        right: 0;
+        top: 25px;
+        background: white;
+        border: 1px solid #ddd;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        border-radius: 5px;
+        z-index: 10;
+        width: 100px;
+        text-align: left;
+    }
+    
+    .comment-menu button {
+        display: block;
+        width: 100%;
+        padding: 8px;
+        border: none;
+        background: white;
+        font-size: 14px;
+        cursor: pointer;
+        text-align: left;
+    }
+    
+    .comment-menu button:hover {
+        background: #f4f4f4;
+    }
 
   </style>
   <link rel="icon" href="https://www.google.com/favicon.ico" type="image/x-icon">
