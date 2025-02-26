@@ -504,6 +504,25 @@
           alert("🚨 댓글 저장 중 오류 발생");
       }
   });
+
+  document.getElementById("comments-list").addEventListener("click", function (event) {
+      // ✅ 톱니바퀴(⚙) 클릭 감지
+      if (event.target.classList.contains("comment-options")) {
+          const commentId = event.target.dataset.commentId;
+          const menu = document.getElementById(`menu-${commentId}`);
+  
+          // ✅ 다른 열린 메뉴 닫기
+          document.querySelectorAll(".comment-menu").forEach((el) => {
+              if (el !== menu) el.style.display = "none";
+          });
+  
+          // ✅ 해당 댓글의 메뉴 토글
+          if (menu) {
+              menu.style.display = menu.style.display === "block" ? "none" : "block";
+          }
+      }
+  });
+
   </script>
 
 </body>
