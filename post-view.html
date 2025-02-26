@@ -224,6 +224,55 @@
     #add-comment:hover {
         background: #0056b3;
     }
+    /* 🔥 댓글 입력 칸을 항상 화면 하단에 고정 */
+    .comment-input-container {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background: white;
+        padding: 10px;
+        box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        z-index: 1000;
+    }
+    
+    /* 🔥 댓글 입력 필드 */
+    #comment-input {
+        flex: 1;
+        min-height: 40px;
+        padding: 10px;
+        font-size: 14px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        resize: none; /* 크기 조절 방지 */
+        overflow-y: auto; /* 입력이 길어지면 스크롤 가능 */
+    }
+    
+    /* 🔥 댓글 작성 버튼 */
+    #add-comment {
+        padding: 10px 15px;
+        font-size: 14px;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: 0.2s;
+        white-space: nowrap; /* 버튼 크기 유지 */
+    }
+    
+    #add-comment:hover {
+        background: #0056b3;
+    }
+    
+    /* 🔥 전체 페이지에서 댓글 입력 칸을 고려한 스크롤 */
+    body {
+        padding-bottom: 80px; /* 댓글 입력 칸만큼 여백 추가 */
+    }
+
 
   </style>
   <link rel="icon" href="https://www.google.com/favicon.ico" type="image/x-icon">
