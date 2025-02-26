@@ -356,36 +356,57 @@
       window.location.href = "bullboard.html";
     });
 
-      const cloudName = "YOUR_CLOUD_NAME"; // 🔹 Cloudinary 계정 이름
-  const uploadPreset = "YOUR_UPLOAD_PRESET"; // 🔹 설정한 Upload Preset
-
-  document.getElementById("upload-btn").addEventListener("click", async () => {
-    const fileInput = document.getElementById("file-input");
-    if (!fileInput.files.length) {
-      alert("파일을 선택하세요!");
-      return;
-    }
-
-    const file = fileInput.files[0];
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("upload_preset", uploadPreset);
-
-    try {
+  const cloudName = "YOUR_CLOUD_NAME";  // 🔥 Cloudinary 계정 이름
+  const uploadPreset = "MiniTrickcalGames";  // 🔥 방금 찾은 Upload Preset 이름
+  
+  async function uploadToCloudinary(file) {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", uploadPreset);
+  
       const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/upload`, {
-        method: "POST",
-        body: formData,
+          method: "POST",
+          body: formData,
       });
-
+  
       const data = await response.json();
-      console.log("Uploaded File:", data.secure_url);
+      return data.secure_url;  // 🔥 업로드된 파일 URL 반환
+  }
 
-      // ✅ 미리보기 추가
-      const preview = document.getElementById("preview");
-      preview.innerHTML = `<img src="${data.secure_url}" width="300">`;
-    } catch (error) {
-      console.error("Upload failed:", error);
-    }
+  document.getElementById("add-comment").addEventListener("click", async () => {
+      const commentInput = document.getElementById("comment-input").value;
+      const fileInput = document.getElementById("file-input").files[0]; // 🔥 파일 선택
+  
+      if (!commentInput.trim() && !fileInput) {
+          return alert("🚨 댓글을 입력하거나 파일을 선택하세요!");
+      }
+  
+      const user = auth.currentUser;
+      if (!user) {
+          return alert("🚨 로그인이 필요합니다!");
+      }
+  
+      try {
+          let fileUrl = "";
+          if (fileInput) {
+              fileUrl = await uploadToCloudinary(fileInput);  // 🔥 파일 업로드
+          }
+  
+          const commentsRef = collection(db, `${board}/${postId}/comments`);
+          await addDoc(commentsRef, {
+              authorId: user.uid,
+              content: commentInput.trim(),
+              media: fileUrl,  // 🔥 업로드된 파일 URL 추가
+              createdAt: serverTimestamp(),
+          });
+  
+          document.getElementById("comment-input").value = ""; // 입력칸 초기화
+          document.getElementById("file-input").value = ""; // 파일 선택 초기화
+          loadComments(board, postId); // 댓글 새로고침
+      } catch (error) {
+          console.error("❌ 댓글 저장 오류:", error);
+          alert("🚨 댓글 저장 중 오류 발생");
+      }
   });
   </script>
 
