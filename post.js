@@ -292,11 +292,6 @@ export async function loadComments(boardType, postId) {
             }
 
             // ✅ 작성 시간 변환
-            const createdAt = commentData.createdAt?.seconds
-                ? new Date(commentData.createdAt.seconds * 1000).toLocaleString()
-                : "날짜 없음";
-
-            // ✅ 댓글 UI 구성
             const commentElement = document.createElement("div");
             commentElement.className = "comment-box";
             commentElement.innerHTML = `
@@ -307,10 +302,10 @@ export async function loadComments(boardType, postId) {
                         <span class="comment-time">${createdAt}</span>
                     </div>
                     
-                    <!-- 🔥 톱니바퀴 아이콘 -->
-                    <div class="comment-options" id="options-${commentId}">⚙</div>
+                    <!-- ✅ 톱니바퀴 아이콘 (data-comment-id 추가) -->
+                    <div class="comment-options" data-comment-id="${commentId}">⚙</div>
                     
-                    <!-- 🔥 옵션 메뉴 (삭제 또는 신고) -->
+                    <!-- ✅ 옵션 메뉴 -->
                     <div class="comment-menu" id="menu-${commentId}">
                         ${isAuthor 
                             ? `<button class="delete-btn" id="delete-${commentId}">🗑 삭제</button>` 
