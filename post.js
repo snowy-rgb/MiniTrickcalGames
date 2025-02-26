@@ -641,7 +641,7 @@ async function uploadToCloudinary(file) {
     formData.append("upload_preset", "MiniTrickcalGames"); // ✅ Cloudinary 업로드 프리셋
 
     try {
-        const response = await fetch("https://api.cloudinary.com/v1_1/YOUR_CLOUD_NAME/upload", {
+        const response = await fetch("https://api.cloudinary.com/v1_1/doji3ykrt/upload", {
             method: "POST",
             body: formData
         });
