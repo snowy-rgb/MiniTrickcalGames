@@ -643,15 +643,16 @@ async function uploadToCloudinary(file) {
 //linkToIm
 function parseMediaInComments(content) {
     // 🔥 이미지 변환 (Markdown -> <img>)
-    content = content.replace(/!\[.*?\]\((https?:\/\/res\.cloudinary\.com\/[^\s]+?\.(?:png|jpg|jpeg|gif))\)/g, 
-        '<img src="$1" alt="이미지" style="max-width: 100%; border-radius: 8px;">');
+    content = content.replace(/!\[이미지\]\((https?:\/\/res\.cloudinary\.com\/[^\s]+?\.(?:png|jpg|jpeg|gif|webp))\)/g, 
+        '<img src="$1" alt="이미지" style="max-width: 100%; border-radius: 8px; display: block; margin-top: 10px;">');
 
     // 🔥 비디오 변환 (Markdown -> <video>)
-    content = content.replace(/!\[.*?\]\((https?:\/\/res\.cloudinary\.com\/[^\s]+?\.(?:mp4|webm|ogg))\)/g, 
-        '<video controls src="$1" style="max-width: 100%; border-radius: 8px;"></video>');
+    content = content.replace(/!\[비디오 보기\]\((https?:\/\/res\.cloudinary\.com\/[^\s]+?\.(?:mp4|webm|ogg))\)/g, 
+        '<video controls src="$1" style="max-width: 100%; border-radius: 8px; display: block; margin-top: 10px;"></video>');
 
     return content;
 }
+
 
 
 const likeBtn = document.getElementById("like-btn");
