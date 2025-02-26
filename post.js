@@ -450,22 +450,30 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
-document.getElementById("comment-media-upload").addEventListener("change", async function (event) {
-    const file = event.target.files[0];
-    if (!file) return;
+document.addEventListener("DOMContentLoaded", () => {
+    const mediaUploadInput = document.getElementById("comment-media-upload");
+    if (mediaUploadInput) {
+        mediaUploadInput.addEventListener("change", async function (event) {
+            const file = event.target.files[0];
+            if (!file) return;
 
-    const fileRef = ref(storage, `comments/${Date.now()}_${file.name}`);
-    await uploadBytes(fileRef, file);
-    const fileURL = await getDownloadURL(fileRef);
+            const fileURL = await uploadToCloudinary(file); // 🔥 Cloudinary 업로드
 
-    // 🔥 선택한 미디어를 댓글 입력 칸에 삽입
-    const commentInput = document.getElementById("comment-input");
-    if (file.type.startsWith("image/")) {
-        commentInput.value += `\n![이미지](${fileURL})`;
-    } else if (file.type.startsWith("video/")) {
-        commentInput.value += `\n🎥 [비디오 보기](${fileURL})`;
+            // 🔥 업로드된 URL을 댓글 입력칸에 추가
+            const commentInput = document.getElementById("comment-input");
+            if (fileURL) {
+                if (file.type.startsWith("image/")) {
+                    commentInput.value += `\n![이미지](${fileURL})`;
+                } else if (file.type.startsWith("video/")) {
+                    commentInput.value += `\n🎥 [비디오 보기](${fileURL})`;
+                }
+            }
+        });
+    } else {
+        console.warn("⚠️ `comment-media-upload` 요소를 찾을 수 없음!");
     }
 });
+
 
 
 //post 불러오기(post-view)
@@ -623,6 +631,32 @@ async function deleteComment(boardType, postId, commentId) {
         }
     } catch (error) {
         console.error("❌ 댓글 삭제 오류:", error);
+    }
+}
+
+//cloudinaryToFile
+async function uploadToCloudinary(file) {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", "MiniTrickcalGames"); // ✅ Cloudinary 업로드 프리셋
+
+    try {
+        const response = await fetch("https://api.cloudinary.com/v1_1/YOUR_CLOUD_NAME/upload", {
+            method: "POST",
+            body: formData
+        });
+
+        if (!response.ok) {
+            throw new Error("🚨 Cloudinary 업로드 실패!");
+        }
+
+        const data = await response.json();
+        console.log("✅ Cloudinary 업로드 완료:", data.secure_url);
+        return data.secure_url; // 🔥 업로드된 파일 URL 반환
+    } catch (error) {
+        console.error("❌ Cloudinary 업로드 오류:", error);
+        alert("🚨 미디어 업로드 중 오류가 발생했습니다.");
+        return null;
     }
 }
 
