@@ -255,27 +255,25 @@ document.addEventListener("DOMContentLoaded", () => {
 // 🔥 댓글 불러오기 (최신순 정렬 + 좋아요/싫어요 추가) re:re:re:
 export async function loadComments(boardType, postId) {
     try {
-        // ✅ 중복 실행 방지
+        // ✅ 중복 실행 방지 (이미 실행된 경우 다시 실행하지 않음)
         if (window.isCommentsLoaded) return;
-        window.isCommentsLoaded = true; // 한 번만 실행되도록 설정
+        window.isCommentsLoaded = true; 
 
         console.log("🔥 loadComments() 실행됨!");
 
         const commentsRef = collection(db, `${boardType}/${postId}/comments`);
-        const q = query(commentsRef, orderBy("createdAt", "desc"));
+        const q = query(commentsRef, orderBy("createdAt", "desc")); // 🔥 최신순 정렬 추가
         const commentsSnap = await getDocs(q);
 
         const commentsList = document.getElementById("comments-list");
-
-        // ✅ 기존 댓글 삭제 (초기화)
-        commentsList.innerHTML = "";
+        commentsList.innerHTML = ""; // ✅ 기존 댓글 초기화
 
         if (commentsSnap.empty) {
             commentsList.innerHTML = "<p>아직 댓글이 없습니다.</p>";
             return;
         }
 
-        // ✅ Firestore에서 가져온 댓글을 한 번만 추가하도록 루프 수정
+        // ✅ Firestore에서 가져온 댓글 목록을 하나씩 추가
         commentsSnap.forEach(async (docSnap) => {
             const commentData = docSnap.data();
             const commentId = docSnap.id;
@@ -306,13 +304,23 @@ export async function loadComments(boardType, postId) {
                 ? new Date(commentData.createdAt.seconds * 1000).toLocaleString()
                 : "날짜 없음";
 
-            // ✅ 좋아요/싫어요 버튼
+            // ✅ 좋아요/싫어요 데이터 처리
             let likeCount = commentData.likes || 0;
             let dislikeCount = commentData.dislikes || 0;
             let userLikes = commentData.likedUsers || {};
             let userDislikes = commentData.dislikedUsers || {};
             let isLiked = user && userLikes[user.uid];
             let isDisliked = user && userDislikes[user.uid];
+
+            // ✅ 댓글 미디어 파일 표시 (Cloudinary 사용)
+            let mediaHtml = "";
+            if (commentData.media) {
+                if (commentData.media.endsWith(".mp4") || commentData.media.endsWith(".webm")) {
+                    mediaHtml = `<video controls src="${commentData.media}" class="comment-media"></video>`;
+                } else if (commentData.media.endsWith(".gif") || commentData.media.endsWith(".png") || commentData.media.endsWith(".jpg")) {
+                    mediaHtml = `<img src="${commentData.media}" class="comment-media">`;
+                }
+            }
 
             // ✅ 댓글 UI 구성
             const commentElement = document.createElement("div");
@@ -326,6 +334,7 @@ export async function loadComments(boardType, postId) {
                     </div>
                 </div>
                 <div class="comment-content">${commentData.content}</div>
+                ${mediaHtml}  <!-- 🔥 미디어 추가 -->
                 <div class="comment-actions">
                     <button class="like-btn ${isLiked ? 'active' : ''}" id="like-${commentId}">👍 ${likeCount}</button>
                     <button class="dislike-btn ${isDisliked ? 'active' : ''}" id="dislike-${commentId}">👎 ${dislikeCount}</button>
@@ -352,6 +361,7 @@ export async function loadComments(boardType, postId) {
         alert("🚨 댓글을 불러오는 중 오류가 발생했습니다.");
     }
 }
+
 
 
 
