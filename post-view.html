@@ -364,11 +364,12 @@
       <div id="comments-list"></div>
   </div>
 
+  <!-- 미리보기 컨테이너 추가 -->
   <div id="media-preview-container" style="display: none;">
-      <div id="media-preview">
-          <button id="remove-media">❌</button>
-      </div>
+      <div id="media-preview"></div>
+      <button id="remove-media">❌</button>
   </div>
+
 
   <div class="comment-input-container">
     <input type="file" id="comment-media-upload" accept="image/*,video/*" hidden>
@@ -537,6 +538,77 @@
       }
   });
 
+    document.addEventListener("DOMContentLoaded", () => {
+        const mediaUploadInput = document.getElementById("comment-media-upload");
+        const mediaPreviewContainer = document.getElementById("media-preview-container");
+        const mediaPreview = document.getElementById("media-preview");
+        const removeMediaBtn = document.getElementById("remove-media");
+        const commentInput = document.getElementById("comment-input");
+        let selectedFile = null;
+    
+        // ✅ 파일 선택 시 미리보기 표시
+        mediaUploadInput.addEventListener("change", function (event) {
+            selectedFile = event.target.files[0];
+            if (!selectedFile) return;
+    
+            const fileURL = URL.createObjectURL(selectedFile);
+            mediaPreviewContainer.style.display = "flex";
+    
+            if (selectedFile.type.startsWith("image/")) {
+                mediaPreview.innerHTML = `<img src="${fileURL}" alt="미리보기" style="max-width: 100px; height: auto; border-radius: 8px;">`;
+            } else if (selectedFile.type.startsWith("video/")) {
+                mediaPreview.innerHTML = `<video src="${fileURL}" controls style="max-width: 100px; height: auto; border-radius: 8px;"></video>`;
+            }
+        });
+    
+        // ✅ 미리보기 삭제 기능
+        removeMediaBtn.addEventListener("click", () => {
+            selectedFile = null;
+            mediaUploadInput.value = "";
+            mediaPreviewContainer.style.display = "none";
+        });
+    
+        // ✅ 댓글 작성 버튼 클릭 시 Cloudinary 업로드 후 textarea 수정
+        document.getElementById("add-comment").addEventListener("click", async () => {
+            let commentText = commentInput.value.trim();
+            let mediaUrl = "";
+    
+            if (!commentText && !selectedFile) {
+                return alert("🚨 댓글을 입력하거나 미디어를 선택하세요!");
+            }
+    
+            if (selectedFile) {
+                mediaUrl = await uploadToCloudinary(selectedFile);
+            }
+    
+            // ✅ `textarea`에 이미지 URL을 추가하는 대신, Firestore에만 저장
+            try {
+                const board = "community_posts";
+                const postId = "게시글_ID";
+                const user = auth.currentUser;
+                if (!user) return alert("🚨 로그인이 필요합니다!");
+    
+                const commentsRef = collection(db, `${board}/${postId}/comments`);
+                await addDoc(commentsRef, {
+                    authorId: user.uid,
+                    content: commentText, // ✅ 이미지 링크를 `textarea`에 추가하지 않음
+                    media: mediaUrl, // ✅ Firestore에만 이미지 URL 저장
+                    createdAt: serverTimestamp(),
+                });
+    
+                commentInput.value = "";
+                selectedFile = null;
+                mediaUploadInput.value = "";
+                mediaPreviewContainer.style.display = "none";
+    
+                alert("✅ 댓글이 작성되었습니다!");
+                loadComments(board, postId);
+            } catch (error) {
+                console.error("❌ 댓글 저장 오류:", error);
+                alert("🚨 댓글 저장 중 오류 발생");
+            }
+        });
+    });
 
   </script>
 
