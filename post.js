@@ -252,16 +252,19 @@ document.addEventListener("DOMContentLoaded", () => {
 // 🔥 댓글 불러오기 (최신순 정렬 + 좋아요/싫어요 추가) re:re:re:
 export async function loadComments(boardType, postId) {
     try {
+        // ✅ 중복 실행 방지
+        if (window.isCommentsLoaded) return;
+        window.isCommentsLoaded = true; // 한 번만 실행되도록 설정
+
         console.log("🔥 loadComments() 실행됨!");
 
-        // 댓글 리스트 가져오기
         const commentsRef = collection(db, `${boardType}/${postId}/comments`);
-        const q = query(commentsRef, orderBy("createdAt", "desc")); // 🔥 최신순 정렬
+        const q = query(commentsRef, orderBy("createdAt", "desc"));
         const commentsSnap = await getDocs(q);
 
         const commentsList = document.getElementById("comments-list");
 
-        // ✅ 중복 방지를 위해 기존 댓글 목록 초기화
+        // ✅ 기존 댓글 삭제 (초기화)
         commentsList.innerHTML = "";
 
         if (commentsSnap.empty) {
@@ -290,7 +293,7 @@ export async function loadComments(boardType, postId) {
                     username = userData.username || "익명";
                     userIcon = userData.profile?.icon || "default-icon.png";
                     if (user && user.uid === commentData.authorId) {
-                        isAuthor = true; // 🔥 현재 로그인한 유저가 작성자인지 확인
+                        isAuthor = true;
                     }
                 }
             }
@@ -346,6 +349,7 @@ export async function loadComments(boardType, postId) {
         alert("🚨 댓글을 불러오는 중 오류가 발생했습니다.");
     }
 }
+
 
 
 
