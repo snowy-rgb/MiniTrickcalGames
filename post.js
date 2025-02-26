@@ -291,7 +291,13 @@ export async function loadComments(boardType, postId) {
                 }
             }
 
-            // ✅ 작성 시간 변환
+            // ✅ **오류 수정: `createdAt`을 정의**
+            let createdAt = "날짜 없음";
+            if (commentData.createdAt && commentData.createdAt.seconds) {
+                createdAt = new Date(commentData.createdAt.seconds * 1000).toLocaleString();
+            }
+
+            // ✅ 댓글 UI 생성
             const commentElement = document.createElement("div");
             commentElement.className = "comment-box";
             commentElement.innerHTML = `
@@ -317,34 +323,12 @@ export async function loadComments(boardType, postId) {
             `;
 
             commentsList.appendChild(commentElement);
-
-            // ✅ 톱니바퀴 클릭 시 메뉴 표시
-            document.getElementById(`options-${commentId}`).addEventListener("click", () => {
-                const menu = document.getElementById(`menu-${commentId}`);
-                menu.style.display = menu.style.display === "block" ? "none" : "block";
-            });
-
-            // ✅ 삭제 버튼 기능 추가 (작성자만 가능)
-            if (isAuthor) {
-                document.getElementById(`delete-${commentId}`).addEventListener("click", () => deleteComment(boardType, postId, commentId));
-            }
-
-            // ✅ 신고 버튼 기능 추가 (추후 구현)
-            if (!isAuthor) {
-                document.getElementById(`report-${commentId}`).addEventListener("click", () => {
-                    alert("🚨 신고 기능은 곧 추가될 예정입니다.");
-                });
-            }
         }
     } catch (error) {
         console.error("❌ 댓글 불러오기 오류:", error);
         alert("🚨 댓글을 불러오는 중 오류가 발생했습니다.");
     }
 }
-
-
-
-
 
 
 
