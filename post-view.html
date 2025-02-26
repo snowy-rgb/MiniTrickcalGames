@@ -364,9 +364,15 @@
       <div id="comments-list"></div>
   </div>
 
+  <div id="media-preview-container" style="display: none;">
+      <div id="media-preview">
+          <button id="remove-media">❌</button>
+      </div>
+  </div>
+
   <div class="comment-input-container">
     <input type="file" id="comment-media-upload" accept="image/*,video/*" hidden>
-    <label for="comment-media-upload" class="media-upload-button" id="upload-btn">🗺</label>
+    <label for="comment-media-upload" class="media-upload-button" id="upload-btn">🌏</label>
     <textarea id="comment-input" placeholder="댓글을 입력하세요"></textarea>
     <button id="add-comment">✏ 작성</button>
   </div>
@@ -531,6 +537,87 @@
       }
   });
 
+  document.addEventListener("DOMContentLoaded", () => {
+      const mediaUploadInput = document.getElementById("comment-media-upload");
+      const mediaPreviewContainer = document.getElementById("media-preview-container");
+      const mediaPreview = document.getElementById("media-preview");
+      const removeMediaBtn = document.getElementById("remove-media");
+      const addCommentBtn = document.getElementById("add-comment");
+      let selectedFile = null;  // 선택된 파일 저장 변수
+  
+      // ✅ 파일 선택 시 미리보기 표시
+      mediaUploadInput.addEventListener("change", function (event) {
+          selectedFile = event.target.files[0];
+          if (!selectedFile) return;
+  
+          const fileURL = URL.createObjectURL(selectedFile);
+          mediaPreviewContainer.style.display = "block"; // 미리보기 표시
+  
+          if (selectedFile.type.startsWith("image/")) {
+              mediaPreview.innerHTML = `<img src="${fileURL}" alt="미리보기" style="max-width: 100px; border-radius: 8px;">`;
+          } else if (selectedFile.type.startsWith("video/")) {
+              mediaPreview.innerHTML = `<video src="${fileURL}" controls style="max-width: 100px; border-radius: 8px;"></video>`;
+          }
+  
+          mediaPreview.appendChild(removeMediaBtn); // 삭제 버튼 추가
+      });
+  
+      // ✅ 미리보기 삭제 기능
+      removeMediaBtn.addEventListener("click", () => {
+          selectedFile = null;
+          mediaUploadInput.value = "";  // 파일 선택 해제
+          mediaPreviewContainer.style.display = "none"; // 미리보기 숨기기
+      });
+  
+      // ✅ 댓글 작성 버튼 클릭 시 Cloudinary 업로드 후 댓글에 추가
+      addCommentBtn.addEventListener("click", async () => {
+          const commentInput = document.getElementById("comment-input");
+          let commentText = commentInput.value.trim();
+  
+          if (!commentText && !selectedFile) {
+              return alert("🚨 댓글을 입력하거나 미디어를 선택하세요!");
+          }
+  
+          if (selectedFile) {
+              // 🔥 Cloudinary에 업로드
+              const fileURL = await uploadToCloudinary(selectedFile);
+              if (fileURL) {
+                  if (selectedFile.type.startsWith("image/")) {
+                      commentText += `\n![이미지](${fileURL})`;
+                  } else if (selectedFile.type.startsWith("video/")) {
+                      commentText += `\n🎥 [비디오 보기](${fileURL})`;
+                  }
+              }
+          }
+  
+          // 🔥 Firestore에 댓글 추가 (예제 코드)
+          try {
+              const board = "community_posts"; // 게시판 타입
+              const postId = "게시글_ID"; // 실제 게시글 ID로 변경해야 함
+              const user = auth.currentUser;
+              if (!user) return alert("🚨 로그인이 필요합니다!");
+  
+              const commentsRef = collection(db, `${board}/${postId}/comments`);
+              await addDoc(commentsRef, {
+                  authorId: user.uid,
+                  content: commentText,
+                  createdAt: serverTimestamp(),
+              });
+  
+              // 입력값 초기화
+              commentInput.value = "";
+              selectedFile = null;
+              mediaUploadInput.value = "";
+              mediaPreviewContainer.style.display = "none";
+  
+              alert("✅ 댓글이 작성되었습니다!");
+              loadComments(board, postId);
+          } catch (error) {
+              console.error("❌ 댓글 저장 오류:", error);
+              alert("🚨 댓글 저장 중 오류 발생");
+          }
+      });
+  });
 
   </script>
 
