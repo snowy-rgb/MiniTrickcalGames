@@ -252,9 +252,13 @@ document.addEventListener("DOMContentLoaded", () => {
 // re:end111- 582AFX90Cy
 // 🔥 댓글 불러오기
 // 🔥 댓글 불러오기 (최신순 정렬)
-// 🔥 댓글 불러오기 (최신순 정렬 + 좋아요/싫어요 추가) re:re:re:
+// 🔥 댓글 불러오기 (최신순 정렬 + 좋아요/싫어요 추가) re:re:re:re
 export async function loadComments(boardType, postId) {
     try {
+        // ✅ 중복 실행 방지
+        if (window.isCommentsLoaded) return;
+        window.isCommentsLoaded = true;
+
         console.log("🔥 loadComments() 실행됨!");
 
         const commentsRef = collection(db, `${boardType}/${postId}/comments`);
@@ -262,7 +266,9 @@ export async function loadComments(boardType, postId) {
         const commentsSnap = await getDocs(q);
 
         const commentsList = document.getElementById("comments-list");
-        commentsList.innerHTML = ""; // 기존 댓글 초기화
+
+        // ✅ 기존 댓글 초기화
+        commentsList.innerHTML = "";
 
         if (commentsSnap.empty) {
             commentsList.innerHTML = "<p>아직 댓글이 없습니다.</p>";
@@ -291,9 +297,9 @@ export async function loadComments(boardType, postId) {
                 }
             }
 
-            // ✅ **오류 수정: `createdAt`을 정의**
+            // ✅ 작성 시간 변환
             let createdAt = "날짜 없음";
-            if (commentData.createdAt && commentData.createdAt.seconds) {
+            if (commentData.createdAt?.seconds) {
                 createdAt = new Date(commentData.createdAt.seconds * 1000).toLocaleString();
             }
 
@@ -308,11 +314,11 @@ export async function loadComments(boardType, postId) {
                         <span class="comment-time">${createdAt}</span>
                     </div>
                     
-                    <!-- ✅ 톱니바퀴 아이콘 (data-comment-id 추가) -->
+                    <!-- ✅ 톱니바퀴 아이콘 -->
                     <div class="comment-options" data-comment-id="${commentId}">⚙</div>
                     
                     <!-- ✅ 옵션 메뉴 -->
-                    <div class="comment-menu" id="menu-${commentId}">
+                    <div class="comment-menu" id="menu-${commentId}" style="display: none;">
                         ${isAuthor 
                             ? `<button class="delete-btn" id="delete-${commentId}">🗑 삭제</button>` 
                             : `<button class="report-btn" id="report-${commentId}">🚨 신고</button>`}
@@ -323,6 +329,24 @@ export async function loadComments(boardType, postId) {
             `;
 
             commentsList.appendChild(commentElement);
+
+            // ✅ 톱니바퀴 클릭 시 메뉴 표시
+            document.querySelector(`[data-comment-id="${commentId}"]`).addEventListener("click", () => {
+                const menu = document.getElementById(`menu-${commentId}`);
+                menu.style.display = menu.style.display === "block" ? "none" : "block";
+            });
+
+            // ✅ 삭제 버튼 기능 추가
+            if (isAuthor) {
+                document.getElementById(`delete-${commentId}`).addEventListener("click", () => deleteComment(boardType, postId, commentId));
+            }
+
+            // ✅ 신고 버튼 기능 추가 (추후 구현)
+            if (!isAuthor) {
+                document.getElementById(`report-${commentId}`).addEventListener("click", () => {
+                    alert("🚨 신고 기능은 곧 추가될 예정입니다.");
+                });
+            }
         }
     } catch (error) {
         console.error("❌ 댓글 불러오기 오류:", error);
