@@ -342,6 +342,21 @@ export async function loadComments(boardType, postId) {
                 </div>
             `;
 
+            //  imglink to img
+            const commentElement = document.createElement("div");
+            commentElement.className = "comment-box";
+            commentElement.innerHTML = `
+                <div class="comment-header">
+                    <img src="${userIcon}" alt="프로필 사진" class="comment-profile">
+                    <div class="comment-info">
+                        <span class="comment-username">${username}</span>
+                        <span class="comment-time">${createdAt}</span>
+                    </div>
+                </div>
+                <div class="comment-content">${parseMediaInComments(commentData.content)}</div>
+            `;
+
+
             // ✅ 중복 방지를 위해 댓글 추가 시 로그 출력
             console.log("✅ 댓글 추가됨:", commentData.content);
             commentsList.appendChild(commentElement);
@@ -660,6 +675,18 @@ async function uploadToCloudinary(file) {
     }
 }
 
+//linkToIm
+function parseMediaInComments(content) {
+    // 🔥 이미지 변환 (Markdown -> <img>)
+    content = content.replace(/!\[.*?\]\((https?:\/\/res\.cloudinary\.com\/[^\s]+?\.(?:png|jpg|jpeg|gif))\)/g, 
+        '<img src="$1" alt="이미지" style="max-width: 100%; border-radius: 8px;">');
+
+    // 🔥 비디오 변환 (Markdown -> <video>)
+    content = content.replace(/!\[.*?\]\((https?:\/\/res\.cloudinary\.com\/[^\s]+?\.(?:mp4|webm|ogg))\)/g, 
+        '<video controls src="$1" style="max-width: 100%; border-radius: 8px;"></video>');
+
+    return content;
+}
 
 
 const likeBtn = document.getElementById("like-btn");
