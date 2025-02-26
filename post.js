@@ -31,6 +31,27 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const storage = getStorage(app);  // ✅ Storage 추가
 
+import { storage } from "./auth.js";
+import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-storage.js";
+
+document.getElementById("comment-media-upload").addEventListener("change", async function (event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const fileRef = ref(storage, `comments/${Date.now()}_${file.name}`);
+    await uploadBytes(fileRef, file);
+    const fileURL = await getDownloadURL(fileRef);
+
+    // 🔥 선택한 미디어를 댓글 입력 칸에 삽입
+    const commentInput = document.getElementById("comment-input");
+    if (file.type.startsWith("image/")) {
+        commentInput.value += `\n![이미지](${fileURL})`;
+    } else if (file.type.startsWith("video/")) {
+        commentInput.value += `\n🎥 [비디오 보기](${fileURL})`;
+    }
+});
+
+
 // ✅ 게시글 저장 함수 (이미지 & 비디오 지원)
 export async function savePost(boardType, title, content, mediaUrls, tags) {
     try {
