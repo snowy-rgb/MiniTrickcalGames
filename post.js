@@ -109,7 +109,6 @@ export async function loadPosts(boardType) {
     }
   } catch (error) {
     console.error("❌ 게시글 불러오기 오류:", error);
-    alert("🚨 게시글을 불러오는 중 오류가 발생했습니다.");
   }
 }
 
