@@ -253,88 +253,101 @@ document.addEventListener("DOMContentLoaded", () => {
 // 🔥 댓글 불러오기 (최신순 정렬 + 좋아요/싫어요 추가) re:re:re:
 export async function loadComments(boardType, postId) {
     try {
+        console.log("🔥 loadComments() 실행됨!");
+
+        // 댓글 리스트 가져오기
         const commentsRef = collection(db, `${boardType}/${postId}/comments`);
         const q = query(commentsRef, orderBy("createdAt", "desc")); // 🔥 최신순 정렬
         const commentsSnap = await getDocs(q);
 
         const commentsList = document.getElementById("comments-list");
-        commentsList.innerHTML = ""; // 기존 댓글 초기화
+
+        // ✅ 중복 방지를 위해 기존 댓글 목록 초기화
+        commentsList.innerHTML = "";
 
         if (commentsSnap.empty) {
             commentsList.innerHTML = "<p>아직 댓글이 없습니다.</p>";
-        } else {
-            for (const docSnap of commentsSnap.docs) {
-                const commentData = docSnap.data();
-                const commentId = docSnap.id;
-                const commentElement = document.createElement("div");
-                commentElement.className = "comment-box"; // 🔥 댓글 칸 스타일 적용
+            return;
+        }
 
-                // ✅ Firestore에서 작성자의 프로필 정보 가져오기
-                let username = "익명";
-                let userIcon = "default-icon.png";
-                let user = auth.currentUser;
-                let isAuthor = false;
+        // ✅ Firestore에서 가져온 댓글을 한 번만 추가하도록 루프 수정
+        commentsSnap.forEach(async (docSnap) => {
+            const commentData = docSnap.data();
+            const commentId = docSnap.id;
 
-                if (commentData.authorId) {
-                    const userRef = doc(db, "Trickcal_MIniGames", commentData.authorId);
-                    const userSnap = await getDoc(userRef);
-                    if (userSnap.exists()) {
-                        const userData = userSnap.data();
-                        username = userData.username || "익명";
-                        userIcon = userData.profile?.icon || "default-icon.png";
-                        if (user && user.uid === commentData.authorId) {
-                            isAuthor = true; // 🔥 현재 로그인한 유저가 작성자인지 확인
-                        }
+            console.log("✅ 불러온 댓글:", commentData);
+
+            // ✅ Firestore에서 작성자의 프로필 정보 가져오기
+            let username = "익명";
+            let userIcon = "default-icon.png";
+            let user = auth.currentUser;
+            let isAuthor = false;
+
+            if (commentData.authorId) {
+                const userRef = doc(db, "Trickcal_MIniGames", commentData.authorId);
+                const userSnap = await getDoc(userRef);
+                if (userSnap.exists()) {
+                    const userData = userSnap.data();
+                    username = userData.username || "익명";
+                    userIcon = userData.profile?.icon || "default-icon.png";
+                    if (user && user.uid === commentData.authorId) {
+                        isAuthor = true; // 🔥 현재 로그인한 유저가 작성자인지 확인
                     }
                 }
-
-                // ✅ 작성 시간 변환
-                const createdAt = commentData.createdAt?.seconds
-                    ? new Date(commentData.createdAt.seconds * 1000).toLocaleString()
-                    : "날짜 없음";
-
-                // ✅ 좋아요/싫어요 버튼
-                let likeCount = commentData.likes || 0;
-                let dislikeCount = commentData.dislikes || 0;
-                let userLikes = commentData.likedUsers || {};
-                let userDislikes = commentData.dislikedUsers || {};
-                let isLiked = user && userLikes[user.uid];
-                let isDisliked = user && userDislikes[user.uid];
-
-                // ✅ 댓글 UI 구성
-                commentElement.innerHTML = `
-                    <div class="comment-header">
-                        <img src="${userIcon}" alt="프로필 사진" class="comment-profile">
-                        <div class="comment-info">
-                            <span class="comment-username">${username}</span>
-                            <span class="comment-time">${createdAt}</span>
-                        </div>
-                    </div>
-                    <div class="comment-content">${commentData.content}</div>
-                    <div class="comment-actions">
-                        <button class="like-btn ${isLiked ? 'active' : ''}" id="like-${commentId}">👍 ${likeCount}</button>
-                        <button class="dislike-btn ${isDisliked ? 'active' : ''}" id="dislike-${commentId}">👎 ${dislikeCount}</button>
-                        ${isAuthor ? `<button class="delete-btn" id="delete-${commentId}">🗑 삭제</button>` : ""}
-                    </div>
-                `;
-
-                commentsList.appendChild(commentElement);
-
-                // ✅ 좋아요/싫어요 버튼 기능 추가
-                document.getElementById(`like-${commentId}`).addEventListener("click", () => updateCommentLikes(boardType, postId, commentId, "like"));
-                document.getElementById(`dislike-${commentId}`).addEventListener("click", () => updateCommentLikes(boardType, postId, commentId, "dislike"));
-
-                // ✅ 삭제 버튼 기능 추가 (작성자만 삭제 가능)
-                if (isAuthor) {
-                    document.getElementById(`delete-${commentId}`).addEventListener("click", () => deleteComment(boardType, postId, commentId));
-                }
             }
-        }
+
+            // ✅ 작성 시간 변환
+            const createdAt = commentData.createdAt?.seconds
+                ? new Date(commentData.createdAt.seconds * 1000).toLocaleString()
+                : "날짜 없음";
+
+            // ✅ 좋아요/싫어요 버튼
+            let likeCount = commentData.likes || 0;
+            let dislikeCount = commentData.dislikes || 0;
+            let userLikes = commentData.likedUsers || {};
+            let userDislikes = commentData.dislikedUsers || {};
+            let isLiked = user && userLikes[user.uid];
+            let isDisliked = user && userDislikes[user.uid];
+
+            // ✅ 댓글 UI 구성
+            const commentElement = document.createElement("div");
+            commentElement.className = "comment-box";
+            commentElement.innerHTML = `
+                <div class="comment-header">
+                    <img src="${userIcon}" alt="프로필 사진" class="comment-profile">
+                    <div class="comment-info">
+                        <span class="comment-username">${username}</span>
+                        <span class="comment-time">${createdAt}</span>
+                    </div>
+                </div>
+                <div class="comment-content">${commentData.content}</div>
+                <div class="comment-actions">
+                    <button class="like-btn ${isLiked ? 'active' : ''}" id="like-${commentId}">👍 ${likeCount}</button>
+                    <button class="dislike-btn ${isDisliked ? 'active' : ''}" id="dislike-${commentId}">👎 ${dislikeCount}</button>
+                    ${isAuthor ? `<button class="delete-btn" id="delete-${commentId}">🗑 삭제</button>` : ""}
+                </div>
+            `;
+
+            // ✅ 중복 방지를 위해 댓글 추가 시 로그 출력
+            console.log("✅ 댓글 추가됨:", commentData.content);
+            commentsList.appendChild(commentElement);
+
+            // ✅ 좋아요/싫어요 버튼 기능 추가
+            document.getElementById(`like-${commentId}`).addEventListener("click", () => updateCommentLikes(boardType, postId, commentId, "like"));
+            document.getElementById(`dislike-${commentId}`).addEventListener("click", () => updateCommentLikes(boardType, postId, commentId, "dislike"));
+
+            // ✅ 삭제 버튼 기능 추가 (작성자만 삭제 가능)
+            if (isAuthor) {
+                document.getElementById(`delete-${commentId}`).addEventListener("click", () => deleteComment(boardType, postId, commentId));
+            }
+        });
+
     } catch (error) {
         console.error("❌ 댓글 불러오기 오류:", error);
         alert("🚨 댓글을 불러오는 중 오류가 발생했습니다.");
     }
 }
+
 
 
 
@@ -469,6 +482,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // ✅ 인자를 명확하게 전달하여 실행
     loadPost(board, postId);
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+    console.log("✅ DOMContentLoaded 실행됨!");
+
+    // ✅ 현재 페이지 확인
+    if (window.location.pathname.includes("post-view.html")) {
+        console.log("✅ post-view.html 감지됨. 게시글 상세 보기 실행!");
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const board = urlParams.get("board");
+        const postId = urlParams.get("id");
+
+        if (!board || !postId) {
+            console.error("❌ 게시판 또는 게시글 ID가 정의되지 않았습니다.");
+            return;
+        }
+
+        // ✅ 한 번만 실행되도록 조건 추가
+        if (!window.isCommentsLoaded) {
+            window.isCommentsLoaded = true;
+            loadComments(board, postId);
+        }
+    }
 });
 
 // 🔥 댓글 좋아요/싫어요 업데이트
