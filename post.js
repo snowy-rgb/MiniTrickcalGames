@@ -323,28 +323,8 @@ export async function loadComments(boardType, postId) {
             }
 
             // ✅ 댓글 UI 구성
-            const commentElement = document.createElement("div");
-            commentElement.className = "comment-box";
-            commentElement.innerHTML = `
-                <div class="comment-header">
-                    <img src="${userIcon}" alt="프로필 사진" class="comment-profile">
-                    <div class="comment-info">
-                        <span class="comment-username">${username}</span>
-                        <span class="comment-time">${createdAt}</span>
-                    </div>
-                </div>
-                <div class="comment-content">${commentData.content}</div>
-                ${mediaHtml}  <!-- 🔥 미디어 추가 -->
-                <div class="comment-actions">
-                    <button class="like-btn ${isLiked ? 'active' : ''}" id="like-${commentId}">👍 ${likeCount}</button>
-                    <button class="dislike-btn ${isDisliked ? 'active' : ''}" id="dislike-${commentId}">👎 ${dislikeCount}</button>
-                    ${isAuthor ? `<button class="delete-btn" id="delete-${commentId}">🗑 삭제</button>` : ""}
-                </div>
-            `;
-
-            //  imglink to img
-            const commentElement = document.createElement("div");
-            commentElement.className = "comment-box";
+            const commentElement = document.createElement("div"); // ✅ 한 번만 선언
+            commentElement.className = "comment-box"; 
             commentElement.innerHTML = `
                 <div class="comment-header">
                     <img src="${userIcon}" alt="프로필 사진" class="comment-profile">
@@ -355,8 +335,9 @@ export async function loadComments(boardType, postId) {
                 </div>
                 <div class="comment-content">${parseMediaInComments(commentData.content)}</div>
             `;
+            commentsList.appendChild(commentElement); // ✅ 댓글 목록에 추가
 
-
+            
             // ✅ 중복 방지를 위해 댓글 추가 시 로그 출력
             console.log("✅ 댓글 추가됨:", commentData.content);
             commentsList.appendChild(commentElement);
