@@ -785,6 +785,175 @@ async function updateLikes(boardType, postId, type) {
 }
 
 
+document.addEventListener("DOMContentLoaded", () => {
+    const mediaUploadInput = document.getElementById("comment-media-upload");
+    const mediaPreviewContainer = document.getElementById("media-preview-container");
+    const mediaPreview = document.getElementById("media-preview");
+    const removeMediaBtn = document.getElementById("remove-media");
+    const addCommentBtn = document.getElementById("add-comment");
+    const commentInput = document.getElementById("comment-input");
+    let selectedFile = null;  // 선택된 파일 저장 변수
+
+    // ✅ 파일 선택 시 미리보기 표시
+    mediaUploadInput.addEventListener("change", function (event) {
+        selectedFile = event.target.files[0];
+        if (!selectedFile) return;
+
+        const fileURL = URL.createObjectURL(selectedFile);
+        mediaPreviewContainer.style.display = "flex"; // 🟢 미리보기를 표시
+
+        if (selectedFile.type.startsWith("image/")) {
+            mediaPreview.innerHTML = `<img src="${fileURL}" alt="미리보기" style="max-width: 100px; height: auto; border-radius: 8px;">`;
+        } else if (selectedFile.type.startsWith("video/")) {
+            mediaPreview.innerHTML = `<video src="${fileURL}" controls style="max-width: 100px; height: auto; border-radius: 8px;"></video>`;
+        }
+
+        mediaPreview.appendChild(removeMediaBtn); // 삭제 버튼 추가
+    });
+
+    // ✅ 미리보기 삭제 기능
+    removeMediaBtn.addEventListener("click", () => {
+        selectedFile = null;
+        mediaUploadInput.value = "";  // 파일 선택 해제
+        mediaPreviewContainer.style.display = "none"; // 미리보기 숨기기
+    });
+
+    // ✅ 댓글 작성 버튼 클릭 시 Cloudinary 업로드 후 댓글에 추가
+    addCommentBtn.addEventListener("click", async () => {
+        let commentText = commentInput.value.trim();
+        let mediaUrl = "";
+
+        if (!commentText && !selectedFile) {
+            return alert("🚨 댓글을 입력하거나 미디어를 선택하세요!");
+        }
+
+        if (selectedFile) {
+            // 🔥 Cloudinary에 업로드
+            mediaUrl = await uploadToCloudinary(selectedFile);
+        }
+
+        // 🔥 Firestore에 댓글 추가
+        try {
+            const board = "community_posts"; // 게시판 타입
+            const postId = "게시글_ID"; // 실제 게시글 ID로 변경해야 함
+            const user = auth.currentUser;
+            if (!user) return alert("🚨 로그인이 필요합니다!");
+
+            const commentsRef = collection(db, `${board}/${postId}/comments`);
+            await addDoc(commentsRef, {
+                authorId: user.uid,
+                content: commentText,
+                media: mediaUrl,  // 🔥 업로드된 파일 URL 추가
+                createdAt: serverTimestamp(),
+            });
+
+            // 입력값 초기화
+            commentInput.value = "";
+            selectedFile = null;
+            mediaUploadInput.value = "";
+            mediaPreviewContainer.style.display = "none";
+
+            alert("✅ 댓글이 작성되었습니다!");
+            loadComments(board, postId);
+        } catch (error) {
+            console.error("❌ 댓글 저장 오류:", error);
+            alert("🚨 댓글 저장 중 오류 발생");
+        }
+    });
+
+    // ✅ 댓글 불러오기 (미디어 링크 숨기고, 사진 미리보기로 표시)
+    async function loadComments(boardType, postId) {
+        try {
+            console.log("🔥 loadComments() 실행됨!");
+
+            const commentsRef = collection(db, `${boardType}/${postId}/comments`);
+            const q = query(commentsRef, orderBy("createdAt", "desc"));
+            const commentsSnap = await getDocs(q);
+
+            const commentsList = document.getElementById("comments-list");
+            commentsList.innerHTML = ""; // 기존 댓글 초기화
+
+            if (commentsSnap.empty) {
+                commentsList.innerHTML = "<p>아직 댓글이 없습니다.</p>";
+                return;
+            }
+
+            for (const docSnap of commentsSnap.docs) {
+                const commentData = docSnap.data();
+                const commentId = docSnap.id;
+                let username = "익명";
+                let userIcon = "default-icon.png";
+                let user = auth.currentUser;
+                let isAuthor = false;
+
+                // ✅ Firestore에서 작성자의 프로필 정보 가져오기
+                if (commentData.authorId) {
+                    const userRef = doc(db, "Trickcal_MIniGames", commentData.authorId);
+                    const userSnap = await getDoc(userRef);
+                    if (userSnap.exists()) {
+                        const userData = userSnap.data();
+                        username = userData.username || "익명";
+                        userIcon = userData.profile?.icon || "default-icon.png";
+                        if (user && user.uid === commentData.authorId) {
+                            isAuthor = true;
+                        }
+                    }
+                }
+
+                // ✅ **오류 수정: `createdAt`을 정의**
+                let createdAt = "날짜 없음";
+                if (commentData.createdAt && commentData.createdAt.seconds) {
+                    createdAt = new Date(commentData.createdAt.seconds * 1000).toLocaleString();
+                }
+
+                // ✅ 댓글 UI 생성
+                const commentElement = document.createElement("div");
+                commentElement.className = "comment-box";
+
+                // ✅ 이미지/비디오가 있을 경우 표시, 없으면 내용만 출력
+                let mediaHtml = "";
+                if (commentData.media) {
+                    if (commentData.media.endsWith(".png") || commentData.media.endsWith(".jpg") || commentData.media.endsWith(".jpeg") || commentData.media.endsWith(".gif") || commentData.media.endsWith(".webp")) {
+                        mediaHtml = `<img src="${commentData.media}" alt="첨부 이미지" style="max-width: 200px; border-radius: 8px; margin-top: 10px;">`;
+                    } else if (commentData.media.endsWith(".mp4") || commentData.media.endsWith(".webm") || commentData.media.endsWith(".ogg")) {
+                        mediaHtml = `<video controls src="${commentData.media}" style="max-width: 200px; border-radius: 8px; margin-top: 10px;"></video>`;
+                    }
+                }
+
+                commentElement.innerHTML = `
+                    <div class="comment-header">
+                        <img src="${userIcon}" alt="프로필 사진" class="comment-profile">
+                        <div class="comment-info">
+                            <span class="comment-username">${username}</span>
+                            <span class="comment-time">${createdAt}</span>
+                        </div>
+                        
+                        <!-- ✅ 톱니바퀴 아이콘 (data-comment-id 추가) -->
+                        <div class="comment-options" data-comment-id="${commentId}">⚙</div>
+                        
+                        <!-- ✅ 옵션 메뉴 -->
+                        <div class="comment-menu" id="menu-${commentId}">
+                            ${isAuthor 
+                                ? `<button class="delete-btn" id="delete-${commentId}">🗑 삭제</button>` 
+                                : `<button class="report-btn" id="report-${commentId}">🚨 신고</button>`}
+                        </div>
+                    </div>
+                    
+                    <div class="comment-content">${commentData.content}</div>
+                    ${mediaHtml} <!-- 🔥 미디어가 있을 때만 추가 -->
+                `;
+
+                commentsList.appendChild(commentElement);
+            }
+        } catch (error) {
+            console.error("❌ 댓글 불러오기 오류:", error);
+            alert("🚨 댓글을 불러오는 중 오류가 발생했습니다.");
+        }
+    }
+});
+
+
+
 const urlParams = new URLSearchParams(window.location.search);
 const board = urlParams.get("board"); 
 const postId = urlParams.get("id");
