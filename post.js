@@ -250,10 +250,11 @@ document.addEventListener("DOMContentLoaded", () => {
 // re:end111- 582AFX90Cy
 // 🔥 댓글 불러오기
 // 🔥 댓글 불러오기 (최신순 정렬)
+// 🔥 댓글 불러오기 (최신순 정렬 + 좋아요/싫어요 추가) re:re:re:
 export async function loadComments(boardType, postId) {
     try {
         const commentsRef = collection(db, `${boardType}/${postId}/comments`);
-        const q = query(commentsRef, orderBy("createdAt", "desc")); // 🔥 최신순 정렬 추가!
+        const q = query(commentsRef, orderBy("createdAt", "desc")); // 🔥 최신순 정렬
         const commentsSnap = await getDocs(q);
 
         const commentsList = document.getElementById("comments-list");
@@ -264,12 +265,15 @@ export async function loadComments(boardType, postId) {
         } else {
             for (const docSnap of commentsSnap.docs) {
                 const commentData = docSnap.data();
+                const commentId = docSnap.id;
                 const commentElement = document.createElement("div");
                 commentElement.className = "comment-box"; // 🔥 댓글 칸 스타일 적용
 
                 // ✅ Firestore에서 작성자의 프로필 정보 가져오기
                 let username = "익명";
                 let userIcon = "default-icon.png";
+                let user = auth.currentUser;
+                let isAuthor = false;
 
                 if (commentData.authorId) {
                     const userRef = doc(db, "Trickcal_MIniGames", commentData.authorId);
@@ -278,6 +282,9 @@ export async function loadComments(boardType, postId) {
                         const userData = userSnap.data();
                         username = userData.username || "익명";
                         userIcon = userData.profile?.icon || "default-icon.png";
+                        if (user && user.uid === commentData.authorId) {
+                            isAuthor = true; // 🔥 현재 로그인한 유저가 작성자인지 확인
+                        }
                     }
                 }
 
@@ -285,6 +292,14 @@ export async function loadComments(boardType, postId) {
                 const createdAt = commentData.createdAt?.seconds
                     ? new Date(commentData.createdAt.seconds * 1000).toLocaleString()
                     : "날짜 없음";
+
+                // ✅ 좋아요/싫어요 버튼
+                let likeCount = commentData.likes || 0;
+                let dislikeCount = commentData.dislikes || 0;
+                let userLikes = commentData.likedUsers || {};
+                let userDislikes = commentData.dislikedUsers || {};
+                let isLiked = user && userLikes[user.uid];
+                let isDisliked = user && userDislikes[user.uid];
 
                 // ✅ 댓글 UI 구성
                 commentElement.innerHTML = `
@@ -295,12 +310,24 @@ export async function loadComments(boardType, postId) {
                             <span class="comment-time">${createdAt}</span>
                         </div>
                     </div>
-                    <div class="comment-content">
-                        ${commentData.content}
+                    <div class="comment-content">${commentData.content}</div>
+                    <div class="comment-actions">
+                        <button class="like-btn ${isLiked ? 'active' : ''}" id="like-${commentId}">👍 ${likeCount}</button>
+                        <button class="dislike-btn ${isDisliked ? 'active' : ''}" id="dislike-${commentId}">👎 ${dislikeCount}</button>
+                        ${isAuthor ? `<button class="delete-btn" id="delete-${commentId}">🗑 삭제</button>` : ""}
                     </div>
                 `;
 
                 commentsList.appendChild(commentElement);
+
+                // ✅ 좋아요/싫어요 버튼 기능 추가
+                document.getElementById(`like-${commentId}`).addEventListener("click", () => updateCommentLikes(boardType, postId, commentId, "like"));
+                document.getElementById(`dislike-${commentId}`).addEventListener("click", () => updateCommentLikes(boardType, postId, commentId, "dislike"));
+
+                // ✅ 삭제 버튼 기능 추가 (작성자만 삭제 가능)
+                if (isAuthor) {
+                    document.getElementById(`delete-${commentId}`).addEventListener("click", () => deleteComment(boardType, postId, commentId));
+                }
             }
         }
     } catch (error) {
@@ -308,6 +335,7 @@ export async function loadComments(boardType, postId) {
         alert("🚨 댓글을 불러오는 중 오류가 발생했습니다.");
     }
 }
+
 
 
 
@@ -442,6 +470,91 @@ document.addEventListener("DOMContentLoaded", () => {
     // ✅ 인자를 명확하게 전달하여 실행
     loadPost(board, postId);
 });
+
+// 🔥 댓글 좋아요/싫어요 업데이트
+async function updateCommentLikes(boardType, postId, commentId, type) {
+    try {
+        const commentRef = doc(db, `${boardType}/${postId}/comments`, commentId);
+        const commentSnap = await getDoc(commentRef);
+
+        if (!commentSnap.exists()) return;
+
+        let commentData = commentSnap.data();
+        const user = auth.currentUser;
+
+        if (!user) {
+            alert("🚨 로그인이 필요합니다!");
+            return;
+        }
+
+        let userLikes = commentData.likedUsers || {};
+        let userDislikes = commentData.dislikedUsers || {};
+        let likes = commentData.likes || 0;
+        let dislikes = commentData.dislikes || 0;
+
+        if (type === "like") {
+            if (userLikes[user.uid]) {
+                delete userLikes[user.uid];
+                likes -= 1;
+            } else {
+                userLikes[user.uid] = true;
+                likes += 1;
+                if (userDislikes[user.uid]) {
+                    delete userDislikes[user.uid];
+                    dislikes -= 1;
+                }
+            }
+        } else if (type === "dislike") {
+            if (userDislikes[user.uid]) {
+                delete userDislikes[user.uid];
+                dislikes -= 1;
+            } else {
+                userDislikes[user.uid] = true;
+                dislikes += 1;
+                if (userLikes[user.uid]) {
+                    delete userLikes[user.uid];
+                    likes -= 1;
+                }
+            }
+        }
+
+        await updateDoc(commentRef, {
+            likes: likes,
+            dislikes: dislikes,
+            likedUsers: userLikes,
+            dislikedUsers: userDislikes
+        });
+
+        loadComments(boardType, postId); // 🔄 댓글 다시 불러오기
+    } catch (error) {
+        console.error("❌ 댓글 좋아요/싫어요 업데이트 오류:", error);
+    }
+}
+
+// 🔥 댓글 삭제 기능 (작성자만 삭제 가능)
+async function deleteComment(boardType, postId, commentId) {
+    try {
+        const commentRef = doc(db, `${boardType}/${postId}/comments`, commentId);
+        const commentSnap = await getDoc(commentRef);
+
+        if (!commentSnap.exists()) return;
+
+        const user = auth.currentUser;
+        if (!user || user.uid !== commentSnap.data().authorId) {
+            alert("🚨 본인이 작성한 댓글만 삭제할 수 있습니다!");
+            return;
+        }
+
+        if (confirm("정말 삭제하시겠습니까?")) {
+            await deleteDoc(commentRef);
+            alert("✅ 댓글이 삭제되었습니다.");
+            loadComments(boardType, postId); // 🔄 댓글 다시 불러오기
+        }
+    } catch (error) {
+        console.error("❌ 댓글 삭제 오류:", error);
+    }
+}
+
 
 
 const likeBtn = document.getElementById("like-btn");
