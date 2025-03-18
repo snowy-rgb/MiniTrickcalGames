@@ -53,7 +53,6 @@ async function saveProfile() {
     let birthday = birthdayValue ? new Date(birthdayValue) : null;
     let emailVisible = document.getElementById("email-visible").checked;
     let usernameInput = document.getElementById("profile-name").value.trim();
-    let bioInput = document.getElementById("profile-bio").value.trim();
 
     if (!usernameInput) {
         alert("이름을 입력해야 합니다.");
@@ -66,7 +65,7 @@ async function saveProfile() {
 
     const profileData = {
         username: usernameInput,
-        introduction: bioInput,
+        introduction: document.getElementById("profile-bio")?.value || "",
         email: user.email,
         emailVisible: emailVisible,
         joinday: joinDate,
@@ -95,10 +94,12 @@ async function loadProfile(user) {
         const userData = userDocSnap.data();
         document.getElementById("profile-display-name").textContent = userData.username || "사용자";
         document.getElementById("profile-name").value = userData.username || "";
-        document.getElementById("profile-bio").style.display = "none";
-        document.getElementById("profile-bio").outerHTML = `<p>${userData.introduction || ""}</p>`;
-        document.getElementById("email-visible").style.display = "none";
-        document.getElementById("profile-birthday").style.display = "none";
+        document.getElementById("profile-bio").value = userData.introduction || "";
+        document.getElementById("email-display").textContent = userData.emailVisible ? userData.email : "비공개";
+        document.getElementById("profile-icon-preview").src = userData.profile?.icon || "default-icon.png";
+        document.getElementById("profile-birthday").value = userData.birthday
+            ? new Date(userData.birthday.seconds * 1000).toISOString().substring(0, 10)
+            : "";
         document.getElementById("profile-birthday-display").textContent = userData.birthday ? document.getElementById("profile-birthday").value : "정보 없음";
         document.getElementById("profile-join-date").textContent = userData.joinday
             ? new Date(userData.joinday.seconds * 1000).toLocaleDateString()
@@ -144,8 +145,6 @@ document.addEventListener("DOMContentLoaded", () => {
 onAuthStateChanged(auth, async (user) => {
     if (user) await loadProfile(user);
 });
-
-
 
 
 
