@@ -30,7 +30,7 @@ async function getCustomUID(user) {
     return userDocSnap.exists() ? userDocSnap.data().customUID || user.uid : user.uid;
 }
 
-// 🔥 **📌 Firestore에서 프로필 데이터 불러오기 (이름 포함)**
+// 🔥 **📌 Firestore에서 프로필 데이터 저장 및 불러오기**
 async function saveProfile() {
     const user = auth.currentUser;
     if (!user) {
@@ -49,15 +49,19 @@ async function saveProfile() {
         joinDate = existingData.data().joinday;
     }
 
-    // 🔴 **생일 값 가져오기**
     let birthdayValue = document.getElementById("profile-birthday")?.value;
-    let birthday = null;
-    if (birthdayValue) {
-        birthday = new Date(birthdayValue); // 날짜 형식으로 저장
+    let birthday = birthdayValue ? new Date(birthdayValue) : null;
+    let emailVisible = document.getElementById("email-visible").checked;
+    let usernameInput = document.getElementById("profile-name").value.trim();
+
+    if (!usernameInput) {
+        alert("이름을 입력해야 합니다.");
+        return;
     }
 
-    let emailVisible = document.getElementById("email-visible").checked;
-    let usernameInput = document.getElementById("profile-name").value || "";
+    let friendCode = existingData.exists() && existingData.data().friendCode
+        ? existingData.data().friendCode
+        : Math.floor(100000 + Math.random() * 900000);
 
     const profileData = {
         username: usernameInput,
@@ -65,23 +69,21 @@ async function saveProfile() {
         email: user.email,
         emailVisible: emailVisible,
         joinday: joinDate,
-        birthday: birthday, // 🔴 생일 값 저장
+        birthday: birthday,
+        friendCode: friendCode,
         profile: { icon: iconURL }
     };
 
     try {
         await setDoc(userDocRef, profileData, { merge: true });
-        console.log("✅ Firestore에 저장 완료:", profileData);
         alert("✅ 프로필이 저장되었습니다!");
-        loadProfile(user); // 🔴 저장 후 다시 불러오기
+        loadProfile(user);
     } catch (error) {
-        console.error("❌ 프로필 저장 오류:", error);
         alert("🚨 프로필 저장 중 오류가 발생했습니다.");
     }
 }
 
-// 🔴 **Firestore에서 프로필 데이터 불러오기 (생일 값 포함)**
-// 🔥 **📌 Firestore에서 프로필 데이터 불러오기**
+// 🔥 Firestore에서 프로필 데이터 불러오기
 async function loadProfile(user) {
     if (!user) return;
     const customUID = await getCustomUID(user);
@@ -90,57 +92,18 @@ async function loadProfile(user) {
 
     if (userDocSnap.exists()) {
         const userData = userDocSnap.data();
-        console.log("✅ 기존 사용자 데이터 불러오기:", userData);
-
-        let usernameDisplay = userData.username || "사용자";
-        if (user.email === "catcat3335@naver.com") {
-            usernameDisplay += ` <span style="color: blue;">-- 개발자</span>`;
-        }
-
-        // ✅ 닉네임 보기 & 입력 필드 설정
-        const displayName = document.getElementById("profile-display-name");
-        if (displayName) {
-            displayName.innerHTML = usernameDisplay;
-        }
-
-        const profileNameInput = document.getElementById("profile-name");
-        if (profileNameInput) {
-            profileNameInput.value = userData.username || "";
-        }
-
+        document.getElementById("profile-display-name").textContent = userData.username || "사용자";
+        document.getElementById("profile-name").value = userData.username || "";
         document.getElementById("profile-bio").value = userData.introduction || "";
-
-        // ✅ 이메일 공개 상태 설정
-        const emailDisplay = document.getElementById("email-display");
-        if (emailDisplay) {
-            emailDisplay.textContent = userData.emailVisible ? (userData.email || "정보 없음") : "비공개";
-        }
-
+        document.getElementById("email-display").textContent = userData.emailVisible ? userData.email : "비공개";
         document.getElementById("profile-icon-preview").src = userData.profile?.icon || "default-icon.png";
-
-        // ✅ 생일 불러오기 & 유지
-        const birthdayInput = document.getElementById("profile-birthday");
-        if (birthdayInput) {
-            birthdayInput.value = userData.birthday
-                ? new Date(userData.birthday.seconds * 1000).toISOString().substring(0, 10)
-                : "";
-        }
-
-        const birthdayDisplay = document.getElementById("profile-birthday-display");
-        if (birthdayDisplay) {
-            birthdayDisplay.textContent = birthdayInput.value || "정보 없음";
-        }
-
-        // ✅ 가입일 표시
-        const joinDateDisplay = document.getElementById("profile-join-date");
-        if (joinDateDisplay) {
-            joinDateDisplay.textContent = userData.joinday
-                ? new Date(userData.joinday.seconds * 1000).toLocaleDateString()
-                : "정보 없음";
-        }
-
-        // ✅ 보기 모드 설정
-        toggleEditMode(false);
+        document.getElementById("profile-birthday").value = userData.birthday
+            ? new Date(userData.birthday.seconds * 1000).toISOString().substring(0, 10)
+            : "";
+        document.getElementById("profile-birthday-display").textContent = userData.birthday ? document.getElementById("profile-birthday").value : "정보 없음";
+        document.getElementById("profile-join-date").textContent = userData.joinday
+            ? new Date(userData.joinday.seconds * 1000).toLocaleDateString()
+            : "정보 없음";
     }
 }
 
@@ -148,7 +111,6 @@ async function loadProfile(user) {
 function toggleEditMode(editMode) {
     document.getElementById("profile-name").style.display = editMode ? "block" : "none";
     document.getElementById("profile-display-name").style.display = editMode ? "none" : "block";
-
     document.getElementById("save-profile").style.display = editMode ? "block" : "none";
     document.getElementById("edit-profile").style.display = editMode ? "none" : "block";
 }
@@ -159,26 +121,29 @@ document.addEventListener("DOMContentLoaded", () => {
         saveProfile();
         toggleEditMode(false);
     });
-
     document.getElementById("edit-profile").addEventListener("click", () => {
         toggleEditMode(true);
     });
+    document.getElementById("profile-icon").addEventListener("click", () => {
+        if (document.getElementById("save-profile").style.display === "block") {
+            document.getElementById("profile-icon-input").click();
+        }
+    });
+    document.getElementById("profile-icon-input").addEventListener("change", (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                document.getElementById("profile-icon-preview").src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+    });
 });
 
-
-// 🔥 **📌 로그인 감지 후 프로필 자동 로드**
+// 🔥 로그인 감지 후 프로필 자동 로드
 onAuthStateChanged(auth, async (user) => {
-    if (user) {
-        console.log("✅ 로그인 감지됨:", user);
-        await loadProfile(user);
-    } else {
-        console.log("🚨 사용자가 로그인하지 않았습니다.");
-    }
-});
-
-// ✅ 이벤트 리스너 설정
-document.addEventListener("DOMContentLoaded", () => {
-    document.getElementById("save-profile").addEventListener("click", saveProfile);
+    if (user) await loadProfile(user);
 });
 
 
