@@ -95,14 +95,22 @@ async function loadProfile(user) {
         const userData = userDocSnap.data();
         document.getElementById("profile-display-name").textContent = userData.username || "사용자";
         document.getElementById("profile-name").value = userData.username || "";
-        document.getElementById("profile-bio-input").style.display = "none";
-        document.getElementById("profile-bio-container").innerHTML = `<p id='profile-bio-text'>${userData.introduction || ""}</p>`;
         document.getElementById("email-visible").style.display = "none";
         document.getElementById("profile-birthday").style.display = "none";
         document.getElementById("profile-birthday-display").textContent = userData.birthday ? document.getElementById("profile-birthday").value : "정보 없음";
         document.getElementById("profile-join-date").textContent = userData.joinday
             ? new Date(userData.joinday.seconds * 1000).toLocaleDateString()
             : "정보 없음";
+        
+        // 🔥 프로필 설명글을 p 태그로 변환
+        let bioContainer = document.getElementById("profile-bio-container");
+        if (!bioContainer) {
+            bioContainer = document.createElement("div");
+            bioContainer.id = "profile-bio-container";
+            document.getElementById("profile-bio-input").parentNode.appendChild(bioContainer);
+        }
+        bioContainer.innerHTML = `<p id='profile-bio-text'>${userData.introduction || ""}</p>`;
+        document.getElementById("profile-bio-input").style.display = "none";
     }
 }
 
@@ -136,7 +144,5 @@ document.addEventListener("DOMContentLoaded", () => {
 onAuthStateChanged(auth, async (user) => {
     if (user) await loadProfile(user);
 });
-
-
 
 
