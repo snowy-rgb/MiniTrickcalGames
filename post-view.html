@@ -396,7 +396,7 @@
         console.log("✅ URL에서 가져온 값 - postId:", postId);
 
         if (!board || !postId) {
-            console.error("❌ 게시판 또는 게시글 ID가 정의되지 않았습니다.");
+            console.error("error:303 <게시판 또는 게시글 ID가 정의되지 않았습니다>");
             return;
         }
 
@@ -408,7 +408,7 @@
     const board = urlParams.get("board"); 
 
     if (!postId || !board) {
-      alert("잘못된 접근입니다.");
+      alert(error:unknown[3] <잘못된 접근입니다>");
       window.location.href = "bullboard.html";
     }
 
@@ -449,7 +449,7 @@
     loadPost();
     
 
-    console.log("✅ 게시글 로딩 시작");
+    console.log("게시글 로딩 시작");
     console.log("📌 board:", board);
     console.log("📌 postId:", postId);
 
@@ -481,12 +481,12 @@
       const fileInput = document.getElementById("file-input").files[0]; // 🔥 파일 선택
   
       if (!commentInput.trim() && !fileInput) {
-          return alert("🚨 댓글을 입력하거나 파일을 선택하세요!");
+          return alert("resp[31] 댓글을 입력하거나 파일을 선택하세요!");
       }
   
       const user = auth.currentUser;
       if (!user) {
-          return alert("🚨 로그인이 필요합니다!");
+          return alert("203 로그인이 필요합니다!");
       }
   
       try {
@@ -507,8 +507,8 @@
           document.getElementById("file-input").value = ""; // 파일 선택 초기화
           loadComments(board, postId); // 댓글 새로고침
       } catch (error) {
-          console.error("❌ 댓글 저장 오류:", error);
-          alert("🚨 댓글 저장 중 오류 발생");
+          console.error("error:311 <댓글 저장 오류:", error);
+          alert("error:311 <댓글 저장 중 오류 발생>");
       }
   });
 
