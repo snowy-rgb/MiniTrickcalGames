@@ -153,14 +153,14 @@
           .filter(tag => tag !== "");
 
         if (!title || !content) {
-            alert("🚨 제목과 내용을 입력해주세요!");
+            alert("resp[53] 제목과 내용을 입력해주세요!");
             return;
         }
 
         const user = auth.currentUser;
         if (!user) {
-            alert("🚨 로그인한 사용자만 글을 작성할 수 있습니다.");
-            return;
+            alert("error:114 <로그인한 사용자만 글을 작성할 수 있습니다>");
+            return
         }
 
         try {
@@ -176,7 +176,7 @@
             window.location.href = "bullboard.html";
         } catch (error) {
             console.error("❌ 게시글 저장 오류:", error);
-            alert("🚨 게시글 저장 중 오류가 발생했습니다.");
+            alert("error:304 <게시글 저장 중 오류가 발생했습니다>");
         }
     });
 
@@ -204,11 +204,11 @@
                     insertMediaIntoEditor(data.secure_url, file.type);
                 } else {
                     console.error("❌ 업로드 실패:", data);
-                    alert("🚨 미디어 업로드 중 문제가 발생했습니다.");
+                    alert("error:402 <미디어 업로드 중 문제가 발생했습니다>");
                 }
             } catch (error) {
                 console.error("❌ Cloudinary 업로드 오류:", error);
-                alert("🚨 Cloudinary 업로드 중 문제가 발생했습니다.");
+                alert("error:401 <Cloudinary 업로드 중 문제가 발생했습니다>");
             }
         }
     });
