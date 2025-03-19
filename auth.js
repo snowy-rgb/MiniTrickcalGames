@@ -44,7 +44,7 @@ export async function signUp(email, password) {
 
     // ✅ 이메일 인증 발송
     await sendEmailVerification(user);
-    alert("✅ 회원가입 성공! 이메일 인증 링크가 발송되었습니다. 메일함을 확인해주세요!");
+    alert("응답: 회원가입 성공! 이메일 인증 링크가 발송되었습니다. 메일함을 확인해주세요!");
 
     // **Firestore에 기본 사용자 정보 저장**
     const userDocRef = doc(db, "Trickcal_MIniGames", user.uid);
@@ -63,8 +63,8 @@ export async function signUp(email, password) {
     window.location.href = "index.html"; 
 
   } catch (error) {
-    console.error("❌ 회원가입 실패:", error.message);
-    alert("🚨 회원가입 실패: " + error.message);
+    console.error("error:101 회원가입 실패:", error.message);
+    alert("error:101 <회원가입 실패>: " + error.message);
   }
 }
 
@@ -92,12 +92,12 @@ export async function signIn(email, password) {
       alert("✅ 로그인 성공!");
       window.location.href = "start.html"; // 로그인 후 start 페이지 이동
     } else {
-      alert("🚨 Firestore에 사용자 정보가 없습니다. 다시 회원가입 해주세요.");
+      alert("error:102 <Firestore에 사용자 정보가 없습니다. 다시 회원가입 해주세요>");
     }
 
   } catch (error) {
-    console.error("❌ 로그인 실패:", error.message);
-    alert("🚨 로그인 실패: " + error.message);
+    console.error("error:113 로그인 실패:", error.message);
+    alert("error:113 <로그인 실패> : " + error.message);
   }
 }
 
@@ -106,7 +106,7 @@ export async function logOut() {
   try {
     await signOut(auth);
     console.log("✅ 로그아웃 성공");
-    alert("👋 로그아웃 되었습니다.");
+    alert("응답 : 로그아웃 되었습니다.");
 
     // ✅ 로컬 저장 데이터 삭제
     localStorage.removeItem("userProfile");
