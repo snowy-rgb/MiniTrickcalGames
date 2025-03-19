@@ -99,6 +99,8 @@ async function loadProfile(user) {
         document.getElementById("profile-bio").value = userData.introduction || "";
         document.getElementById("email-display").textContent = userData.emailVisible ? userData.email : "비공개";
         document.getElementById("profile-icon-preview").src = userData.profile?.icon || "default-icon.png";
+        document.getElementById("profile-birthday-display").textContent = userData.birthday ? new Date(userData.birthday).toISOString().substring(0, 10) : "정보 없음";
+        document.getElementById("friend-code").textContent = userData.friendCode || "없음";
     }
 }
 
@@ -119,27 +121,13 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("edit-profile").addEventListener("click", () => {
         toggleEditMode(true);
     });
-    document.getElementById("profile-icon").addEventListener("click", () => {
-        if (document.getElementById("save-profile").style.display === "block") {
-            document.getElementById("profile-icon-input").click();
-        }
-    });
-    document.getElementById("profile-icon-input").addEventListener("change", (event) => {
-        const file = event.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                document.getElementById("profile-icon-preview").src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        }
-    });
 });
 
 // 🔥 **📌 로그인 감지 후 프로필 자동 로드**
 onAuthStateChanged(auth, async (user) => {
     if (user) await loadProfile(user);
 });
+
 
 
 //네트워크 오류 = 1, 심각함 = 5-9 ..;
