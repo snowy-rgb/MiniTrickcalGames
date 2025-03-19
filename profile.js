@@ -34,7 +34,7 @@ async function getCustomUID(user) {
 async function saveProfile() {
     const user = auth.currentUser;
     if (!user) {
-        alert("🚨 로그인된 사용자가 없습니다.");
+        alert("error:201 <로그인된 사용자가 없습니다>");
         return;
     }
 
@@ -56,7 +56,7 @@ async function saveProfile() {
     let bioInput = document.getElementById("profile-bio-input").value.trim();
 
     if (!usernameInput) {
-        alert("이름을 입력해야 합니다.");
+        alert("error:251 <이름을 입력해야 합니다>");
         return;
     }
 
@@ -80,7 +80,7 @@ async function saveProfile() {
         alert("✅ 프로필이 저장되었습니다!");
         loadProfile(user);
     } catch (error) {
-        alert("🚨 프로필 저장 중 오류가 발생했습니다.");
+        alert("error:281 <프로필 저장 중 오류가 발생했습니다>");
     }
 }
 
@@ -144,5 +144,11 @@ document.addEventListener("DOMContentLoaded", () => {
 onAuthStateChanged(auth, async (user) => {
     if (user) await loadProfile(user);
 });
+
+
+//네트워크 오류 = 1, 심각함 = 5-9 ..;
+//계정및 로그인 문제 = 2 , 심각한 로그인 = 3 ~ 4 , 심각한 계정 = 8 ~ 9 ..;
+
+
 
 
