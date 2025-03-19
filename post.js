@@ -38,13 +38,13 @@ import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/fireba
 export async function savePost(boardType, title, content, mediaUrls, tags) {
     try {
         if (!boardType || (boardType !== "dev_notices" && boardType !== "community_posts")) {
-            throw new Error("🚨 올바른 게시판을 선택하세요!");
+            throw new Error("321: <올바른 게시판을 선택하세요!>");
         }
 
         // ✅ 현재 로그인한 사용자의 UID 가져오기
         const user = auth.currentUser;
         if (!user) {
-            throw new Error("🚨 로그인이 필요합니다!");
+            throw new Error("error:114 <로그인이 필요합니다>");
         }
 
         const userRef = doc(db, "users", user.uid);
@@ -69,7 +69,7 @@ export async function savePost(boardType, title, content, mediaUrls, tags) {
 
     } catch (error) {
         console.error("❌ 게시글 저장 오류:", error);
-        alert("🚨 게시글 저장 중 오류가 발생했습니다: " + error.message);
+        alert("error:304 <게시글 저장 중 오류가 발생했습니다>: " + error.message);
     }
 }
 
@@ -77,7 +77,7 @@ export async function savePost(boardType, title, content, mediaUrls, tags) {
 export async function loadPosts(boardType) {
   try {
     if (!boardType || (boardType !== "dev_notices" && boardType !== "community_posts")) {
-      console.log("오류 : 확인되지않음//u-//무시")
+      console.log("오류 : 확인되지않음//u-//unknown - no? no problem")
     }
 
     console.log("🔥 Firestore 요청 확인: ", boardType);
@@ -132,7 +132,7 @@ export async function loadPost(board, postId) {
 
         if (!postSnap.exists()) {
             console.error("❌ Firestore 문서 없음:", board, postId);
-            alert("게시글을 찾을 수 없습니다.");
+            alert("error:301 <게시글을 찾을 수 없습니다>");
             window.location.href = "bullboard.html";
             return;
         }
@@ -344,13 +344,13 @@ export async function loadComments(boardType, postId) {
             // ✅ 신고 버튼 기능 추가 (추후 구현)
             if (!isAuthor) {
                 document.getElementById(`report-${commentId}`).addEventListener("click", () => {
-                    alert("🚨 신고 기능은 곧 추가될 예정입니다.");
+                    alert("응답 : 신고 기능은 곧 추가될 예정입니다.");
                 });
             }
         }
     } catch (error) {
         console.error("❌ 댓글 불러오기 오류:", error);
-        alert("🚨 댓글을 불러오는 중 오류가 발생했습니다.");
+        alert("error:312 <댓글을 불러오는 중 오류가 발생했습니다>");
     }
 }
 
@@ -400,10 +400,10 @@ document.addEventListener("DOMContentLoaded", () => {
         if (addCommentBtn) {
             addCommentBtn.addEventListener("click", async () => {
                 const commentInput = document.getElementById("comment-input").value;
-                if (!commentInput.trim()) return alert("🚨 댓글을 입력하세요!");
+                if (!commentInput.trim()) return alert("resp[54] 댓글을 입력하세요!");
 
                 const user = auth.currentUser;
-                if (!user) return alert("🚨 로그인이 필요합니다!");
+                if (!user) return alert("error:114 <로그인이 필요합니다>!");
 
                 try {
                     const commentsRef = collection(db, `${board}/${postId}/comments`);
@@ -417,7 +417,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     loadComments(board, postId); // 댓글 새로고침
                 } catch (error) {
                     console.error("❌ 댓글 저장 오류:", error);
-                    alert("🚨 댓글 저장 중 오류 발생");
+                    alert("error:311 <댓글 저장 중 오류 발생>");
                 }
             });
         } else {
@@ -551,7 +551,7 @@ async function updateCommentLikes(boardType, postId, commentId, type) {
         const user = auth.currentUser;
 
         if (!user) {
-            alert("🚨 로그인이 필요합니다!");
+            alert("error:114 <로그인이 필요합니다>");
             return;
         }
 
