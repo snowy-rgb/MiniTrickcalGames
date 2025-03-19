@@ -196,8 +196,8 @@
                     mediaFiles.push(data.secure_url);
                 }
             } catch (error) {
-                console.error("❌ Cloudinary 업로드 오류:", error);
-                alert("🚨 Cloudinary 업로드 중 문제가 발생했습니다.");
+                console.error("error:301 'Cloudinary 업로드 오류:", error);
+                alert(error:301 <Cloudinary 업로드 중 문제가 발생했습니다>");
             }
         }
     });
@@ -219,8 +219,8 @@
         alert("✅ 게시글이 수정되었습니다!");
         window.location.href = `post-view.html?id=${postId}&board=${board}`;
       } catch (error) {
-        console.error("❌ 게시글 수정 오류:", error);
-        alert("🚨 게시글 수정 중 오류가 발생했습니다.");
+        console.error("error 302: 게시글 수정 오류:", error);
+        alert("error:302 <게시글 수정 중 오류가 발생했습니다>");
       }
     });
 
