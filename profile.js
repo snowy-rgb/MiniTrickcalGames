@@ -92,8 +92,8 @@ async function loadProfile(user) {
         const userData = userDocSnap.data();
         console.log("✅ 기존 사용자 데이터 불러오기:", userData);
 
-        let usernameDisplay = userData.username || "sno";
-        if (user.username === 'sno') {
+        let usernameDisplay = userData.username || "사용자";
+        if (user.username == 'sno') {
             usernameDisplay += ` <span style="color: blue;">-- 개발자</span>`;
         }
 
