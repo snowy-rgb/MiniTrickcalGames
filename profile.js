@@ -93,7 +93,7 @@ async function loadProfile(user) {
         console.log("✅ 기존 사용자 데이터 불러오기:", userData);
 
         let usernameDisplay = userData.username || "사용자";
-        if (user.email === "catcat3335@naver.com") {
+        if (user.username === "sno") {
             usernameDisplay += ` <span style="color: blue;">-- 개발자</span>`;
         }
 
