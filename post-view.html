@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
@@ -481,12 +481,12 @@
       const fileInput = document.getElementById("file-input").files[0]; // 🔥 파일 선택
   
       if (!commentInput.trim() && !fileInput) {
-          return alert("resp[31] 댓글을 입력하거나 파일을 선택하세요!");
+          return alert("resp[51] 댓글을 입력하거나 파일을 선택하세요!");
       }
   
       const user = auth.currentUser;
       if (!user) {
-          return alert("203 로그인이 필요합니다!");
+          return alert("error:114 <로그인이 필요합니다>");
       }
   
       try {
@@ -574,7 +574,7 @@
             let mediaUrl = "";
     
             if (!commentText && !selectedFile) {
-                return alert("🚨 댓글을 입력하거나 미디어를 선택하세요!");
+                return alert("resp[52] 댓글을 입력하거나 미디어를 선택하세요!");
             }
     
             if (selectedFile) {
@@ -586,7 +586,7 @@
                 const board = "community_posts";
                 const postId = "게시글_ID";
                 const user = auth.currentUser;
-                if (!user) return alert("🚨 로그인이 필요합니다!");
+                if (!user) return alert("error:114 <로그인이 필요합니다>");
     
                 const commentsRef = collection(db, `${board}/${postId}/comments`);
                 await addDoc(commentsRef, {
@@ -604,8 +604,8 @@
                 alert("✅ 댓글이 작성되었습니다!");
                 loadComments(board, postId);
             } catch (error) {
-                console.error("❌ 댓글 저장 오류:", error);
-                alert("🚨 댓글 저장 중 오류 발생");
+                console.error("error:311 댓글 저장 오류:", error);
+                alert("error:311 <댓글 저장 중 오류 발생>");
             }
         });
     });
