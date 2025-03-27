@@ -204,7 +204,7 @@
 
   <!-- 메뉴 영역 -->
   <div class="menu-bar">
-    <div class="menu-item">홈</div>
+    <div class="menu-item" id="exit">나가기</div>
     <div class="menu-item">커뮤니티</div>
     <div class="menu-item" id="bull_board">게시판</div>
     <div class="menu-item" id="more-menu">추가기능</div>
@@ -239,8 +239,12 @@
       window.location.href = "logo.html";// logo to logo.html(getById - logo1) 
       target="_blank"; //화면 생성
     });
-
     
+    //
+    document.getElementById("exit").addEventListener("click", () => {
+      window.location.href = "index.html";
+    });
+
 
       // ✅ Firebase에서 프로필 데이터 불러오기 (사용자 로그인 상태 확인)
       fetchUserProfile();
