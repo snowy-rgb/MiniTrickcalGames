@@ -19,13 +19,8 @@ import { getStorage } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-s
 
 // ✅ Firebase 설정
 const firebaseConfig = {
-  apiKey: "AIzaSyA-tApRNQGZ3d1gzGhX5hAdntMsC5d9PrM",
-  authDomain: "minitrickcal.firebaseapp.com",
-  projectId: "minitrickcal",
-  storageBucket: "minitrickcal.firebasestorage.app",
-  messagingSenderId: "891613009633",
-  appId: "1:891613009633:web:1b0888f7641df77424c9a0",
-  measurementId: "G-6BK85ML1RH"
+  // 보안 문제로 인해 대체되었습니다. 메모장을 확인하세요.
+  show: false;
 };
 
 // ✅ Firebase 초기화
@@ -117,3 +112,4 @@ export async function logOut() {
     alert("🚨 로그아웃 실패: " + error.message);
   }
 }
+
