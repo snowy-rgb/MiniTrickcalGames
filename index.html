@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>MiniTrickcalGames - 시작하기 로그인</title>
+  <title>MiniTrickcalGames - R.I.P</title>
   <style>
     @font-face {
       font-family: 'OneStoreMobileGothicPop';
@@ -118,54 +118,13 @@
 
   <!-- 로고 이미지 -->
   <video class="video-small" autoplay loop muted playsinline>
-    <source src="komi.mp4" class="logo" type="video/mp4">
-    브라우저가 video 태그를 지원하지 않습니다.
-  </video>
-
-  <!-- 제목 -->
-  <div class="title">MiniTrickcalGames로 로그인</div>
-
-  <!-- 입력 필드 -->
-  <input type="email" id="email" placeholder="아이디">
-  <input type="password" id="password" placeholder="비밀번호">
-
-  <!-- 버튼들 -->
-  <div class="button-container">
-    <button id="signup-btn">회원가입</button>
-    <button id="signin-btn">로그인</button>
-    <button id="logout-btn">로그아웃</button>
-  </div>
+  <h1>R.I.P</h1>
+  <p>더 나은 실력으로 찾아뵙겠습니다</p>
 
   <div class="footer">
     <p>Trickcal copyrighted by EPIDGames. MiniTrickcalGames powered by Snowii</p>
     <p>이 사이트는 공식이 아님을 알립니다</p><a href="privacy.html" style="color: red; text-decoration: underline;" target="_blank">개인정보 처리방침</a>
   </div>
-
-  <!-- Firebase auth.js 연결 -->
-  <script type="module">
-  import { signUp, signIn, logOut } from "./auth.js";
-
-  document.getElementById("signup-btn").addEventListener("click", () => {
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
-    signUp(email, password);
-  });
-
-  document.getElementById("signin-btn").addEventListener("click", () => {
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
-    signIn(email, password);
-  });
-
-  document.getElementById("logout-btn").addEventListener("click", () => {
-    logOut();
-  });
-  </script>
-  <script>
-    document.getElementById("signup-btn").addEventListener("click", () => {
-      window.location.href = "signUp.html";
-    });
-  </script>
 
 </body>
 </html>
